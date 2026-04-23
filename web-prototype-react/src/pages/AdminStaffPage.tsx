@@ -174,7 +174,7 @@ export function AdminStaffPage() {
     } finally {
       setLoading(false);
     }
-  }, [addToast]);
+  }, [showToast]);
 
   useEffect(() => { load(); }, [load]);
 
