@@ -49,7 +49,7 @@ function App() {
           <Route
             path="/kds"
             element={
-              <ProtectedRoute roles={['KITCHEN', 'ADMIN']}>
+              <ProtectedRoute roles={['KITCHEN', 'MANAGER', 'ADMIN']}>
                 <KDSPage />
               </ProtectedRoute>
             }

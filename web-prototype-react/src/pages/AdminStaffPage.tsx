@@ -53,7 +53,7 @@ interface CreateModalProps {
 }
 
 function CreateStaffModal({ onClose, onCreated }: CreateModalProps) {
-  const { addToast } = useStore();
+  const { showToast } = useStore();
   const [form, setForm] = useState<CreateStaffData>({
     displayName: '',
     email: '',
@@ -68,13 +68,13 @@ function CreateStaffModal({ onClose, onCreated }: CreateModalProps) {
     try {
       setLoading(true);
       const staff = await createStaff(form);
-      addToast({ type: 'success', message: `Đã tạo tài khoản cho ${staff.displayName}` });
+      showToast(`Đã tạo tài khoản cho ${staff.displayName}`, 'success');
       onCreated(staff);
       onClose();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: { message?: string } } } })
         ?.response?.data?.error?.message ?? 'Tạo tài khoản thất bại';
-      addToast({ type: 'error', message: msg });
+      showToast(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -155,7 +155,7 @@ function CreateStaffModal({ onClose, onCreated }: CreateModalProps) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export function AdminStaffPage() {
-  const { addToast } = useStore();
+  const { showToast } = useStore();
   const [staff, setStaff] = useState<ApiStaff[]>([]);
   const [loading, setLoading] = useState(true);
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('ALL');
@@ -170,7 +170,7 @@ export function AdminStaffPage() {
       const data = await listStaff();
       setStaff(data);
     } catch {
-      addToast({ type: 'error', message: 'Không thể tải danh sách nhân viên' });
+      showToast('Không thể tải danh sách nhân viên', 'error');
     } finally {
       setLoading(false);
     }
@@ -186,11 +186,11 @@ export function AdminStaffPage() {
       setActionLoading(s.id);
       const updated = await updateStaffStatus(s.id, next);
       setStaff((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-      addToast({ type: 'success', message: `Đã ${action.toLowerCase()} tài khoản ${s.displayName}` });
+      showToast(`Đã ${action.toLowerCase()} tài khoản ${s.displayName}`, 'success');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: { message?: string } } } })
         ?.response?.data?.error?.message ?? 'Thao tác thất bại';
-      addToast({ type: 'error', message: msg });
+      showToast(msg, 'error');
     } finally {
       setActionLoading(null);
     }
@@ -202,11 +202,11 @@ export function AdminStaffPage() {
       const updated = await updateStaff(id, { role });
       setStaff((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
       setEditingRole(null);
-      addToast({ type: 'success', message: 'Đã cập nhật vai trò' });
+      showToast('Đã cập nhật vai trò', 'success');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: { message?: string } } } })
         ?.response?.data?.error?.message ?? 'Cập nhật thất bại';
-      addToast({ type: 'error', message: msg });
+      showToast(msg, 'error');
     } finally {
       setActionLoading(null);
     }

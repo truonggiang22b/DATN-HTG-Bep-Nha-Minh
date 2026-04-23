@@ -4,8 +4,9 @@ import { useStore } from '../store/useStore';
 import { formatPrice } from '../components/Toast';
 import type { ItemStatus, ApiMenuItem } from '../types';
 import {
-  getCategories, createCategory, updateCategory,
+  getCategories, createCategory, updateCategory, deleteCategory, restoreCategory,
   getMenuItems, createMenuItem, updateMenuItem, updateItemStatus,
+  deleteMenuItem, restoreMenuItem,
   uploadMenuImage,
 } from '../services/internalApi';
 import '../styles/admin.css';
@@ -122,6 +123,44 @@ export const AdminMenuPage = () => {
     onError: () => showToast('Không thể cập nhật danh mục', 'error'),
   });
 
+  const { mutate: doDeleteCat } = useMutation({
+    mutationFn: (id: string) => deleteCategory(id),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] });
+      const hidden = result?.hiddenItemsCount ?? 0;
+      showToast(`Đã ẩn danh mục${hidden > 0 ? ` và ${hidden} món` : ''}`);
+    },
+    onError: () => showToast('Không thể ẩn danh mục', 'error'),
+  });
+
+  const { mutate: doRestoreCat } = useMutation({
+    mutationFn: (id: string) => restoreCategory(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      showToast('Đã khôi phục danh mục');
+    },
+    onError: () => showToast('Không thể khôi phục danh mục', 'error'),
+  });
+
+  const { mutate: doDeleteItem } = useMutation({
+    mutationFn: (id: string) => deleteMenuItem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] });
+      showToast('Đã ẩn món');
+    },
+    onError: () => showToast('Không thể ẩn món', 'error'),
+  });
+
+  const { mutate: doRestoreItem } = useMutation({
+    mutationFn: (id: string) => restoreMenuItem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] });
+      showToast('Đã hiện lại món');
+    },
+    onError: () => showToast('Không thể khôi phục món', 'error'),
+  });
+
   // ── Filtered items ────────────────────────────────────────────────────────
   const filtered = menuItems.filter((item) => {
     if (filterCat !== 'all' && item.categoryId !== filterCat) return false;
@@ -130,7 +169,9 @@ export const AdminMenuPage = () => {
     return true;
   });
 
-  const handleStatusChange = (item: ApiMenuItem, action: 'toggle_sold' | 'restore' | 'hide') => {
+  const handleStatusChange = (item: ApiMenuItem, action: 'toggle_sold' | 'restore' | 'hide' | 'soft_delete' | 'restore_item') => {
+    if (action === 'soft_delete') { doDeleteItem(item.id); return; }
+    if (action === 'restore_item') { doRestoreItem(item.id); return; }
     let newStatus: ItemStatus;
     if (action === 'toggle_sold') newStatus = item.status === 'SOLD_OUT' ? 'ACTIVE' : 'SOLD_OUT';
     else if (action === 'restore') newStatus = 'ACTIVE';
@@ -324,7 +365,14 @@ export const AdminMenuPage = () => {
                               {item.status === 'ACTIVE' && <button className="qa-btn qa-btn--danger" disabled={statusPending} onClick={() => handleStatusChange(item, 'toggle_sold')}>Tạm hết</button>}
                               {item.status === 'SOLD_OUT' && <button className="qa-btn" style={{ borderColor: 'var(--color-leaf)', color: 'var(--color-leaf)' }} disabled={statusPending} onClick={() => handleStatusChange(item, 'restore')}>Bán lại</button>}
                               {item.status === 'ACTIVE' && <button className="qa-btn" disabled={statusPending} onClick={() => handleStatusChange(item, 'hide')}>Ẩn</button>}
-                              {item.status === 'HIDDEN' && <button className="qa-btn" style={{ borderColor: 'var(--color-leaf)', color: 'var(--color-leaf)' }} disabled={statusPending} onClick={() => handleStatusChange(item, 'restore')}>Hiện lại</button>}
+                              {(item.status === 'ACTIVE' || item.status === 'SOLD_OUT') && (
+                                <button className="qa-btn qa-btn--danger" disabled={statusPending}
+                                  onClick={() => { if (window.confirm(`Ẩn mềm "${item.name}"? Có thể khôi phục sau.`)) handleStatusChange(item, 'soft_delete'); }}
+                                  title="Xóa mềm — ẩn khỏi menu, giữ lại lịch sử">
+                                  Xóa
+                                </button>
+                              )}
+                              {item.status === 'HIDDEN' && <button className="qa-btn" style={{ borderColor: 'var(--color-leaf)', color: 'var(--color-leaf)' }} disabled={statusPending} onClick={() => handleStatusChange(item, 'restore_item')}>Hiện lại</button>}
                             </div>
                           </td>
                           <td>
@@ -518,8 +566,22 @@ export const AdminMenuPage = () => {
                         <>
                           <span style={{ flex: 1, fontWeight: 500, fontSize: 14 }}>{cat.name}</span>
                           <span style={{ fontSize: 12, color: 'var(--color-soy)' }}>{itemCount} món</span>
+                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: cat.status === 'INACTIVE' ? 'rgba(156,163,175,0.15)' : 'rgba(34,197,94,0.1)', color: cat.status === 'INACTIVE' ? '#6b7280' : '#166534', fontWeight: 600 }}>
+                            {cat.status === 'INACTIVE' ? 'Ẩn' : 'Hiện'}
+                          </span>
                           <button className="qa-btn" style={{ borderColor: 'var(--color-turmeric)', color: 'var(--color-turmeric)' }}
                             onClick={() => { setEditingCatId(cat.id); setEditingCatName(cat.name); }}>✏️</button>
+                          {cat.status !== 'INACTIVE' ? (
+                            <button className="qa-btn qa-btn--danger" title="Ẩn danh mục và toàn bộ món"
+                              onClick={() => { if (window.confirm(`Ẩn danh mục "${cat.name}" và ${itemCount} món con?`)) doDeleteCat(cat.id); }}>
+                              Ẩn
+                            </button>
+                          ) : (
+                            <button className="qa-btn" style={{ borderColor: 'var(--color-leaf)', color: 'var(--color-leaf)' }}
+                              onClick={() => doRestoreCat(cat.id)}>
+                              Khôi phục
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
