@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Mô tả ngắn về dự án của bạn" />
+  <title>Tên Dự Án | Tagline</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ========== HEADER / NAV ========== -->
+  <header class="header" id="header">
+    <nav class="navbar container">
+      <a href="#" class="logo">
+        <span class="logo-icon">⬡</span>
+        <span class="logo-text">BrandName</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#features" class="nav-link">Tính năng</a></li>
+        <li><a href="#about" class="nav-link">Về chúng tôi</a></li>
+        <li><a href="#pricing" class="nav-link">Bảng giá</a></li>
+        <li><a href="#contact" class="nav-link">Liên hệ</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="btn btn-ghost" id="btn-login">Đăng nhập</button>
+        <button class="btn btn-primary" id="btn-signup">Bắt đầu miễn phí</button>
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ========== HERO ========== -->
+    <section class="hero" id="hero">
+      <div class="hero-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+      </div>
+
+      <div class="container hero-content">
+        <div class="badge" id="badge-announce">
+          <span class="badge-dot"></span>
+          🎉 Ra mắt phiên bản 2.0 — Khám phá ngay
+        </div>
+
+        <h1 class="hero-title">
+          Giải Pháp Thông Minh<br />
+          Cho <span class="gradient-text">Doanh Nghiệp</span> Của Bạn
+        </h1>
+
+        <p class="hero-desc">
+          Mô tả ngắn về sản phẩm / dịch vụ của bạn. Nêu rõ lợi ích chính
+          và vấn đề bạn giải quyết cho khách hàng trong 2-3 câu.
+        </p>
+
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-lg" id="btn-get-started">
+            Bắt đầu ngay
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+          <button class="btn btn-outline btn-lg" id="btn-watch-demo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            Xem demo
+          </button>
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-number" data-target="10000">0</span><span>+</span>
+            <span class="stat-label">Người dùng</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-number" data-target="99">0</span><span>%</span>
+            <span class="stat-label">Hài lòng</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-number" data-target="50">0</span><span>+</span>
+            <span class="stat-label">Quốc gia</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Visual / Mockup -->
+      <div class="container">
+        <div class="hero-mockup" id="hero-mockup">
+          <div class="mockup-window">
+            <div class="mockup-titlebar">
+              <div class="mockup-dots">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+              </div>
+              <div class="mockup-url">app.yourproject.com</div>
+            </div>
+            <div class="mockup-body">
+              <div class="mockup-sidebar">
+                <div class="sidebar-item active"></div>
+                <div class="sidebar-item"></div>
+                <div class="sidebar-item"></div>
+                <div class="sidebar-item"></div>
+              </div>
+              <div class="mockup-main">
+                <div class="mockup-card card-wide shimmer"></div>
+                <div class="mockup-row">
+                  <div class="mockup-card shimmer"></div>
+                  <div class="mockup-card shimmer"></div>
+                </div>
+                <div class="mockup-line shimmer"></div>
+                <div class="mockup-line short shimmer"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== FEATURES ========== -->
+    <section class="features" id="features">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">Tính năng</span>
+          <h2 class="section-title">Mọi thứ bạn cần<br />trong một nền tảng</h2>
+          <p class="section-desc">Khám phá các tính năng mạnh mẽ giúp bạn làm việc hiệu quả hơn.</p>
+        </div>
+
+        <div class="features-grid">
+
+          <div class="feature-card" id="feature-1">
+            <div class="feature-icon" style="--icon-color: #6366f1;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <h3 class="feature-title">Tên Tính Năng 1</h3>
+            <p class="feature-desc">Mô tả ngắn về tính năng này, nêu rõ lợi ích đem lại cho người dùng.</p>
+          </div>
+
+          <div class="feature-card" id="feature-2">
+            <div class="feature-icon" style="--icon-color: #10b981;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <h3 class="feature-title">Tên Tính Năng 2</h3>
+            <p class="feature-desc">Mô tả ngắn về tính năng này, nêu rõ lợi ích đem lại cho người dùng.</p>
+          </div>
+
+          <div class="feature-card" id="feature-3">
+            <div class="feature-icon" style="--icon-color: #f59e0b;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            </div>
+            <h3 class="feature-title">Tên Tính Năng 3</h3>
+            <p class="feature-desc">Mô tả ngắn về tính năng này, nêu rõ lợi ích đem lại cho người dùng.</p>
+          </div>
+
+          <div class="feature-card" id="feature-4">
+            <div class="feature-icon" style="--icon-color: #ec4899;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3 class="feature-title">Tên Tính Năng 4</h3>
+            <p class="feature-desc">Mô tả ngắn về tính năng này, nêu rõ lợi ích đem lại cho người dùng.</p>
+          </div>
+
+          <div class="feature-card" id="feature-5">
+            <div class="feature-icon" style="--icon-color: #06b6d4;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+            </div>
+            <h3 class="feature-title">Tên Tính Năng 5</h3>
+            <p class="feature-desc">Mô tả ngắn về tính năng này, nêu rõ lợi ích đem lại cho người dùng.</p>
+          </div>
+
+          <div class="feature-card" id="feature-6">
+            <div class="feature-icon" style="--icon-color: #8b5cf6;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <h3 class="feature-title">Tên Tính Năng 6</h3>
+            <p class="feature-desc">Mô tả ngắn về tính năng này, nêu rõ lợi ích đem lại cho người dùng.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PRICING ========== -->
+    <section class="pricing" id="pricing">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">Bảng giá</span>
+          <h2 class="section-title">Chọn gói phù hợp</h2>
+          <p class="section-desc">Bắt đầu miễn phí, nâng cấp khi bạn cần thêm tính năng.</p>
+        </div>
+
+        <div class="pricing-grid">
+
+          <div class="pricing-card" id="plan-free">
+            <div class="plan-header">
+              <h3 class="plan-name">Miễn Phí</h3>
+              <div class="plan-price">
+                <span class="price-currency">₫</span>
+                <span class="price-amount">0</span>
+                <span class="price-period">/tháng</span>
+              </div>
+              <p class="plan-desc">Phù hợp để bắt đầu và khám phá.</p>
+            </div>
+            <ul class="plan-features">
+              <li class="plan-feature included">✓ Tính năng cơ bản 1</li>
+              <li class="plan-feature included">✓ Tính năng cơ bản 2</li>
+              <li class="plan-feature included">✓ Hỗ trợ cộng đồng</li>
+              <li class="plan-feature excluded">✗ Tính năng nâng cao</li>
+              <li class="plan-feature excluded">✗ API access</li>
+            </ul>
+            <button class="btn btn-outline btn-full" id="btn-free-plan">Bắt đầu miễn phí</button>
+          </div>
+
+          <div class="pricing-card featured" id="plan-pro">
+            <div class="plan-badge-popular">Phổ biến nhất</div>
+            <div class="plan-header">
+              <h3 class="plan-name">Pro</h3>
+              <div class="plan-price">
+                <span class="price-currency">₫</span>
+                <span class="price-amount">299K</span>
+                <span class="price-period">/tháng</span>
+              </div>
+              <p class="plan-desc">Dành cho cá nhân và team nhỏ.</p>
+            </div>
+            <ul class="plan-features">
+              <li class="plan-feature included">✓ Tất cả tính năng Miễn phí</li>
+              <li class="plan-feature included">✓ Tính năng nâng cao</li>
+              <li class="plan-feature included">✓ API access</li>
+              <li class="plan-feature included">✓ Hỗ trợ ưu tiên</li>
+              <li class="plan-feature included">✓ Analytics chi tiết</li>
+            </ul>
+            <button class="btn btn-primary btn-full" id="btn-pro-plan">Dùng thử 14 ngày</button>
+          </div>
+
+          <div class="pricing-card" id="plan-enterprise">
+            <div class="plan-header">
+              <h3 class="plan-name">Enterprise</h3>
+              <div class="plan-price">
+                <span class="price-amount" style="font-size:2rem;">Liên hệ</span>
+              </div>
+              <p class="plan-desc">Giải pháp tùy chỉnh cho doanh nghiệp lớn.</p>
+            </div>
+            <ul class="plan-features">
+              <li class="plan-feature included">✓ Tất cả tính năng Pro</li>
+              <li class="plan-feature included">✓ SLA đảm bảo uptime</li>
+              <li class="plan-feature included">✓ Tích hợp tùy chỉnh</li>
+              <li class="plan-feature included">✓ Dedicated support 24/7</li>
+              <li class="plan-feature included">✓ On-premise option</li>
+            </ul>
+            <button class="btn btn-outline btn-full" id="btn-enterprise-plan">Liên hệ tư vấn</button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== CTA ========== -->
+    <section class="cta-section" id="contact">
+      <div class="container">
+        <div class="cta-card">
+          <div class="orb orb-cta-1"></div>
+          <div class="orb orb-cta-2"></div>
+          <h2 class="cta-title">Sẵn sàng bắt đầu?</h2>
+          <p class="cta-desc">Tham gia cùng hàng nghìn người dùng đang tin tưởng sản phẩm của chúng tôi.</p>
+          <div class="cta-actions">
+            <button class="btn btn-primary btn-lg" id="btn-cta-start">Bắt đầu miễn phí</button>
+            <button class="btn btn-ghost btn-lg" id="btn-cta-contact">Liên hệ với chúng tôi</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="logo">
+            <span class="logo-icon">⬡</span>
+            <span class="logo-text">BrandName</span>
+          </a>
+          <p class="footer-tagline">Mô tả ngắn về công ty / sản phẩm của bạn.</p>
+          <div class="social-links">
+            <a href="#" class="social-link" aria-label="Facebook">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            </a>
+            <a href="#" class="social-link" aria-label="Twitter">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+            </a>
+            <a href="#" class="social-link" aria-label="LinkedIn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Sản phẩm</h4>
+          <ul class="footer-links">
+            <li><a href="#">Tính năng</a></li>
+            <li><a href="#">Bảng giá</a></li>
+            <li><a href="#">Changelog</a></li>
+            <li><a href="#">Roadmap</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Công ty</h4>
+          <ul class="footer-links">
+            <li><a href="#">Về chúng tôi</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Tuyển dụng</a></li>
+            <li><a href="#">Liên hệ</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Hỗ trợ</h4>
+          <ul class="footer-links">
+            <li><a href="#">Tài liệu</a></li>
+            <li><a href="#">API Reference</a></li>
+            <li><a href="#">Cộng đồng</a></li>
+            <li><a href="#">Trạng thái hệ thống</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2026 BrandName. Bảo lưu mọi quyền.</p>
+        <div class="footer-legal">
+          <a href="#">Điều khoản sử dụng</a>
+          <a href="#">Chính sách bảo mật</a>
+          <a href="#">Cookie</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scroll to Top Button -->
+  <button class="scroll-top" id="scroll-top" aria-label="Scroll to top">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+  </button>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

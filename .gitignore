@@ -1,0 +1,31 @@
+# ── Environment files (toàn bộ monorepo) ──────────────────────
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+!**/.env.production.example
+
+# ── Dependencies ───────────────────────────────────────────────
+**/node_modules/
+
+# ── Build outputs ──────────────────────────────────────────────
+**/dist/
+**/build/
+**/.next/
+coverage/
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+**/npm-debug.log*
+
+# ── Test artifacts ────────────────────────────────────────────
+playwright-report/
+test-results/
+
+# ── OS / Editor ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.sw?
+
+# ── Dev uploads (local disk storage) ─────────────────────────
+backend-api/uploads/

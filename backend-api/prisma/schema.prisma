@@ -1,0 +1,279 @@
+// schema.prisma — Bếp Nhà Mình — QR Ordering System
+// Spec reference: 14_be_mvp_spec_node_express_ts.md Section 8
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  NEW
+  PREPARING
+  READY
+  SERVED
+  CANCELLED
+}
+
+enum MenuItemStatus {
+  ACTIVE
+  SOLD_OUT
+  HIDDEN
+}
+
+enum CategoryStatus {
+  ACTIVE
+  HIDDEN
+}
+
+enum TableStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum SessionStatus {
+  OPEN
+  CLOSED
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  KITCHEN
+}
+
+// ─── Multi-tenant root ────────────────────────────────────────────────────────
+
+model Store {
+  id        String   @id @default(uuid())
+  name      String
+  timezone  String   @default("Asia/Ho_Chi_Minh")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  branches  Branch[]
+  users     User[]
+  orders    Order[]
+
+  @@map("stores")
+}
+
+model Branch {
+  id        String   @id @default(uuid())
+  storeId   String   @map("store_id")
+  name      String
+  address   String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  store         Store         @relation(fields: [storeId], references: [id])
+  diningTables  DiningTable[]
+  categories    Category[]
+  orders        Order[]
+
+  @@map("branches")
+}
+
+// ─── Users & Roles ────────────────────────────────────────────────────────────
+
+model User {
+  id                String   @id @default(uuid())
+  supabaseAuthUserId String  @unique @map("supabase_auth_user_id")
+  storeId           String   @map("store_id")
+  defaultBranchId   String?  @map("default_branch_id")
+  displayName       String   @map("display_name")
+  email             String
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  store              Store             @relation(fields: [storeId], references: [id])
+  roles              UserRole_Rel[]
+  orderStatusHistory OrderStatusHistory[]
+
+  @@index([storeId, email])
+  @@map("users")
+}
+
+model UserRole_Rel {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  role      UserRole
+  storeId   String   @map("store_id")
+  branchId  String?  @map("branch_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_roles")
+}
+
+// ─── Tables & Sessions ────────────────────────────────────────────────────────
+
+model DiningTable {
+  id          String      @id @default(uuid())
+  branchId    String      @map("branch_id")
+  tableCode   String      @map("table_code")
+  displayName String      @map("display_name")
+  qrToken     String      @unique @map("qr_token")
+  status      TableStatus @default(ACTIVE)
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  branch       Branch         @relation(fields: [branchId], references: [id])
+  sessions     TableSession[]
+  orders       Order[]
+
+  @@unique([branchId, tableCode])
+  @@map("dining_tables")
+}
+
+model TableSession {
+  id           String        @id @default(uuid())
+  tableId      String        @map("table_id")
+  status       SessionStatus @default(OPEN)
+  openedAt     DateTime      @default(now()) @map("opened_at")
+  closedAt     DateTime?     @map("closed_at")
+  orderCounter Int           @default(0) @map("order_counter")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  table  DiningTable @relation(fields: [tableId], references: [id])
+  orders Order[]
+
+  @@index([tableId, status, openedAt(sort: Desc)])
+  @@map("table_sessions")
+}
+
+// ─── Menu ─────────────────────────────────────────────────────────────────────
+
+model Category {
+  id        String         @id @default(uuid())
+  branchId  String         @map("branch_id")
+  name      String
+  sortOrder Int            @default(0) @map("sort_order")
+  status    CategoryStatus @default(ACTIVE)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  branch    Branch     @relation(fields: [branchId], references: [id])
+  menuItems MenuItem[]
+
+  @@map("categories")
+}
+
+model MenuItem {
+  id               String         @id @default(uuid())
+  categoryId       String         @map("category_id")
+  name             String
+  price            Decimal        @db.Decimal(10, 0)
+  imageUrl         String?        @map("image_url")
+  shortDescription String?        @map("short_description")
+  ingredients      String?
+  tagsJson         Json           @default("[]") @map("tags_json")
+  status           MenuItemStatus @default(ACTIVE)
+  sortOrder        Int            @default(0) @map("sort_order")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  category     Category          @relation(fields: [categoryId], references: [id])
+  optionGroups MenuOptionGroup[]
+  orderItems   OrderItem[]
+
+  @@index([categoryId, status, sortOrder])
+  @@map("menu_items")
+}
+
+model MenuOptionGroup {
+  id         String  @id @default(uuid())
+  menuItemId String  @map("menu_item_id")
+  name       String
+  isRequired Boolean @default(false) @map("is_required")
+  minSelect  Int     @default(0) @map("min_select")
+  maxSelect  Int     @default(1) @map("max_select")
+  sortOrder  Int     @default(0) @map("sort_order")
+
+  menuItem MenuItem      @relation(fields: [menuItemId], references: [id])
+  options  MenuOption[]
+
+  @@map("menu_option_groups")
+}
+
+model MenuOption {
+  id            String  @id @default(uuid())
+  optionGroupId String  @map("option_group_id")
+  name          String
+  priceDelta    Decimal @default(0) @db.Decimal(10, 0) @map("price_delta")
+  isActive      Boolean @default(true) @map("is_active")
+  sortOrder     Int     @default(0) @map("sort_order")
+
+  optionGroup MenuOptionGroup @relation(fields: [optionGroupId], references: [id])
+
+  @@map("menu_options")
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+
+model Order {
+  id              String      @id @default(uuid())
+  storeId         String      @map("store_id")
+  branchId        String      @map("branch_id")
+  tableId         String      @map("table_id")
+  tableSessionId  String      @map("table_session_id")
+  clientSessionId String      @map("client_session_id")
+  orderCode       String      @map("order_code")
+  status          OrderStatus @default(NEW)
+  subtotal        Decimal     @db.Decimal(10, 0)
+  customerNote    String?     @map("customer_note")
+  idempotencyKey  String      @unique @map("idempotency_key")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  store        Store              @relation(fields: [storeId], references: [id])
+  branch       Branch             @relation(fields: [branchId], references: [id])
+  table        DiningTable        @relation(fields: [tableId], references: [id])
+  tableSession TableSession       @relation(fields: [tableSessionId], references: [id])
+  items        OrderItem[]
+  statusHistory OrderStatusHistory[]
+
+  @@unique([tableSessionId, orderCode])
+  @@index([tableSessionId, createdAt(sort: Desc)])
+  @@index([storeId, branchId, createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Asc)])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                         String  @id @default(uuid())
+  orderId                    String  @map("order_id")
+  menuItemId                 String  @map("menu_item_id")
+  nameSnapshot               String  @map("name_snapshot")
+  priceSnapshot              Decimal @db.Decimal(10, 0) @map("price_snapshot")
+  quantity                   Int
+  selectedOptionsSnapshotJson Json   @default("[]") @map("selected_options_snapshot_json")
+  note                       String? @default("")
+  lineTotal                  Decimal @db.Decimal(10, 0) @map("line_total")
+
+  order    Order    @relation(fields: [orderId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id              String      @id @default(uuid())
+  orderId         String      @map("order_id")
+  fromStatus      OrderStatus? @map("from_status")
+  toStatus        OrderStatus @map("to_status")
+  reason          String?
+  changedByUserId String?     @map("changed_by_user_id")
+  changedAt       DateTime    @default(now()) @map("changed_at")
+
+  order         Order  @relation(fields: [orderId], references: [id])
+  changedByUser User?  @relation(fields: [changedByUserId], references: [id])
+
+  @@index([orderId, changedAt(sort: Desc)])
+  @@map("order_status_history")
+}
