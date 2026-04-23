@@ -10,6 +10,7 @@ import { AdminLayout } from './pages/AdminLayout';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { AdminMenuPage } from './pages/AdminMenuPage';
 import { AdminTablesPage } from './pages/AdminTablesPage';
+import { AdminStaffPage } from './pages/AdminStaffPage';
 
 // React Query client — cấu hình mặc định
 const queryClient = new QueryClient({
@@ -66,6 +67,7 @@ function App() {
             <Route index element={<AdminDashboardPage />} />
             <Route path="menu" element={<AdminMenuPage />} />
             <Route path="tables" element={<AdminTablesPage />} />
+            <Route path="staff" element={<AdminStaffPage />} />
           </Route>
 
           {/* ── Catch-all ─────────────────────────────────────────────── */}

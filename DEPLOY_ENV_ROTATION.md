@@ -1,26 +1,82 @@
-# Deploy Environment Rotation
+# Deploy Environment & Secret Rotation
 
-This workspace was updated to stop accidental re-commits of local `.env` files and to provide production env templates.
+> Cập nhật: 23/04/2026  
+> Mục tiêu: chuẩn hóa biến môi trường cho deploy và tránh lộ secret thật trong báo cáo/source code.
 
-What was changed:
-- `.env` and `.env.*` are now ignored at the workspace root and in both deployable apps.
-- Safe example files are kept via `!.env.example` and `!.env.production.example`.
-- Frontend now has a production env file so Vite does not fall back to `http://localhost:3001/api` during production builds.
+## 1. Nguyên tắc
 
-What still must be done outside the codebase:
-1. Rotate the current Supabase database password.
-2. Rotate `SUPABASE_SERVICE_ROLE_KEY`.
-3. Rotate the JWT secret or regenerate the project secret set used by the backend.
-4. Update the new values in your deployment platform secrets:
-   - Railway: backend env vars
-   - Vercel: `VITE_API_URL`
-   - Supabase dashboard: source of truth for rotated keys
+- Không commit `.env`, `.env.production`, `.env.local` hoặc bất kỳ file nào chứa secret thật.
+- Chỉ commit file mẫu: `.env.example`, `.env.production.example`.
+- Secret production phải cấu hình trực tiếp trên Railway/Vercel/Supabase, không copy vào tài liệu nộp GVHD.
+- Sau khi nghi ngờ secret từng lộ hoặc từng được dùng trong môi trường không an toàn, cần rotate ngay.
 
-Recommended production values:
-- Backend `APP_BASE_URL`: `https://api.example.com`
-- Backend `FRONTEND_URL`: `https://app.example.com`
-- Frontend `VITE_API_URL`: `https://api.example.com/api`
+## 2. Backend Env Bắt Buộc
 
-Important:
-- The current local file `backend-api/.env` was intentionally left untouched so your local app does not break before you rotate the real secrets.
-- After rotating secrets, update local `backend-api/.env` manually or replace it from `backend-api/.env.production.example` as needed.
+Backend nằm trong `backend-api`.
+
+| Biến | Môi trường | Ghi chú |
+|---|---|---|
+| `PORT` | local/deploy | Railway có thể inject port; local dùng `3001` |
+| `NODE_ENV` | local/deploy/test | `development`, `production`, hoặc `test` |
+| `APP_BASE_URL` | deploy | URL public của backend |
+| `FRONTEND_URL` | deploy | URL public của frontend để CORS allowlist |
+| `DATABASE_URL` | deploy | Supabase pooled connection cho runtime |
+| `DIRECT_URL` | deploy/migrate | Supabase direct connection cho Prisma migrate |
+| `SUPABASE_URL` | deploy | Project URL |
+| `SUPABASE_ANON_KEY` | deploy | Dùng cho auth client phía backend |
+| `SUPABASE_SERVICE_ROLE_KEY` | deploy | Server-side only, cần bảo mật cao |
+| `SUPABASE_JWT_SECRET` | deploy | JWT secret trong Supabase settings |
+| `SUPABASE_STORAGE_BUCKET` | optional | Bucket ảnh menu, mặc định nên dùng `menu-images` |
+
+## 3. Frontend Env Bắt Buộc
+
+Frontend nằm trong `web-prototype-react`.
+
+| Biến | Giá trị mẫu | Ghi chú |
+|---|---|---|
+| `VITE_API_URL` | `https://your-backend.example.com/api` | Không để fallback localhost khi build production |
+
+## 4. Giá Trị Production Khuyến Nghị
+
+```text
+Backend APP_BASE_URL=https://your-backend.up.railway.app
+Backend FRONTEND_URL=https://your-frontend.vercel.app
+Frontend VITE_API_URL=https://your-backend.up.railway.app/api
+```
+
+## 5. Quy Trình Rotate Secret
+
+1. Vào Supabase Dashboard.
+2. Rotate database password.
+3. Rotate hoặc tạo lại `SUPABASE_SERVICE_ROLE_KEY` nếu cần.
+4. Kiểm tra lại `SUPABASE_JWT_SECRET` trong Supabase JWT settings.
+5. Cập nhật secret mới trên Railway backend env vars.
+6. Cập nhật `VITE_API_URL` trên Vercel nếu backend URL thay đổi.
+7. Chạy lại Prisma migrate nếu cần:
+
+```bash
+cd backend-api
+npm run db:migrate:deploy
+```
+
+8. Chạy smoke test sau deploy:
+
+```bash
+curl https://your-backend.up.railway.app/health
+```
+
+9. Chạy lại test local/staging nếu dùng cùng database staging:
+
+```bash
+cd backend-api && npm test
+cd web-prototype-react && npm test
+```
+
+## 6. Trạng Thái Hiện Tại
+
+- `backend-api/.env` là file local thật, không đưa nội dung vào báo cáo.
+- `backend-api/.env.example` và `backend-api/.env.production.example` là file mẫu an toàn.
+- Nếu deploy production, cần nhập secret thật trực tiếp trên Railway/Vercel, không commit lại vào repo.
+- Sau đợt chuẩn hóa ngày 23/04/2026, test local mới nhất:
+  - Backend: `99/99 passed`
+  - Frontend E2E: `54 passed, 1 skipped, 0 failed`

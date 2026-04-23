@@ -21,7 +21,7 @@ async function createOrder(request: APIRequestContext): Promise<{ orderId: strin
   const qrRes = await request.get(`${API}/api/public/qr/${QR_TABLE01}`);
   const qrData = (await qrRes.json()).data;
 
-  const menuRes = await request.get(`${API}/api/public/menu?branchId=${qrData.branch.id}`);
+  const menuRes = await request.get(`${API}/api/public/branches/${qrData.branch.id}/menu`);
   const items = (await menuRes.json()).data.categories
     .flatMap((c: any) => c.items)
     .filter((i: any) => i.status === 'ACTIVE');
@@ -37,11 +37,12 @@ async function createOrder(request: APIRequestContext): Promise<{ orderId: strin
     },
   });
   const { data } = await res.json();
-  return { orderId: data.id, orderCode: data.orderCode };
+  const order = data.order ?? data;
+  return { orderId: order.id, orderCode: order.orderCode };
 }
 
 async function getKitchenToken(request: APIRequestContext): Promise<string> {
-  const res = await request.post(`${API}/api/internal/auth/login`, {
+  const res = await request.post(`${API}/api/auth/login`, {
     data: { email: ACCOUNTS.kitchen.email, password: ACCOUNTS.kitchen.password },
   });
   const json = await res.json();

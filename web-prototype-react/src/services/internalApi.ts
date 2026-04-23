@@ -214,3 +214,81 @@ export const uploadMenuImage = async (file: File): Promise<UploadResult> => {
   return res.data.data as UploadResult;
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ADMIN — SOFT DELETE & RESTORE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const deleteMenuItem = async (id: string) => {
+  const res = await apiClient.delete(`/internal/menu-items/${id}`);
+  return res.data.data;
+};
+
+export const restoreMenuItem = async (id: string) => {
+  const res = await apiClient.patch(`/internal/menu-items/${id}/restore`);
+  return res.data.data;
+};
+
+export const deleteCategory = async (id: string) => {
+  const res = await apiClient.delete(`/internal/categories/${id}`);
+  return res.data.data as { message: string; hiddenItemsCount: number };
+};
+
+export const restoreCategory = async (id: string) => {
+  const res = await apiClient.patch(`/internal/categories/${id}/restore`);
+  return res.data.data;
+};
+
+export const deactivateTable = async (id: string) => {
+  const res = await apiClient.delete(`/internal/tables/${id}`);
+  return res.data.data;
+};
+
+export const restoreTableApi = async (id: string) => {
+  const res = await apiClient.patch(`/internal/tables/${id}/restore`);
+  return res.data.data;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ADMIN — STAFF MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface ApiStaff {
+  id: string;
+  email: string;
+  displayName: string;
+  isActive: boolean;
+  defaultBranchId: string | null;
+  roles: string[];
+  createdAt: string;
+}
+
+export const listStaff = async (): Promise<ApiStaff[]> => {
+  const res = await apiClient.get('/internal/users');
+  return res.data.data.users as ApiStaff[];
+};
+
+export interface CreateStaffData {
+  displayName: string;
+  email: string;
+  role: 'ADMIN' | 'MANAGER' | 'KITCHEN';
+  defaultBranchId?: string;
+  temporaryPassword: string;
+}
+
+export const createStaff = async (data: CreateStaffData): Promise<ApiStaff> => {
+  const res = await apiClient.post('/internal/users', data);
+  return res.data.data.user as ApiStaff;
+};
+
+export const updateStaff = async (
+  id: string,
+  data: { displayName?: string; role?: 'ADMIN' | 'MANAGER' | 'KITCHEN'; defaultBranchId?: string | null }
+): Promise<ApiStaff> => {
+  const res = await apiClient.patch(`/internal/users/${id}`, data);
+  return res.data.data.user as ApiStaff;
+};
+
+export const updateStaffStatus = async (id: string, isActive: boolean): Promise<ApiStaff> => {
+  const res = await apiClient.patch(`/internal/users/${id}/status`, { isActive });
+  return res.data.data.user as ApiStaff;
+};

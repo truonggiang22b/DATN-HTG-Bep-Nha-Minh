@@ -142,3 +142,59 @@ export async function updateMenuItemStatus(req: Request, res: Response, next: Ne
     next(err);
   }
 }
+
+/** DELETE /api/internal/menu-items/:id — soft delete (set HIDDEN) */
+export async function deleteMenuItem(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = req.user!;
+    const id = String(req.params.id);
+
+    const existing = await prisma.menuItem.findUnique({
+      where: { id },
+      include: { category: { include: { branch: true } } },
+    });
+    if (!existing) throw AppError.notFound('Món ăn');
+    if (existing.category.branch.storeId !== user.storeId) {
+      throw AppError.forbidden('Món ăn không thuộc quán của bạn');
+    }
+
+    const updated = await prisma.menuItem.update({
+      where: { id },
+      data: { status: 'HIDDEN' },
+    });
+    return success(res, { item: { id: updated.id, name: updated.name, status: updated.status } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** PATCH /api/internal/menu-items/:id/restore */
+export async function restoreMenuItem(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = req.user!;
+    const id = String(req.params.id);
+
+    const existing = await prisma.menuItem.findUnique({
+      where: { id },
+      include: { category: { include: { branch: true } } },
+    });
+    if (!existing) throw AppError.notFound('Món ăn');
+    if (existing.category.branch.storeId !== user.storeId) {
+      throw AppError.forbidden('Món ăn không thuộc quán của bạn');
+    }
+    if (existing.category.status === 'HIDDEN') {
+      throw AppError.badRequest(
+        'CATEGORY_HIDDEN',
+        'Không thể khôi phục món vì danh mục cha đang bị ẩn. Hãy khôi phục danh mục trước.',
+      );
+    }
+
+    const updated = await prisma.menuItem.update({
+      where: { id },
+      data: { status: 'ACTIVE' },
+    });
+    return success(res, { item: { id: updated.id, name: updated.name, status: updated.status } });
+  } catch (err) {
+    next(err);
+  }
+}

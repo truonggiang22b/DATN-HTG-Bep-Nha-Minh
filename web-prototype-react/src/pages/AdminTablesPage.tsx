@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '../store/useStore';
-import { getTables, createTable, updateTable, resetTableSession } from '../services/internalApi';
+import { getTables, createTable, deactivateTable, restoreTableApi, resetTableSession } from '../services/internalApi';
 import '../styles/admin.css';
 
 // ── SVG Icons ─────────────────────────────────────────────────────────────────
@@ -27,9 +27,11 @@ export const AdminTablesPage = () => {
   const queryClient = useQueryClient();
 
   const [confirmReset, setConfirmReset] = useState<string | null>(null);
+  const [confirmDeactivate, setConfirmDeactivate] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [newTable, setNewTable] = useState({ tableCode: '', displayName: '' });
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ACTIVE');
 
   // ── Query ─────────────────────────────────────────────────────────────────
   const { data: tables = [], isLoading } = useQuery({
@@ -70,13 +72,22 @@ export const AdminTablesPage = () => {
   });
 
   const { mutate: doToggleStatus } = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: 'ACTIVE' | 'INACTIVE' }) =>
-      updateTable(id, { status }),
-    onSuccess: (table) => {
-      queryClient.invalidateQueries({ queryKey: ['tables'] });
-      showToast(`${table.displayName} → ${table.status === 'ACTIVE' ? 'Hoạt động' : 'Ngừng'}`);
+    mutationFn: ({ id, status }: { id: string; status: 'ACTIVE' | 'INACTIVE' }) => {
+      if (status === 'INACTIVE') return deactivateTable(id);
+      return restoreTableApi(id);
     },
-    onError: () => showToast('Không thể đổi trạng thái bàn', 'error'),
+    onSuccess: (_res, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['tables'] });
+      const t = tables.find((x) => x.id === vars.id);
+      const label = vars.status === 'INACTIVE' ? 'Ngừng sử dụng' : 'Bật lại';
+      showToast(`${label} — ${t?.displayName ?? vars.id}`);
+      setConfirmDeactivate(null);
+    },
+    onError: (err: { response?: { data?: { error?: { message?: string } } } }) => {
+      const msg = err?.response?.data?.error?.message ?? 'Không thể đổi trạng thái bàn';
+      showToast(msg, 'error');
+      setConfirmDeactivate(null);
+    },
   });
 
   const handleCopyQR = (qrToken: string) => {
@@ -103,16 +114,35 @@ export const AdminTablesPage = () => {
         {isLoading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--color-soy)' }}>Đang tải...</div>
         ) : (
-          <>
+        <>
+            {/* Status filter tabs */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              {([['ACTIVE', 'Đang sử dụng'], ['INACTIVE', 'Ngừng sử dụng'], ['ALL', 'Tất cả']] as const).map(([v, label]) => (
+                <button key={v} onClick={() => setStatusFilter(v)}
+                  style={{
+                    padding: '6px 16px', borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    border: '1.5px solid', transition: 'all 0.15s',
+                    borderColor: statusFilter === v ? 'var(--color-chili)' : 'var(--color-steam)',
+                    background: statusFilter === v ? 'rgba(216,58,46,0.1)' : 'transparent',
+                    color: statusFilter === v ? 'var(--color-chili)' : 'var(--color-soy)',
+                  }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
             {/* Info banner */}
             <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 13, color: '#374151' }}>
               <span style={{ marginTop: 1 }}>ℹ️</span>
-              <span>Reset phiên sẽ đóng phiên hiện tại và xóa dữ liệu khách đang bàn. Chỉ thực hiện khi bàn đã thanh toán xong và không còn đơn đang xử lý.</span>
+              <span>"Ngừng sử dụng" bàn sẽ ẩn bàn khỏi danh sách đang dùng nhưng không xóa lịch sử. QR cũ sẽ không nhận order mới. Bạn có thể bật lại bất cứ lúc nào.</span>
             </div>
 
             <div className="admin-table-wrapper">
               <div className="admin-table-header">
-                <span className="admin-table-title">Danh sách bàn ({tables.length})</span>
+                <span className="admin-table-title">
+                  {statusFilter === 'ACTIVE' ? 'Bàn đang sử dụng' : statusFilter === 'INACTIVE' ? 'Bàn ngừng sử dụng' : 'Tất cả bàn'}
+                  {' '}({tables.filter(t => statusFilter === 'ALL' || t.status === statusFilter).length})
+                </span>
               </div>
               <table className="data-table">
                 <thead>
@@ -121,10 +151,12 @@ export const AdminTablesPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {tables.length === 0 ? (
-                    <tr><td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--color-soy)' }}>Chưa có bàn nào</td></tr>
-                  ) : (
-                    tables.map((table) => (
+                  {(() => {
+                    const filtered = tables.filter(t => statusFilter === 'ALL' || t.status === statusFilter);
+                    if (filtered.length === 0) return (
+                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--color-soy)' }}>Không có bàn nào</td></tr>
+                    );
+                    return filtered.map((table) => (
                       <tr key={table.id}>
                         <td>
                           <div style={{ fontWeight: 600 }}>{table.displayName}</div>
@@ -194,21 +226,39 @@ export const AdminTablesPage = () => {
                                 <IconTrash /> Reset phiên
                               </button>
                             )}
-                            {/* Toggle status */}
-                            <button
-                              className="qa-btn"
-                              style={table.status === 'ACTIVE'
-                                ? { borderColor: 'var(--color-soy)', color: 'var(--color-soy)' }
-                                : { borderColor: 'var(--color-leaf)', color: 'var(--color-leaf)' }}
-                              onClick={() => doToggleStatus({ id: table.id, status: table.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' })}
-                            >
-                              {table.status === 'ACTIVE' ? 'Tắt bàn' : 'Bật bàn'}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                             {confirmDeactivate === table.id ? (
+                               <span style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                                 <span style={{ fontSize: 12, color: 'var(--color-chili)', display: 'block', width: '100%', marginBottom: 4 }}>
+                                   {table.hasActiveSession ? '⚠️ Bàn có phiên đang mở!' : 'Ngừng sử dụng bàn này?'}
+                                 </span>
+                                 <button className="qa-btn qa-btn--danger"
+                                   onClick={() => doToggleStatus({ id: table.id, status: 'INACTIVE' })}>
+                                   Xác nhận
+                                 </button>
+                                 <button className="qa-btn" onClick={() => setConfirmDeactivate(null)}>Hủy</button>
+                               </span>
+                             ) : (
+                               <button
+                                 className="qa-btn"
+                                 style={table.status === 'ACTIVE'
+                                   ? { borderColor: 'rgba(216,58,46,0.4)', color: 'var(--color-chili)' }
+                                   : { borderColor: 'rgba(34,197,94,0.4)', color: '#166534' }}
+                                 onClick={() => {
+                                   if (table.status === 'ACTIVE') {
+                                     setConfirmDeactivate(table.id);
+                                   } else {
+                                     doToggleStatus({ id: table.id, status: 'ACTIVE' });
+                                   }
+                                 }}
+                               >
+                                 {table.status === 'ACTIVE' ? 'Ngừng sử dụng' : 'Bật lại'}
+                               </button>
+                             )}
+                           </div>
+                         </td>
+                       </tr>
+                     ));
+                  })()}
                 </tbody>
               </table>
             </div>

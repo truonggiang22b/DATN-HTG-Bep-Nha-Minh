@@ -20,7 +20,7 @@ async function setupOrderViaApi(request: APIRequestContext, qrToken: string) {
   expect(qrRes.ok()).toBeTruthy();
   const qrData = (await qrRes.json()).data;
 
-  const menuRes = await request.get(`http://localhost:3001/api/public/menu?branchId=${qrData.branch.id}`);
+  const menuRes = await request.get(`http://localhost:3001/api/public/branches/${qrData.branch.id}/menu`);
   const menuData = (await menuRes.json()).data;
 
   const activeItems = menuData.categories
@@ -43,7 +43,8 @@ async function setupOrderViaApi(request: APIRequestContext, qrToken: string) {
     },
   });
 
-  const orderData = (await submitRes.json()).data;
+  const orderDataPayload = (await submitRes.json()).data;
+  const orderData = orderDataPayload.order ?? orderDataPayload;
   return {
     orderId: orderData.id,
     orderCode: orderData.orderCode,
@@ -54,7 +55,7 @@ async function setupOrderViaApi(request: APIRequestContext, qrToken: string) {
 }
 
 async function getAdminToken(request: APIRequestContext): Promise<string> {
-  const res = await request.post('http://localhost:3001/api/internal/auth/login', {
+  const res = await request.post('http://localhost:3001/api/auth/login', {
     data: { email: ACCOUNTS.admin.email, password: ACCOUNTS.admin.password },
   });
   return (await res.json()).data.accessToken;
@@ -109,15 +110,19 @@ test('TC-FULL-01: Happy Path — Customer đặt → Kitchen xử lý → Admin 
     for (let i = 0; i < await cards.count(); i++) {
       const btn = cards.nth(i).locator('.menu-card__add-btn');
       if (!await btn.isEnabled()) continue;
-      await btn.click();
 
+      await btn.scrollIntoViewIfNeeded();
+      await customerPage.waitForTimeout(200);
+      await btn.click({ force: true });
+
+      await customerPage.waitForTimeout(700);
       const sheetOpen = await customerPage.locator('button', { hasText: /Thêm vào giỏ/ }).isVisible().catch(() => false);
       if (sheetOpen) {
         await customerPage.keyboard.press('Escape');
-        await customerPage.waitForTimeout(300);
+        await customerPage.waitForTimeout(400);
         continue;
       }
-      if (await customerPage.locator('.toast').isVisible().catch(() => false)) {
+      if (await customerPage.locator('.toast').isVisible({ timeout: 2000 }).catch(() => false)) {
         orderPlaced = true;
         break;
       }
@@ -164,11 +169,11 @@ test('TC-FULL-01: Happy Path — Customer đặt → Kitchen xử lý → Admin 
       await expect(adminPage.locator('.admin-content').first()).toBeVisible({ timeout: 10_000 });
 
       // Chọn preset "Tất cả"
-      await adminPage.locator('button', { hasText: 'Tất cả' }).click();
+      await adminPage.locator('button', { hasText: 'Tất cả' }).first().click();
       await adminPage.waitForTimeout(1500);
 
       // Đơn hàng vừa tạo phải xuất hiện trong dashboard
-      const dashRow = adminPage.locator('td, tr', { hasText: orderCode }).first();
+      const dashRow = adminPage.locator('.order-history-row', { hasText: orderCode }).first();
       await expect(dashRow).toBeVisible({ timeout: 10_000 });
 
       return; // Test complete via API fallback
@@ -246,10 +251,10 @@ test('TC-FULL-01: Happy Path — Customer đặt → Kitchen xử lý → Admin 
     await loginAndNavigate(adminPage, 'admin', '/admin');
     await expect(adminPage.locator('.admin-content').first()).toBeVisible({ timeout: 10_000 });
 
-    await adminPage.locator('button', { hasText: 'Tất cả' }).click();
+    await adminPage.locator('button', { hasText: 'Tất cả' }).first().click();
     await adminPage.waitForTimeout(1500);
 
-    const dashRow = adminPage.locator('td, tr', { hasText: orderCode ?? '' }).first();
+    const dashRow = adminPage.locator('.order-history-row', { hasText: orderCode ?? '' }).first();
     await expect(dashRow).toBeVisible({ timeout: 10_000 });
 
   } finally {

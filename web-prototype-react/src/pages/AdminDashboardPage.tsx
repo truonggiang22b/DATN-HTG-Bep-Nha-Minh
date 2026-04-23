@@ -356,6 +356,7 @@ export const AdminDashboardPage = () => {
                             <div key={order.id} style={{ borderBottom: idx < dayOrders.length - 1 ? '1px solid var(--color-steam)' : 'none' }}>
                               {/* Order row */}
                               <button
+                                className="order-history-row"
                                 onClick={() => toggleOrder(order.id)}
                                 style={{
                                   width: '100%', display: 'flex', alignItems: 'center', gap: 12,
@@ -403,7 +404,7 @@ export const AdminDashboardPage = () => {
 
                               {/* Expanded order detail */}
                               {isOpen && (
-                                <div style={{
+                                <div className="order-detail" style={{
                                   background: 'var(--color-rice)', padding: '12px 16px 16px 48px',
                                   borderTop: '1px dashed var(--color-steam)',
                                 }}>

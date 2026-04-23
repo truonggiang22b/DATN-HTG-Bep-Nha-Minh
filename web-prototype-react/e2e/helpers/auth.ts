@@ -28,6 +28,8 @@ interface LoginResult {
   user: { id: string; email: string; role: string; storeId: string };
 }
 
+const loginCache = new Map<string, LoginResult>();
+
 /**
  * Login qua API (nhanh, không cần render UI).
  * Trả về accessToken để inject vào localStorage.
@@ -36,24 +38,30 @@ export async function apiLogin(
   email: string,
   password: string,
 ): Promise<LoginResult> {
-  const res = await fetch(`${API}/api/internal/auth/login`, {
+  const cacheKey = `${email}:${password}`;
+  const cached = loginCache.get(cacheKey);
+  if (cached) return cached;
+
+  const res = await fetch(`${API}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
   if (!res.ok) throw new Error(`Login failed: ${res.status}`);
   const json = await res.json();
+  loginCache.set(cacheKey, json.data);
   return json.data;
 }
 
 /**
  * Login qua UI (cho test login flow).
+ * Dùng id selector vì placeholder của form không phải 'Email'/'Mật khẩu'.
  */
 export async function uiLogin(page: Page, email: string, password: string) {
   await page.goto('/login');
-  await page.getByPlaceholder('Email').fill(email);
-  await page.getByPlaceholder('Mật khẩu').fill(password);
-  await page.getByRole('button', { name: 'Đăng nhập' }).click();
+  await page.locator('#login-email').fill(email);
+  await page.locator('#login-password').fill(password);
+  await page.locator('#login-submit').click();
 }
 
 /**
@@ -67,16 +75,13 @@ export async function loginAndNavigate(
   const { email, password } = ACCOUNTS[account];
   const result = await apiLogin(email, password);
 
-  // Cần navigate tới domain trước để set localStorage
+  // Navigate tới domain trước để set sessionStorage (useAuthStore dùng sessionStorage)
   await page.goto('/login');
   await page.evaluate((data) => {
-    localStorage.setItem('bnm-auth', JSON.stringify({
-      state: {
-        accessToken: data.accessToken,
-        user: data.user,
-      },
-      version: 0,
-    }));
+    // useAuthStore.ts dùng sessionStorage với 2 keys riêng biệt:
+    // TOKEN_KEY = 'bnm-auth-token', USER_KEY = 'bnm-auth-user'
+    sessionStorage.setItem('bnm-auth-token', data.accessToken);
+    sessionStorage.setItem('bnm-auth-user', JSON.stringify(data.user));
   }, result);
 
   await page.goto(targetPath);

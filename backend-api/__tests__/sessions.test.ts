@@ -50,7 +50,7 @@ describe('Session Management', () => {
       data: { status: 'CLOSED', closedAt: new Date() },
     });
 
-    // Find a menu item without required options
+    // Find a simple ACTIVE menu item without required options.
     const branchId = (await prisma.diningTable.findUnique({
       where: { id: tableId },
       select: { branchId: true },
@@ -58,7 +58,11 @@ describe('Session Management', () => {
 
     if (branchId) {
       const item = await prisma.menuItem.findFirst({
-        where: { category: { branchId }, status: 'ACTIVE' },
+        where: {
+          category: { branchId },
+          status: 'ACTIVE',
+          optionGroups: { none: { isRequired: true } },
+        },
       });
       menuItemId = item?.id ?? '';
     }

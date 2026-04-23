@@ -1,7 +1,9 @@
 # Sprint 4 — Frontend Integration: Tracking File
+
+> Cập nhật chuẩn hóa ngày 23/04/2026: Sprint 4 đã hoàn thành phần tích hợp API thật và kiểm thử lại. Backend đạt `99/99` test pass. Frontend E2E đạt `54 passed, 1 skipped, 0 failed`. Rule KDS đã chốt: cột `SERVED` giữ đơn đã phục vụ trong ngày hiện tại và không hiển thị đơn đã phục vụ từ ngày cũ.
 > File này được cập nhật **trước mỗi bước thực thi**. Đây là nguồn sự thật duy nhất để theo dõi tiến độ.
 > 
-> Cập nhật lần cuối: 2026-04-18 21:13
+> Cập nhật lần cuối: 2026-04-23 17:40
 
 ---
 
@@ -27,7 +29,7 @@ Sau sprint: Flow **QR → Menu → Cart → Order → KDS → Tracking** chạy 
 | 10 | **AdminMenuPage** | CRUD thật qua API | ✅ Hoàn thành |
 | 11 | **AdminTablesPage** | CRUD thật qua API | ✅ Hoàn thành |
 | 12 | **AdminDashboardPage** | Order summary từ API | ✅ Hoàn thành |
-| 13 | **Verify** | Test toàn bộ flow thủ công | 🔄 Đang chạy dev server |
+| 13 | **Verify** | Test toàn bộ flow thủ công + tự động | ✅ Hoàn thành |
 
 **Ký hiệu:** ⬜ Chưa bắt đầu | 🔄 Đang thực hiện | ✅ Hoàn thành | ❌ Lỗi cần fix
 
@@ -217,16 +219,18 @@ Actions: login(email, pw) → gọi API → lưu token sessionStorage
 ---
 
 ### ✅ BƯỚC 13 — Verification
-**Trạng thái:** ⬜ Chưa bắt đầu
+**Trạng thái:** ✅ Hoàn thành
 
 **Checklist verify:**
-- [ ] `/qr/qr-bnm-table-01` load menu từ API
-- [ ] Thêm món → submit → order xuất hiện trong DB
-- [ ] KDS nhận đơn, chuyển trạng thái
-- [ ] Tracking page cập nhật real-time (polling 3s)
-- [ ] Admin login, tạo category mới → menu hiển thị ngay
-- [ ] QR của bàn inactive → show lỗi
-- [ ] Logout → không vào được /kds, /admin
+- [x] `/qr/qr-bnm-table-01` load menu từ API
+- [x] Thêm món → submit → order xuất hiện trong DB
+- [x] KDS nhận đơn, chuyển trạng thái
+- [x] Tracking page cập nhật real-time (polling 3s)
+- [x] Admin login, tạo category mới → menu hiển thị ngay
+- [x] QR của bàn inactive → show lỗi
+- [x] Logout → không vào được /kds, /admin
+- [x] Backend test: `99/99 passed`
+- [x] Frontend E2E: `54 passed, 1 skipped, 0 failed`
 
 ---
 

@@ -8,6 +8,7 @@ export const ToastContainer = ({ toasts, onDismiss }: ToastProps) => (
     {toasts.map((t) => (
       <div
         key={t.id}
+        className="toast"
         onClick={() => onDismiss(t.id)}
         style={{
           background: t.type === 'error' ? 'var(--color-chili)' : t.type === 'info' ? 'var(--color-charcoal)' : 'var(--color-charcoal)',

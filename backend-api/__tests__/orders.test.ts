@@ -156,13 +156,19 @@ describe('Internal KDS & Order Management', () => {
     expect(res.body.data.orders).toBeInstanceOf(Array);
   });
 
-  it('KDS-02: Active orders contain only NEW/PREPARING/READY status', async () => {
+  it('KDS-02: KDS board shows active orders plus SERVED orders from today', async () => {
     const res = await request(app)
       .get('/api/internal/orders/active')
       .set('Authorization', `Bearer ${kitchenToken}`);
 
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
     for (const order of res.body.data.orders) {
-      expect(['NEW', 'PREPARING', 'READY']).toContain(order.status);
+      expect(['NEW', 'PREPARING', 'READY', 'SERVED']).toContain(order.status);
+      if (order.status === 'SERVED') {
+        expect(new Date(order.createdAt).getTime()).toBeGreaterThanOrEqual(todayStart.getTime());
+      }
     }
   });
 

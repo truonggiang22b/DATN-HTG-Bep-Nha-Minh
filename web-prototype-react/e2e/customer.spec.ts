@@ -12,7 +12,7 @@ const API  = 'http://localhost:3001';
 
 /** Lấy admin token để gọi API */
 async function getAdminToken(request: APIRequestContext): Promise<string> {
-  const res = await request.post(`${API}/api/internal/auth/login`, {
+  const res = await request.post(`${API}/api/auth/login`, {
     data: { email: 'admin@bepnhaminh.vn', password: 'Admin@123456' },
   });
   const json = await res.json();
@@ -38,20 +38,31 @@ async function quickAdd(page: any): Promise<boolean> {
   const cards = page.locator('.menu-card:not(.menu-card--sold-out)');
   const count = await cards.count();
   for (let i = 0; i < count; i++) {
-    const btn = cards.nth(i).locator('.menu-card__add-btn');
+    const card = cards.nth(i);
+    const btn = card.locator('.menu-card__add-btn');
     if (await btn.isDisabled()) continue;
-    await btn.click();
-    // Nếu sheet mở (có required option) → đóng và thử món khác
-    await page.waitForTimeout(400);
+
+    // Scroll button vào viewport để tránh bị overlay (sticky header/cart bar) che
+    await btn.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(200);
+
+    // Force click để bypass bất kỳ pointer-events overlay nào
+    await btn.click({ force: true });
+
+    // Đợi lâu hơn để phân biệt toast vs sheet mở ra
+    await page.waitForTimeout(700);
+
+    // Nếu sheet mở (món có required option) → đóng và thử món khác
     const sheetVisible = await page.locator('.sheet-overlay, .sheet-backdrop').first().isVisible().catch(() => false)
       || await page.locator('button', { hasText: 'Thêm vào giỏ' }).isVisible().catch(() => false);
     if (sheetVisible) {
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(400);
       continue;
     }
+
     // Toast xuất hiện = thêm thành công
-    if (await page.locator('.toast').first().isVisible().catch(() => false)) return true;
+    if (await page.locator('.toast').first().isVisible({ timeout: 2000 }).catch(() => false)) return true;
   }
   return false;
 }
@@ -314,7 +325,7 @@ test.describe('CUSTOMER — Đặt Hàng & Tracking', () => {
     // 1. Tạo đơn qua API
     const qrRes = await request.get(`${API}/api/public/qr/${QR_TOKENS.table05}`);
     const qrData = (await qrRes.json()).data;
-    const menuRes = await request.get(`${API}/api/public/menu?branchId=${qrData.branch.id}`);
+    const menuRes = await request.get(`${API}/api/public/branches/${qrData.branch.id}/menu`);
     const menuData = (await menuRes.json()).data;
     const firstActive = menuData.categories.flatMap((c: any) => c.items).find((i: any) => i.status === 'ACTIVE');
     test.skip(!firstActive, 'Không có món ACTIVE, skip TC-C13');
@@ -328,7 +339,7 @@ test.describe('CUSTOMER — Đặt Hàng & Tracking', () => {
       },
     });
     const { data: orderData } = await submitRes.json();
-    const { id: orderId } = orderData;
+    const { id: orderId } = orderData.order ?? orderData;
 
     // 2. Mở tracking page
     // Inject qrToken vào sessionStorage trước
@@ -376,7 +387,7 @@ test.describe('CUSTOMER — Đặt Hàng & Tracking', () => {
   test('TC-C15: Tracking page — đơn CANCELLED hiện trạng thái hủy', async ({ page, request }) => {
     const qrRes = await request.get(`${API}/api/public/qr/${QR_TOKENS.table01}`);
     const qrData = (await qrRes.json()).data;
-    const menuRes = await request.get(`${API}/api/public/menu?branchId=${qrData.branch.id}`);
+    const menuRes = await request.get(`${API}/api/public/branches/${qrData.branch.id}/menu`);
     const menuData = (await menuRes.json()).data;
     const firstActive = menuData.categories.flatMap((c: any) => c.items).find((i: any) => i.status === 'ACTIVE');
     test.skip(!firstActive, 'Không có món ACTIVE, skip TC-C15');
@@ -390,7 +401,7 @@ test.describe('CUSTOMER — Đặt Hàng & Tracking', () => {
       },
     });
     const { data: orderData } = await submitRes.json();
-    const { id: orderId } = orderData;
+    const { id: orderId } = orderData.order ?? orderData;
 
     await page.goto(`${BASE}/login`);
     await page.evaluate((token: string) => sessionStorage.setItem('bnm-qr-token', token), QR_TOKENS.table01);

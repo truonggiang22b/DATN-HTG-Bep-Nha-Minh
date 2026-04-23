@@ -74,3 +74,68 @@ export async function updateCategory(req: Request, res: Response, next: NextFunc
     next(err);
   }
 }
+
+/** DELETE /api/internal/categories/:id — soft delete (HIDDEN), cascade items */
+export async function deleteCategory(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = req.user!;
+    const id = String(req.params.id);
+
+    const existing = await prisma.category.findUnique({
+      where: { id },
+      include: {
+        branch: true,
+        menuItems: { where: { status: { in: ['ACTIVE', 'SOLD_OUT'] } } },
+      },
+    });
+    if (!existing) throw AppError.notFound('Danh mục');
+    if (existing.branch.storeId !== user.storeId) {
+      throw AppError.forbidden('Danh mục không thuộc quán của bạn');
+    }
+
+    // Cascade: ẩn toàn bộ món ACTIVE/SOLD_OUT cùng lúc
+    await prisma.$transaction([
+      prisma.menuItem.updateMany({
+        where: { categoryId: id, status: { in: ['ACTIVE', 'SOLD_OUT'] } },
+        data: { status: 'HIDDEN' },
+      }),
+      prisma.category.update({
+        where: { id },
+        data: { status: 'HIDDEN' },
+      }),
+    ]);
+
+    return success(res, {
+      message: 'Danh mục đã ẩn khỏi menu',
+      hiddenItemsCount: existing.menuItems.length,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** PATCH /api/internal/categories/:id/restore */
+export async function restoreCategory(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = req.user!;
+    const id = String(req.params.id);
+
+    const existing = await prisma.category.findUnique({
+      where: { id },
+      include: { branch: true },
+    });
+    if (!existing) throw AppError.notFound('Danh mục');
+    if (existing.branch.storeId !== user.storeId) {
+      throw AppError.forbidden('Danh mục không thuộc quán của bạn');
+    }
+
+    // Chỉ khôi phục category, không tự động bật lại món con
+    const updated = await prisma.category.update({
+      where: { id },
+      data: { status: 'ACTIVE' },
+    });
+    return success(res, { category: updated });
+  } catch (err) {
+    next(err);
+  }
+}

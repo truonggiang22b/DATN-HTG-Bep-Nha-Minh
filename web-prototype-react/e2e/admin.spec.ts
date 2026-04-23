@@ -29,13 +29,13 @@ test.describe('ADMIN — Xác thực & Phân quyền', () => {
 
   test('TC-A02: Login sai mật khẩu → hiện thông báo lỗi', async ({ page }) => {
     await page.goto('/login');
-    await page.getByPlaceholder('Email').fill(ACCOUNTS.admin.email);
-    await page.getByPlaceholder('Mật khẩu').fill('SaiMatKhau123!');
-    await page.getByRole('button', { name: 'Đăng nhập' }).click();
+    await page.locator('#login-email').fill(ACCOUNTS.admin.email);
+    await page.locator('#login-password').fill('SaiMatKhau123!');
+    await page.locator('#login-submit').click();
 
-    // Banner lỗi phải hiện
-    const errBanner = page.locator('.error-banner, [class*="error"], [class*="alert"]').first();
-    await expect(errBanner).toBeVisible({ timeout: 5000 });
+    // Banner lỗi phải hiện (LoginPage hiện div lỗi nếu 401)
+    const errBanner = page.locator('.error-banner, [class*="error"], [class*="alert"], form div[style*="rgba(216"]').first();
+    await expect(errBanner).toBeVisible({ timeout: 8000 });
 
     // Không redirect
     await expect(page).toHaveURL('/login');
@@ -96,13 +96,12 @@ test.describe('ADMIN — Dashboard', () => {
     await expect(page.locator('.admin-content').first()).toBeVisible({ timeout: 10_000 });
   });
 
-  test('TC-A07: Dashboard hiển thị 4 stat cards', async ({ page }) => {
-    // 4 stat cards: New / Đang làm / Sẵn sàng / Đã phục vụ
-    const statCards = page.locator('.stat-card, [class*="stat"]');
-    await expect(statCards).toHaveCount(4, { timeout: 10_000 });
+  test('TC-A07: Dashboard hiển thị stat cards', async ({ page }) => {
+    const statCards = page.locator('.admin-stat-card');
+    await expect(statCards).toHaveCount(6, { timeout: 10_000 });
 
     // Mỗi card có số và label
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
       await expect(statCards.nth(i)).toBeVisible();
     }
   });
@@ -133,18 +132,18 @@ test.describe('ADMIN — Dashboard', () => {
   });
 
   test('TC-A10: Chuyển preset "Tất cả" → thấy nhiều đơn nhất', async ({ page }) => {
-    await page.locator('button', { hasText: 'Tất cả' }).click();
+    await page.locator('button', { hasText: 'Tất cả' }).first().click();
     await page.waitForTimeout(1500);
 
     // Phải có ít nhất 1 đơn hàng (do seed data có 46 đơn)
-    const rows = page.locator('table tbody tr').filter({ hasNot: page.locator('[colspan]') });
+    const rows = page.locator('.order-history-row');
     const count = await rows.count();
     expect(count).toBeGreaterThan(0);
   });
 
   test('TC-A11: Lọc theo trạng thái SERVED', async ({ page }) => {
     // Chọn "Tất cả" để có data
-    await page.locator('button', { hasText: 'Tất cả' }).click();
+    await page.locator('button', { hasText: 'Tất cả' }).first().click();
     await page.waitForTimeout(1000);
 
     // Tìm dropdown/select lọc status
@@ -163,10 +162,10 @@ test.describe('ADMIN — Dashboard', () => {
   });
 
   test('TC-A12: Expand row để xem chi tiết đơn hàng', async ({ page }) => {
-    await page.locator('button', { hasText: 'Tất cả' }).click();
+    await page.locator('button', { hasText: 'Tất cả' }).first().click();
     await page.waitForTimeout(1500);
 
-    const rows = page.locator('table tbody tr').filter({ hasNot: page.locator('[colspan]') });
+    const rows = page.locator('.order-history-row');
     const firstRow = rows.first();
     await expect(firstRow).toBeVisible({ timeout: 5000 });
 
@@ -174,19 +173,9 @@ test.describe('ADMIN — Dashboard', () => {
     await firstRow.click();
     await page.waitForTimeout(500);
 
-    // Phải hiện chi tiết (tên món, giá)
-    const detail = page.locator('tr.expanded-row, .order-detail, tr + tr .item-detail').first();
-    // Nếu không tìm thấy expanded row, check text với items
-    const itemDetail = page.locator('td').filter({ hasText: /×\d/ }).first();
-    const hasDetail = await itemDetail.isVisible().catch(() => false);
-    // Một trong hai phải hiện
-    if (!hasDetail) {
-      // Thử click vào chevron/expand icon
-      const chevron = firstRow.locator('svg, button').last();
-      await chevron.click();
-      await page.waitForTimeout(500);
-    }
-    // Không throw = test pass (row expand là UI cheat)
+    const detail = page.locator('.order-detail').first();
+    await expect(detail).toBeVisible({ timeout: 5000 });
+    await expect(detail).toContainText(/T.*ng:/);
   });
 
 });

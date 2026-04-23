@@ -58,13 +58,26 @@ const IconBrand = () => (
   </svg>
 );
 
+const IconStaff = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="9" cy="7" r="4" />
+    <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+    <line x1="19" y1="8" x2="19" y2="14" />
+    <line x1="16" y1="11" x2="22" y2="11" />
+  </svg>
+);
+
+
 // ── Sidebar component ─────────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { to: '/admin',        label: 'Tổng quan',          Icon: IconDashboard, end: true  },
   { to: '/admin/menu',   label: 'Thực đơn',           Icon: IconMenu,      end: false },
   { to: '/admin/tables', label: 'Bàn & QR',           Icon: IconTable,     end: false },
+  { to: '/admin/staff',  label: 'Nhân viên',          Icon: IconStaff,     end: false },
   { to: '/kds',          label: 'Màn hình bếp (KDS)', Icon: IconKDS,       end: false },
 ];
+
 
 const AdminSidebar = () => {
   const navigate = useNavigate();
