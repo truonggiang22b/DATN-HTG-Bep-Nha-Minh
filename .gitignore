@@ -29,3 +29,11 @@ Thumbs.db
 
 # ── Dev uploads (local disk storage) ─────────────────────────
 backend-api/uploads/
+
+# ── Dev/test artifacts ────────────────────────────────────────
+backend-api/error.json
+backend-api/test-results.txt
+backend-api/test-script.ts
+
+# ── stitch-skills (external repo) ────────────────────────────
+stitch-skills/
