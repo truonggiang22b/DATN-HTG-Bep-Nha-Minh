@@ -17,8 +17,8 @@ COPY tsconfig.json ./
 COPY prisma ./prisma/
 COPY src ./src/
 
+RUN npx prisma generate    # generate Prisma client FIRST (types needed by tsc)
 RUN npm run build          # tsc → dist/
-RUN npx prisma generate    # generate Prisma client
 
 # ─── Stage 2: Runtime ─────────────────────────────────────────────
 FROM node:20-alpine AS runtime
