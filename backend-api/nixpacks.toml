@@ -1,0 +1,12 @@
+# Nixpacks config for Bếp Nhà Mình backend
+# Railway sẽ dùng nixpacks thay vì Dockerfile
+# Env vars được inject đúng cách qua nixpacks builder
+
+[phases.build]
+cmds = [
+  'npx prisma generate',
+  'npm run build'
+]
+
+[start]
+cmd = 'npx prisma migrate deploy && node dist/server.js'
