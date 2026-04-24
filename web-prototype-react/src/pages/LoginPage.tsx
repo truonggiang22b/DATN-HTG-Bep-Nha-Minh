@@ -59,17 +59,11 @@ export const LoginPage = () => {
     }}>
       {/* Logo */}
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <div style={{
-          width: 72, height: 72, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #d83a2e, #f0875a)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 16px',
-          fontSize: 32,
-          boxShadow: '0 8px 32px rgba(216,58,46,0.4)',
-        }}>🍜</div>
-        <div style={{ color: '#fff', fontSize: '22px', fontWeight: 700, letterSpacing: '-0.5px' }}>
-          {BRAND_NAME}
-        </div>
+        <img
+          src="/logo.png"
+          alt="Bếp Nhà Mình"
+          style={{ width: 120, height: 120, objectFit: 'contain', margin: '0 auto 12px', display: 'block', filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.3))' }}
+        />
         <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', marginTop: 4 }}>
           Đăng nhập cho nhân viên
         </div>

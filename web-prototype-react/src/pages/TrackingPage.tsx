@@ -104,7 +104,9 @@ export const TrackingPage = () => {
     return (
       <div className="app-shell">
         <header className="customer-header">
-          <span className="customer-header__brand">{BRAND_NAME}</span>
+          <span className="customer-header__brand">
+            <img src="/logo.png" alt="Bếp Nhà Mình" style={{ height: 38, objectFit: 'contain', display: 'block' }} />
+          </span>
         </header>
         <div style={{ padding: '32px', textAlign: 'center', color: 'var(--color-soy)' }}>
           Đang tải thông tin đơn hàng...
@@ -132,7 +134,9 @@ export const TrackingPage = () => {
   return (
     <div className="app-shell">
       <header className="customer-header">
-        <span className="customer-header__brand">{BRAND_NAME}</span>
+        <span className="customer-header__brand">
+          <img src="/logo.png" alt="Bếp Nhà Mình" style={{ height: 38, objectFit: 'contain', display: 'block' }} />
+        </span>
         <span className="customer-header__table">{resolvedTableDisplay}</span>
       </header>
 

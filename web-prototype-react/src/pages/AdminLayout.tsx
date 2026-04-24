@@ -91,9 +91,11 @@ const AdminSidebar = () => {
   return (
     <nav className="admin-sidebar">
       <div className="admin-sidebar__brand" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span className="admin-sidebar__brand-icon">
-          <IconBrand />
-        </span>
+        <img
+          src="/logo.png"
+          alt="Bếp Nhà Mình"
+          style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }}
+        />
         <div>
           <div style={{ fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>{BRAND_NAME}</div>
           <div className="admin-sidebar__sub">Quản lý cửa hàng</div>
