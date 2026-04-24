@@ -104,7 +104,7 @@ export const TrackingPage = () => {
       <div className="app-shell">
         <header className="customer-header">
           <span className="customer-header__brand">
-            <img src="/logo.png" alt="Bếp Nhà Mình" style={{ height: 38, objectFit: 'contain', display: 'block' }} />
+            <img src="/logo.png" alt="Bếp Nhà Mình" style={{ height: 38, objectFit: 'contain', display: 'block', borderRadius: '50%' }} />
           </span>
         </header>
         <div style={{ padding: '32px', textAlign: 'center', color: 'var(--color-soy)' }}>
@@ -134,7 +134,7 @@ export const TrackingPage = () => {
     <div className="app-shell">
       <header className="customer-header">
         <span className="customer-header__brand">
-          <img src="/logo.png" alt="Bếp Nhà Mình" style={{ height: 38, objectFit: 'contain', display: 'block' }} />
+          <img src="/logo.png" alt="Bếp Nhà Mình" style={{ height: 38, objectFit: 'contain', display: 'block', borderRadius: '50%' }} />
         </span>
         <span className="customer-header__table">{resolvedTableDisplay}</span>
       </header>

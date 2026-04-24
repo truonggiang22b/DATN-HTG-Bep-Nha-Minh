@@ -182,7 +182,7 @@ export const MenuPage = ({ qrToken }: MenuPageProps) => {
       {/* Header */}
       <header className="customer-header">
         <span className="customer-header__brand">
-          <img src="/logo.png" alt="Bếp Nhà Mình" style={{ height: 38, objectFit: 'contain', display: 'block' }} />
+          <img src="/logo.png" alt="Bếp Nhà Mình" style={{ height: 38, objectFit: 'contain', display: 'block', borderRadius: '50%' }} />
         </span>
         <span className="customer-header__table">{table.displayName}</span>
         <button

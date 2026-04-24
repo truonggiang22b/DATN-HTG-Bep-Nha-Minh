@@ -87,7 +87,7 @@ const AdminSidebar = () => {
         <img
           src="/logo.png"
           alt="Bếp Nhà Mình"
-          style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }}
+          style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0, borderRadius: '50%' }}
         />
         <div>
           <div style={{ fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>{BRAND_NAME}</div>
