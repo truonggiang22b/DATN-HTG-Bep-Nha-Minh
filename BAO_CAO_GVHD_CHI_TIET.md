@@ -1,462 +1,756 @@
-# Báo cáo chi tiết dự án "Bếp Nhà Mình" - QR Ordering System
+# BÁO CÁO DỰ ÁN: BẾP NHÀ MÌNH — QR ORDERING SYSTEM
 
-> Ngày cập nhật: 23/04/2026  
-> Đối tượng nhận: Giáo viên hướng dẫn  
-> Phạm vi: Hướng đi sản phẩm, nghiệp vụ, kiến trúc kỹ thuật, tiến độ và kết quả kiểm thử  
-> Lưu ý bảo mật: Báo cáo này không công khai giá trị trong file `.env`, chỉ mô tả cấu hình và trạng thái ở mức tổng quan.
+> **Ngày cập nhật:** 24/04/2026  
+> **Đối tượng nhận:** Giáo viên hướng dẫn  
+> **Sinh viên:** Trương Giang (truonggiang22b)  
+> **Phạm vi:** Nghiệp vụ, kiến trúc kỹ thuật, tiến độ, kiểm thử, deployment production  
+> **Lưu ý bảo mật:** Báo cáo này không công khai giá trị credentials, chỉ mô tả cấu hình ở mức tổng quan.
 
-## 1. Thông tin chung
+---
 
-**Tên dự án:** Bếp Nhà Mình - QR Ordering System.
+## MỤC LỤC
 
-**Mô tả ngắn:** Dự án xây dựng hệ thống đặt món tại bàn cho cửa hàng F&B. Khách hàng dùng điện thoại quét QR tại bàn để mở menu số, chọn món, gửi order trực tiếp vào hệ thống. Bếp/quầy nhận order trên màn hình KDS, cập nhật trạng thái chế biến, và khách có thể theo dõi tiến độ đơn trên điện thoại.
+1. [Thông tin chung](#1-thông-tin-chung)
+2. [Bối cảnh và hướng đi sản phẩm](#2-bối-cảnh-và-hướng-đi-sản-phẩm)
+3. [Quy trình nghiệp vụ](#3-quy-trình-nghiệp-vụ)
+4. [Giải pháp kỹ thuật](#4-giải-pháp-kỹ-thuật)
+5. [Tiến độ thực hiện](#5-tiến-độ-thực-hiện)
+6. [Deployment Production](#6-deployment-production)
+7. [Kiểm thử và đánh giá](#7-kiểm-thử-và-đánh-giá)
+8. [Kết quả demo trực tiếp](#8-kết-quả-demo-trực-tiếp)
+9. [Rủi ro và hướng phát triển](#9-rủi-ro-và-hướng-phát-triển)
+10. [Kết luận](#10-kết-luận)
+11. [Phụ lục](#11-phụ-lục)
 
-**Mục tiêu chính:**
+---
 
-- Giảm thời gian khách chờ nhân viên đưa menu và ghi order.
-- Giảm sai sót do ghi nhầm món, thiếu option, thiếu ghi chú.
-- Giúp bếp/quầy nhận thông tin rõ ràng và có thứ tự xử lý.
-- Giúp admin/chủ quán cập nhật menu, trạng thái món, bàn và QR linh hoạt.
-- Chứng minh flow vận hành end-to-end bằng MVP trước khi mở rộng sang payment, POS, AI hoặc quản lý kho.
+## 1. THÔNG TIN CHUNG
+
+**Tên dự án:** Bếp Nhà Mình - QR Ordering System
+
+**Mô tả ngắn:** Hệ thống đặt món tại bàn cho cơ sở F&B. Khách hàng dùng điện thoại quét mã QR tại bàn để mở menu số, chọn món và gửi order trực tiếp vào hệ thống. Bếp/quầy nhận order trên màn hình KDS, cập nhật trạng thái chế biến. Khách có thể theo dõi tiến độ đơn hàng trên điện thoại theo thời gian thực.
+
+**Trạng thái dự án (24/04/2026):** ✅ **MVP hoàn chỉnh, đã deploy production**
+
+| Hạng mục | Trạng thái |
+|---|---|
+| Backend API | ✅ Live — Railway `asia-southeast1` |
+| Frontend Web | ✅ Live — Vercel CDN |
+| Database | ✅ Supabase PostgreSQL |
+| Kiểm thử tự động | ✅ 99/99 backend + 54/55 E2E |
+| Dữ liệu demo production | ✅ Đã seed |
 
 **Đối tượng sử dụng:**
 
-| Actor | Vai trò trong hệ thống | Giá trị nhận được |
+| Actor | Vai trò | Giá trị nhận được |
 |---|---|---|
-| Khách hàng | Quét QR, xem menu, đặt món, theo dõi trạng thái | Gọi món nhanh, không cần tải app, biết đơn đang xử lý đến đâu |
-| Bếp/quầy | Nhận order, xem ghi chú/option, cập nhật trạng thái | Giảm bỏ sót order, xử lý theo cột trạng thái |
-| Quản lý ca | Theo dõi bàn, order, reset phiên bàn | Kiểm soát vận hành từng ca |
-| Admin/chủ quán | Quản lý menu, danh mục, bàn, QR, trạng thái món | Chủ động điều chỉnh menu số và dữ liệu demo/vận hành |
+| Khách hàng | Quét QR, xem menu, đặt món, theo dõi trạng thái | Gọi món nhanh, không cần cài app, biết đơn đang xử lý đến đâu |
+| Nhân viên bếp | Nhận order trên KDS, cập nhật trạng thái chế biến | Giảm bỏ sót order, xử lý theo cột trạng thái rõ ràng |
+| Quản lý ca | Theo dõi bàn, reset phiên bàn khi khách rời đi | Kiểm soát vận hành từng ca |
+| Admin/chủ quán | Quản lý menu, bàn, QR, xem lịch sử order | Chủ động điều chỉnh menu và giám sát vận hành |
 
-## 2. Bối cảnh và hướng đi sản phẩm
+---
+
+## 2. BỐI CẢNH VÀ HƯỚNG ĐI SẢN PHẨM
 
 ### 2.1 Vấn đề thực tế
 
-Trong mô hình phục vụ truyền thống, khách hàng phải chờ nhân viên đưa menu, ghi order và truyền thông tin cho bếp. Quy trình này dễ phát sinh các vấn đề:
+Trong mô hình phục vụ truyền thống, khách hàng phải chờ nhân viên đưa menu, ghi order và truyền thông tin về bếp. Quy trình này dễ phát sinh các vấn đề:
 
-- Khách phải chờ khi quán đông.
-- Nhân viên có thể ghi sai món, sai số lượng, thiếu option hoặc thiếu ghi chú.
-- Bếp nhận thông tin qua lời nói/giấy, dễ bị bỏ sót hoặc khó sắp xếp ưu tiên.
-- Menu giấy chậm cập nhật, món tạm hết vẫn có thể bị gọi nhầm.
-- Quản lý khó theo dõi dữ liệu order lịch sử nếu order không được số hóa.
+- **Thời gian chờ dài:** Khách phải chờ khi quán đông, nhân viên bận.
+- **Sai sót khi ghi order:** Nhân viên có thể ghi sai món, sai số lượng, thiếu option hoặc thiếu ghi chú.
+- **Bếp nhận thông tin không chuẩn:** Order truyền qua lời nói/giấy, dễ bị bỏ sót hoặc khó sắp xếp ưu tiên.
+- **Menu giấy lỗi thời:** Món tạm hết vẫn hiện trên menu, khách đặt nhầm gây phiền phức.
+- **Thiếu số liệu vận hành:** Order không được số hóa, quản lý khó theo dõi lịch sử và hiệu suất.
 
 ### 2.2 Định hướng MVP
 
-MVP của dự án tập trung vào việc chứng minh một vòng đời order tại bàn hoàn chỉnh:
+MVP tập trung vào việc chứng minh một vòng đời order tại bàn hoàn chỉnh:
 
-```text
-QR -> Menu -> Cart -> Order -> KDS -> Tracking -> Reset table session
+```
+QR → Menu → Cart → Order → KDS → Tracking → Reset table session
 ```
 
-Định hướng sản phẩm hiện tại là **web-first, mobile-first**:
+**Chiến lược sản phẩm:** Web-first, mobile-first, zero friction cho khách hàng:
 
-- Khách hàng không cần cài app, chỉ cần mở link QR trên trình duyệt.
-- QR cố định theo bàn; phiên bàn được quản lý bằng table session.
-- Khách không cần đăng nhập trong flow MVP.
+- Khách không cần cài app, chỉ cần mở link QR trên trình duyệt di động.
+- QR cố định theo bàn vật lý; phiên bàn được quản lý bằng table session.
+- Khách không cần tạo tài khoản hay đăng nhập trong luồng MVP.
 - Admin/KDS có đăng nhập và phân quyền theo role.
-- Payment, POS sync, quản lý kho, loyalty và AI nâng cao chưa đưa vào critical path.
+- Payment, POS sync, quản lý kho, loyalty và AI nâng cao được để lại cho phase sau.
 
-### 2.3 Phạm vi hiện tại và ngoài phạm vi
+### 2.3 Phạm vi MVP
 
-| Nhóm | Trạng thái |
+| Nhóm tính năng | Trạng thái |
 |---|---|
-| QR theo bàn, menu số, giỏ hàng, gửi order | Đã có trong MVP |
-| KDS xử lý order, tracking trạng thái cho khách | Đã có trong MVP |
-| Admin quản lý menu, danh mục, bàn, QR, reset phiên | Đã có trong MVP |
-| Auth/RBAC cho staff | Đã có ở backend/frontend tích hợp |
-| Payment online | Chưa nằm trong MVP |
-| POS sync | Chưa nằm trong MVP |
-| Quản lý kho nguyên liệu | Chưa nằm trong MVP |
-| AI gợi ý món nâng cao | Để dành cho phase sau |
-| Realtime push WebSocket/SSE | Chưa bắt buộc; hiện đang dùng polling |
+| QR theo bàn, menu số, giỏ hàng, gửi order | ✅ Đã có |
+| KDS xử lý order, tracking trạng thái cho khách | ✅ Đã có |
+| Admin quản lý menu, danh mục, bàn, QR, reset phiên | ✅ Đã có |
+| Auth/RBAC cho staff (ADMIN, MANAGER, KITCHEN) | ✅ Đã có |
+| Upload ảnh menu | ✅ Đã có (Supabase Storage) |
+| Soft-delete/restore món và danh mục | ✅ Đã có |
+| Payment online | ❌ Ngoài phạm vi MVP |
+| POS sync | ❌ Ngoài phạm vi MVP |
+| Quản lý kho nguyên liệu | ❌ Ngoài phạm vi MVP |
+| AI gợi ý món | ❌ Phase sau |
+| Realtime push WebSocket/SSE | ❌ Hiện dùng polling cho MVP |
 
-## 3. Quy trình nghiệp vụ
+---
 
-### 3.1 Luồng khách hàng
+## 3. QUY TRÌNH NGHIỆP VỤ
 
-1. Khách ngồi vào bàn và quét QR.
-2. Hệ thống resolve QR token để nhận diện bàn, chi nhánh và phiên bàn.
-3. Khách xem menu theo danh mục, tìm kiếm món, xem chi tiết món.
-4. Khách chọn món, option, số lượng và ghi chú nếu có.
-5. Khách vào giỏ hàng, kiểm tra tổng tiền tạm tính và gửi order.
-6. Backend validate lại dữ liệu: QR hợp lệ, giỏ không rỗng, món còn bán, option hợp lệ, idempotency key không tạo trùng order.
-7. Order được tạo và hiển thị cho KDS.
-8. Khách được điều hướng sang màn hình tracking để xem mã đơn, món đã gọi và trạng thái.
+### 3.1 Luồng Khách Hàng
 
-### 3.2 Luồng bếp/KDS
-
-Order trên KDS đi theo state machine:
-
-```text
-NEW -> PREPARING -> READY -> SERVED
-NEW/PREPARING -> CANCELLED
+```
+┌─────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│  Quét QR    │ → │  Xem menu   │ → │  Giỏ hàng   │ → │  Đặt món    │
+│  tại bàn   │   │  theo danh   │   │  + Options  │   │  (Submit)   │
+└─────────────┘   │  mục/tìm    │   └──────────────┘   └──────┬───────┘
+                  └──────────────┘                            │
+┌─────────────────────────────────────────────────────────────▼───────────┐
+│  Tracking Page: xem mã đơn, danh sách món, trạng thái cập nhật           │
+│  (polling 3 giây)                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-Ý nghĩa nghiệp vụ:
+**Chi tiết các bước:**
 
-| Trạng thái | Ý nghĩa cho bếp/quầy | Ý nghĩa cho khách |
+1. Khách ngồi vào bàn, quét QR → hệ thống resolve token nhận diện bàn, chi nhánh và phiên bàn đang mở.
+2. Khách xem menu theo danh mục, tìm kiếm món, xem chi tiết và option.
+3. Khách thêm món vào giỏ hàng (chọn option, số lượng, ghi chú nếu cần).
+4. Khách vào giỏ hàng xem tổng tiền tạm tính và xác nhận gửi order.
+5. Backend validate: QR hợp lệ, giỏ không rỗng, món còn bán, option hợp lệ, idempotency key chưa tồn tại.
+6. Order được tạo trong DB, tự động xuất hiện trên KDS bếp.
+7. Khách được điều hướng sang màn hình tracking — xem mã đơn, món đã gọi và trạng thái cập nhật mỗi 3 giây.
+
+### 3.2 Luồng Bếp/KDS
+
+Order trên KDS đi theo state machine có kiểm soát:
+
+```
+NEW → PREPARING → READY → SERVED
+NEW/PREPARING → CANCELLED
+```
+
+| Trạng thái | Ý nghĩa cho bếp | Ý nghĩa cho khách |
 |---|---|---|
-| `NEW` | Đơn mới nhận | Đơn đã được tiếp nhận |
-| `PREPARING` | Đang chuẩn bị | Đang chuẩn bị |
-| `READY` | Sẵn sàng mang ra | Đang mang ra / sẵn sàng |
-| `SERVED` | Đã phục vụ | Đã phục vụ xong |
-| `CANCELLED` | Đã hủy | Đơn đã bị hủy |
+| `NEW` | Đơn mới, cần xác nhận bắt đầu làm | Đơn đã được tiếp nhận |
+| `PREPARING` | Đang chuẩn bị trong bếp | Đang chuẩn bị |
+| `READY` | Sẵn sàng mang ra bàn | Sắp được phục vụ |
+| `SERVED` | Đã phục vụ xong | Đã phục vụ xong |
+| `CANCELLED` | Đơn hủy | Đơn đã bị hủy |
 
-### 3.3 Luồng admin/quản lý
+**Quy tắc KDS board:**
+- Hiển thị tất cả đơn `NEW`, `PREPARING`, `READY` (không giới hạn thời gian).
+- Hiển thị đơn `SERVED` **trong ngày hiện tại** để đối soát cuối ca.
+- Không hiển thị `CANCELLED` và `SERVED` từ ngày cũ.
 
-Admin và quản lý ca có các nhóm tác vụ:
+### 3.3 Luồng Admin/Quản Lý
 
-- Quản lý danh mục món.
-- Quản lý món ăn: tên, giá, mô tả, ảnh, trạng thái `ACTIVE`, `SOLD_OUT`, `HIDDEN`.
-- Quản lý bàn và QR token.
-- Xem dashboard/order history.
-- Reset phiên bàn sau khi khách thanh toán/dọn bàn.
+| Nhóm tác vụ | Chức năng chi tiết |
+|---|---|
+| Quản lý danh mục | Tạo/sửa/xóa mềm (soft-delete) danh mục, khôi phục |
+| Quản lý món ăn | Tạo/sửa món, upload ảnh, đặt trạng thái `ACTIVE`/`SOLD_OUT`/`HIDDEN`, soft-delete/restore |
+| Quản lý bàn & QR | Tạo bàn, xem QR token, theo dõi trạng thái bàn có phiên hoạt động hay không |
+| Reset phiên | Đóng phiên bàn cũ sau khi khách rời — bắt buộc để QR phục vụ lượt khách tiếp theo |
+| Dashboard | Xem lịch sử order, thống kê theo trạng thái |
+| Quản lý staff | Xem danh sách nhân viên theo chi nhánh |
 
-Reset phiên bàn là nghiệp vụ quan trọng vì QR là cố định theo bàn. Nếu không đóng phiên cũ, khách mới có thể bị gán order vào phiên của khách trước.
-
-### 3.4 Business rules quan trọng
+### 3.4 Business Rules Quan Trọng
 
 | Rule | Nội dung |
 |---|---|
-| QR cố định theo bàn | Mỗi QR token đại diện cho một bàn vật lý |
-| Order gắn với table session | Các order bổ sung trong cùng lượt khách được gom theo session |
-| Khách không cần login | Customer flow chỉ cần QR token và client session |
-| Không sửa order sau khi gửi | Gọi thêm tạo order mới trong cùng phiên |
-| Chỉ đặt món `ACTIVE` | `SOLD_OUT` và `HIDDEN` không được submit thành order |
-| Snapshot dữ liệu order | Order item lưu tên, giá, option tại thời điểm đặt |
-| Chống trùng order | Dùng idempotency key khi submit |
-| Admin/KDS được bảo vệ | API nội bộ cần auth và role phù hợp |
+| QR cố định theo bàn | Mỗi QR token đại diện cho một bàn vật lý, không thay đổi |
+| Order gắn với table session | Các order trong cùng lượt khách được gom theo session |
+| Khách không cần login | Customer flow chỉ cần QR token và client session ID |
+| Không sửa order sau khi gửi | Gọi thêm món → tạo order mới trong cùng phiên |
+| Chỉ đặt được món `ACTIVE` | `SOLD_OUT` và `HIDDEN` bị chặn ở server |
+| Snapshot order item | Lưu tên, giá, option tại thời điểm đặt — tránh sai lệch khi admin sửa menu sau |
+| Chống trùng order | Idempotency key ngăn tạo đơn trùng khi người dùng bấm submit nhiều lần |
+| Admin/KDS bắt buộc auth | Mọi API nội bộ cần JWT hợp lệ và role phù hợp |
 
-## 4. Giải pháp kỹ thuật
+---
 
-### 4.1 Tổng quan kiến trúc
+## 4. GIẢI PHÁP KỸ THUẬT
 
-Hệ thống hiện được tách thành frontend và backend:
+### 4.1 Kiến Trúc Tổng Quan
 
-```text
-Customer Web App / KDS / Admin
-        |
-        v
-Backend API Express
-        |
-        v
-PostgreSQL/Supabase + Prisma
+```
+┌──────────────────────────────────────────────────────────┐
+│                    CLIENT LAYER                          │
+│                                                          │
+│  📱 Customer      👨‍🍳 KDS (Bếp)     🖥️ Admin Dashboard  │
+│  (Mobile web)    (Desktop web)    (Desktop web)          │
+│                                                          │
+│           React 19 + Vite + TypeScript                   │
+│           TanStack Query (data fetching + cache)         │
+│           Zustand (auth store + toast)                   │
+│           React Router v6                               │
+│                   VERCEL CDN                             │
+└────────────────────────┬─────────────────────────────────┘
+                         │ HTTPS / REST API
+┌────────────────────────▼─────────────────────────────────┐
+│                    API LAYER                             │
+│                                                          │
+│           Express 5 + TypeScript + Node.js 20           │
+│           Zod validation                                 │
+│           Helmet + CORS + Rate Limit                     │
+│           Pino logger                                    │
+│                  RAILWAY (asia-southeast1)               │
+└────────────────────────┬─────────────────────────────────┘
+                         │ Prisma ORM
+┌────────────────────────▼─────────────────────────────────┐
+│                  DATA LAYER                              │
+│                                                          │
+│           PostgreSQL (Supabase)                          │
+│           Supabase Auth (JWT)                            │
+│           Supabase Storage (menu images)                 │
+└──────────────────────────────────────────────────────────┘
 ```
 
 ### 4.2 Frontend
 
-Frontend nằm trong thư mục `web-prototype-react`.
+**Thư mục:** `web-prototype-react/`
 
-**Stack chính:**
+**Stack:**
 
-- React 19.
-- TypeScript.
-- Vite.
-- React Router.
-- TanStack React Query.
-- Zustand.
-- Playwright E2E.
+| Thư viện | Phiên bản | Mục đích |
+|---|---|---|
+| React | 19 | UI framework |
+| TypeScript | 5.x | Type safety |
+| Vite | 6.x | Build tool |
+| React Router | v6 | Routing |
+| TanStack React Query | v5 | Data fetching, cache, polling |
+| Zustand | v4 | Auth store + toast store |
+| Axios | v1 | HTTP client |
+| Playwright | v1.x | E2E testing |
 
-**Các route chính:**
+**Routes và phân quyền:**
 
 | Route | Đối tượng | Mục đích |
 |---|---|---|
 | `/qr/:qrToken` | Khách | Mở menu theo QR bàn |
-| `/cart` | Khách | Xem giỏ hàng và submit order |
-| `/order/:orderId/tracking` | Khách | Theo dõi trạng thái order |
+| `/cart` | Khách | Giỏ hàng và submit order |
+| `/order/:orderId/tracking` | Khách | Theo dõi trạng thái đơn |
 | `/login` | Staff | Đăng nhập admin/kitchen |
-| `/kds` | Kitchen/Admin | Màn hình bếp xử lý order |
-| `/admin` | Admin | Dashboard |
-| `/admin/menu` | Admin | Quản lý menu/danh mục |
-| `/admin/tables` | Admin | Quản lý bàn/QR/reset phiên |
+| `/kds` | KITCHEN, MANAGER | Màn hình bếp xử lý order |
+| `/admin` | ADMIN | Dashboard thống kê |
+| `/admin/menu` | ADMIN | Quản lý menu và danh mục |
+| `/admin/tables` | ADMIN | Quản lý bàn, QR, reset phiên |
+| `/admin/staff` | ADMIN | Xem danh sách nhân viên |
 
-**Trạng thái tích hợp hiện tại:**
+**Service layer:**
 
-- Frontend đã có service layer gồm `apiClient`, `publicApi`, `internalApi`.
-- Customer flow đã gọi API thật cho QR/menu/order/tracking.
-- KDS/Admin đã chuyển sang auth thật và API nội bộ.
-- Polling đang được dùng cho tracking/KDS thay vì WebSocket.
+```
+src/services/
+├── apiClient.ts      # Axios instance, auth interceptor, error normalize
+├── publicApi.ts      # QR resolve, menu, submit order, tracking
+└── internalApi.ts    # Auth login/logout, KDS, Admin CRUD
+```
 
 ### 4.3 Backend
 
-Backend nằm trong thư mục `backend-api`.
+**Thư mục:** `backend-api/`
 
-**Stack chính:**
+**Stack:**
 
-- Node.js >= 20.
-- Express 5.
-- TypeScript.
-- Prisma ORM.
-- PostgreSQL/Supabase.
-- JWT/Auth qua Supabase.
-- Zod validation.
-- Vitest + Supertest.
-- Helmet, CORS, rate limit, pino logger.
-
-**Route chính:**
-
-| Nhóm route | Prefix | Mục đích |
+| Thư viện | Phiên bản | Mục đích |
 |---|---|---|
-| Health | `/health` | Kiểm tra server |
-| Public customer | `/api/public` | QR resolve, menu, submit order, tracking |
-| Auth | `/api/auth` | Login/logout/me |
-| Internal | `/api/internal` | KDS, admin CRUD, tables, sessions, upload |
+| Node.js | >= 20 | Runtime |
+| Express | 5.x | HTTP framework |
+| TypeScript | 5.x | Type safety |
+| Prisma | 6.x | ORM + migration |
+| Zod | v3 | Schema validation |
+| Helmet | v8 | Security headers |
+| cors | v2 | CORS policy |
+| express-rate-limit | v7 | Rate limiting |
+| pino | v9 | JSON structured logging |
+| Vitest + Supertest | latest | Unit + Integration testing |
 
-**Bảo mật tối thiểu đã có:**
+**API routes:**
 
-- Helmet security headers.
-- CORS theo `FRONTEND_URL`, cho localhost trong dev.
-- Rate limit riêng cho public/auth/internal.
-- Auth middleware cho internal API.
-- Role guard cho `ADMIN`, `MANAGER`, `KITCHEN`.
-- Server-side validation với Zod.
+| Nhóm | Prefix | Giới hạn | Mục đích |
+|---|---|---|---|
+| Health | `GET /health` | — | Kiểm tra server alive |
+| Public | `/api/public` | 100 req/min | QR, menu, order, tracking |
+| Auth | `/api/auth` | 10 req/min | Login, logout, me |
+| Internal | `/api/internal` | 200 req/min | KDS, Admin CRUD |
 
-### 4.4 Database và model dữ liệu
+**Security đã triển khai:**
 
-Database được quản lý bằng Prisma schema. Các entity chính:
+- Helmet security headers (XSS, frame, content-type protection).
+- CORS whitelist theo `FRONTEND_URL` env var (chỉ cho localhost trong dev).
+- Rate limiting riêng cho từng nhóm route.
+- JWT authentication middleware cho internal API.
+- Role-based access control (ADMIN, MANAGER, KITCHEN).
+- Server-side validation toàn bộ input bằng Zod.
+- Env validation bắt buộc khi khởi động — app crash fast nếu thiếu config.
+
+### 4.4 Database & Data Model
+
+**Database:** PostgreSQL 15 trên Supabase (Singapore region).  
+**ORM:** Prisma 6 với migration tự động.
+
+**Entities chính:**
 
 | Entity | Vai trò |
 |---|---|
-| `Store` | Quán/thực thể kinh doanh |
-| `Branch` | Chi nhánh |
-| `User`, `UserRole_Rel` | Tài khoản và role |
-| `DiningTable` | Bàn vật lý và QR token |
-| `TableSession` | Phiên phục vụ của một bàn |
-| `Category` | Danh mục menu |
-| `MenuItem` | Món ăn |
-| `MenuOptionGroup`, `MenuOption` | Option món |
-| `Order` | Đơn hàng |
-| `OrderItem` | Chi tiết món trong đơn, có snapshot |
-| `OrderStatusHistory` | Lịch sử đổi trạng thái |
+| `Store` | Thực thể kinh doanh (quán/chuỗi) |
+| `Branch` | Chi nhánh của Store |
+| `User` + `UserRole_Rel` | Tài khoản staff và phân quyền |
+| `DiningTable` | Bàn vật lý, có QR token cố định |
+| `TableSession` | Phiên phục vụ của một bàn (mở/đóng) |
+| `Category` | Danh mục menu, hỗ trợ soft-delete |
+| `MenuItem` | Món ăn, có trạng thái ACTIVE/SOLD_OUT/HIDDEN, soft-delete |
+| `MenuOptionGroup` + `MenuOption` | Option/topping cho món |
+| `Order` | Đơn hàng, gắn với session và QR token |
+| `OrderItem` | Chi tiết món trong đơn, **có snapshot** tên/giá/option |
+| `OrderStatusHistory` | Lịch sử chuyển trạng thái đơn |
 
-Hệ thống đã có nền tảng multi-store/multi-branch ở mức dữ liệu, dù MVP chủ yếu dùng cho demo/pilot.
+**Thiết kế điểm mạnh:**
 
-## 5. Tiến độ thực hiện
+- Multi-store/multi-branch ready ở tầng data model.
+- Snapshot order item — giá và option được lưu tại thời điểm đặt, không bị ảnh hưởng khi admin sửa menu sau.
+- Soft-delete cho Category và MenuItem — admin có thể khôi phục dữ liệu đã ẩn.
+- OrderStatusHistory — audit trail đầy đủ cho mỗi lần chuyển trạng thái.
 
-### 5.1 Giai đoạn tài liệu và phân tích
+---
 
-Dự án đã có bộ tài liệu trong `docs_prototype`, gồm:
+## 5. TIẾN ĐỘ THỰC HIỆN
 
-- Phân tích dự án và định hướng sản phẩm.
-- Quy trình nghiệp vụ thống nhất.
-- PRD MVP và backlog.
-- Kiến trúc kỹ thuật.
-- Data model và API spec.
-- Requirement traceability matrix.
-- UAT/QA checklist.
-- Báo cáo tổng kết và báo cáo testing.
+### 5.1 Giai Đoạn 1 — Phân Tích & Tài Liệu
 
-Đánh giá: phần nghiệp vụ và scope MVP đã được mô tả khá đầy đủ, có thể dùng làm cơ sở bảo vệ với giáo viên hướng dẫn.
+**Thời gian:** Trước Sprint 1  
+**Kết quả:** Bộ tài liệu hoàn chỉnh trong `docs_prototype/`
 
-### 5.2 Giai đoạn prototype UI
+| Tài liệu | Nội dung |
+|---|---|
+| `01_phan_tich_du_an` | Phân tích bài toán, định hướng sản phẩm |
+| `02_quy_trinh_nghiep_vu` | Flow nghiệp vụ thống nhất |
+| `03_prd_mvp_va_backlog` | PRD và product backlog |
+| `05_kien_truc_ky_thuat` | Architecture decision records |
+| `06_data_model_api_spec` | Schema Prisma và API specification |
+| `13_tong_ket_du_an` | Báo cáo tổng kết PM/PO/BA |
+| `15_final_testing_report` | Báo cáo kiểm thử |
 
-Frontend đã có các màn hình chính:
+### 5.2 Giai Đoạn 2 — Prototype UI (Sprint 1-2)
 
-- Menu mobile cho khách.
-- Item detail sheet.
+**Kết quả:** Toàn bộ màn hình chính đã có
+
+- Menu mobile cho khách (theo danh mục, item detail sheet).
 - Cart page.
 - Tracking page.
 - Login page.
-- KDS page.
-- Admin layout, dashboard, menu management, table management.
+- KDS page (4 cột trạng thái).
+- Admin layout, Dashboard, Menu management, Table management, Staff management.
 
-Ban đầu prototype có dùng mock/localStorage để chứng minh flow UI. Sau Sprint 4, frontend đã được chuyển sang API thật.
+### 5.3 Giai Đoạn 3 — Backend API (Sprint 3)
 
-### 5.3 Giai đoạn backend/API
+**Kết quả:** Backend MVP production-ready
 
-Backend MVP đã có:
-
-- Prisma schema và migration.
-- Seed data.
-- Auth login/logout/me.
-- Public QR/menu/order/tracking.
-- Internal KDS active orders và status update.
-- Admin CRUD categories/menu items/tables.
+- Prisma schema và migration đầy đủ.
+- Seed data (2 store, 5 bàn, 5 danh mục, 13 món, 3 tài khoản).
+- Auth login/logout/me (qua Supabase JWT).
+- Public routes: QR resolve, menu, submit order, tracking.
+- Internal routes: KDS active orders + status update, Admin CRUD.
 - Reset table session.
-- Upload image endpoint.
-- Test backend bằng Vitest/Supertest.
+- Upload ảnh menu (Supabase Storage).
+- Test suite Vitest/Supertest.
 
-### 5.4 Giai đoạn tích hợp Sprint 4
+### 5.4 Giai Đoạn 4 — Tích Hợp API Thật (Sprint 4)
 
-Theo tracking file Sprint 4, mục tiêu là thay mock data bằng real API calls. Các hạng mục đã được thực hiện:
+**Kết quả:** Frontend chuyển hoàn toàn từ mock sang API thật
 
-- Cài `axios`, `@tanstack/react-query`.
-- Tạo API layer.
-- Tạo auth store dùng sessionStorage.
-- Cập nhật type API.
-- Bảo vệ `/kds` và `/admin` bằng route guard.
-- MenuPage, CartPage, TrackingPage, KDSPage, Admin pages gọi API thật.
-- KDS/tracking dùng polling 3-5 giây.
+| Bước | Hạng mục | Trạng thái |
+|---|---|---|
+| 1 | Install axios, @tanstack/react-query | ✅ |
+| 2 | API service layer (apiClient, publicApi, internalApi) | ✅ |
+| 3 | Auth store (useAuthStore + sessionStorage) | ✅ |
+| 4 | Type definitions cho API response | ✅ |
+| 5 | App shell + LoginPage + ProtectedRoute | ✅ |
+| 6 | MenuPage dùng useQuery + API thật | ✅ |
+| 7 | CartPage dùng useMutation + submit thật | ✅ |
+| 8 | TrackingPage polling 3 giây | ✅ |
+| 9 | KDSPage polling 5 giây + mutation thật | ✅ |
+| 10 | AdminMenuPage CRUD thật | ✅ |
+| 11 | AdminTablesPage CRUD + reset thật | ✅ |
+| 12 | AdminDashboardPage stats từ API | ✅ |
+| 13 | Kiểm thử toàn bộ flow | ✅ |
 
-### 5.5 Trạng thái hiện tại sau khi chuẩn hóa test ngày 23/04/2026
+**Các cải tiến kèm theo Sprint 4:**
 
-Sau khi chốt lại nghiệp vụ KDS và sửa các test FE/E2E bị lệch implementation, số liệu kiểm thử mới nhất như sau:
+- Thêm soft-delete/restore cho MenuItem và Category.
+- Sửa lỗi RBAC: bổ sung role MANAGER cho route `/kds`.
+- Sửa lỗi `addToast` → `showToast` trong AdminStaffPage.
+- Chuẩn hóa rule KDS board (SERVED trong ngày, không lấy CANCELLED).
+- Cập nhật 28 test E2E bị lệch implementation sau khi chuyển sang API thật.
 
-| Lớp test | Framework | Tổng | Pass | Fail | Skip | Ghi chú |
-|---|---:|---:|---:|---:|---:|---|
-| Backend | Vitest + Supertest | 99 | 99 | 0 | 0 | Đã cập nhật `KDS-02` theo rule KDS giữ `SERVED` trong ngày |
-| Frontend E2E | Playwright Chromium | 55 | 54 | 0 | 1 | Đã sửa endpoint, auth helper, selector, toast, quick-add và dashboard order row |
+### 5.5 Giai Đoạn 5 — Production Deployment (24/04/2026)
 
-Nhận xét:
+**Kết quả:** Hệ thống live trên internet
 
-- Backend đã pass toàn bộ 99/99 test sau khi cập nhật expectation của `KDS-02` theo nghiệp vụ đã chốt.
-- Frontend E2E đã pass toàn bộ các test chạy được: 54 pass, 1 skip có chủ đích, 0 fail.
-- Rule KDS hiện tại: board hiển thị `NEW`, `PREPARING`, `READY` và `SERVED` trong ngày hiện tại; sang ngày mới, đơn `SERVED` cũ không còn hiện trên KDS.
-- Không ghi nhận hệ thống "bug-free tuyệt đối", nhưng có thể ghi nhận core MVP đã có bằng chứng test tự động ổn định ở thời điểm 23/04/2026.
+Chi tiết ở [Mục 6 — Deployment Production](#6-deployment-production).
 
-## 6. Kiểm thử và đánh giá
+---
 
-### 6.1 Backend testing
+## 6. DEPLOYMENT PRODUCTION
 
-Backend có 6 nhóm test:
+### 6.1 Tổng Quan Hạ Tầng
 
-- `auth.test.ts`.
-- `admin_crud.test.ts`.
-- `orders.test.ts`.
-- `public.test.ts`.
-- `sessions.test.ts`.
-- `e2e.test.ts`.
-
-Lần chạy mới nhất trong phiên làm việc này:
-
-```text
-Test files: 6 passed, total 6
-Tests: 99 passed, total 99
+```
+GitHub Repo (truonggiang22b/DATN-HTG-Bep-Nha-Minh)
+      │
+      ├──────────────────────────────────┐
+      │ Auto-deploy on push to main      │ Auto-deploy on push to main
+      ▼                                  ▼
+  RAILWAY                           VERCEL
+  (backend-api/)                    (web-prototype-react/)
+  Node.js + Express                 Vite + React
+  Region: asia-southeast1          CDN global
+  Builder: Nixpacks                Builder: Vite
+      │
+      │
+      ▼
+  SUPABASE
+  PostgreSQL (Singapore)
+  Auth (JWT)
+  Storage (menu images)
 ```
 
-Điểm đã chuẩn hóa trong backend test:
+### 6.2 URLs Production
 
-- `KDS-02` được đổi từ kỳ vọng "active orders chỉ gồm `NEW/PREPARING/READY`" sang "KDS board hiển thị đơn đang xử lý và đơn `SERVED` trong ngày".
-- `SESSION-06` được sửa dữ liệu test để chọn món `ACTIVE` không có required option, tránh gửi order thiếu option và nhận `400 INVALID_OPTION`.
-
-Rule backend hiện tại của `/api/internal/orders/active`:
-
-- `NEW`, `PREPARING`, `READY` không giới hạn ngày.
-- `SERVED` trong ngày hiện tại.
-- Không lấy `CANCELLED`.
-
-Rule này khớp với nghiệp vụ KDS: bếp/quầy cần thấy cột "Đã phục vụ" trong ngày để đối soát cuối ca, nhưng không giữ đơn đã phục vụ từ ngày cũ.
-
-### 6.2 Frontend E2E testing
-
-Playwright test được chia theo nhóm:
-
-- Admin.
-- Customer.
-- Kitchen/KDS.
-- Full-flow.
-
-Lần chạy mới nhất:
-
-```text
-55 tests
-54 passed
-0 failed
-1 skipped
-```
-
-Các nhóm đã sửa để FE E2E xanh:
-
-- Auth helper dùng đúng `/api/auth/login`, cache login để tránh rate limit và inject đúng `sessionStorage`.
-- Test API menu dùng đúng `/api/public/branches/:branchId/menu`.
-- Toast có class `.toast` để Playwright bắt được thông báo thao tác.
-- Test tạo order đọc đúng response shape `data.order ?? data`.
-- Quick-add customer flow chọn món active, tránh món sold out/required option không phù hợp.
-- Dashboard Admin có selector ổn định `.order-history-row` và `.order-detail` thay cho selector table cũ.
-
-| Nhóm kiểm thử | Trạng thái |
+| Service | URL |
 |---|---|
-| Customer | Pass menu, cart, submit order, tracking, gọi thêm món, cancelled/served state |
-| KDS | Pass login, board 4 cột, polling, state machine `NEW -> PREPARING -> READY -> SERVED`, cancel |
-| Admin | Pass login/RBAC, dashboard, menu CRUD/status, table/reset session flow |
-| Full-flow | Pass customer đặt món -> kitchen xử lý -> admin xem dashboard |
+| **Backend API** | `https://datn-htg-bep-nha-minh-production.up.railway.app` |
+| **Health check** | `https://datn-htg-bep-nha-minh-production.up.railway.app/health` |
+| **Frontend** | `https://datn-htg-bep-nha-minh.vercel.app` |
 
-Kết luận kiểm thử frontend: bộ E2E hiện đã khớp implementation và pass theo lần chạy mới nhất. Một test skip còn lại là skip có điều kiện theo dữ liệu/chức năng phụ, không phải fail.
+### 6.3 Cấu Hình Railway (Backend)
 
-## 7. Đánh giá hiện trạng dự án
+| Item | Giá trị |
+|---|---|
+| Platform | Railway Hobby |
+| Region | asia-southeast1 (Singapore) |
+| Builder | Nixpacks (auto-detect Node.js) |
+| Build command | `npx prisma generate && npm run build` |
+| Start command | `npx prisma migrate deploy && node dist/server.js` |
+| Root directory | `backend-api/` |
+| Auto-deploy | ✅ Khi push commit lên nhánh `main` |
 
-### 7.1 Điểm đã đạt
+**Environment Variables cấu hình trên Railway (11 biến):**
 
-- Có bộ tài liệu nghiệp vụ và kỹ thuật khá đầy đủ cho một đồ án.
-- MVP có scope rõ, tập trung vào core ordering thay vì mở rộng quá sớm.
-- Frontend có đầy đủ 3 vùng trải nghiệm: Customer, KDS, Admin.
-- Backend đã có data model, API, auth, RBAC và test automation.
-- Đã có cấu hình deploy mẫu cho backend/frontend.
-- Đã có ý thức bảo mật env qua `.env.example`, `.env.production.example` và tài liệu rotation.
+| Biến | Mô tả |
+|---|---|
+| `PORT` | Port server (Railway tự inject) |
+| `NODE_ENV` | `production` |
+| `APP_BASE_URL` | URL backend production |
+| `FRONTEND_URL` | URL frontend (whitelist CORS) |
+| `DATABASE_URL` | Supabase connection string (pooler) |
+| `DIRECT_URL` | Supabase direct connection string |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_ANON_KEY` | Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
+| `SUPABASE_JWT_SECRET` | JWT secret để verify token |
+| `SUPABASE_STORAGE_BUCKET` | Tên bucket lưu ảnh món |
 
-### 7.2 Điểm cần hoàn thiện
+### 6.4 Cấu Hình Vercel (Frontend)
 
-- Cần chuẩn hóa README/hướng dẫn chạy local để người khác có thể dựng backend, frontend và database theo đúng thứ tự.
-- Cần hoàn thiện tài liệu deploy production, đặc biệt là danh sách biến môi trường, nơi cấu hình secret và quy trình rotate secret.
-- Cần giữ test evidence mới nhất trong repo để tránh nhầm với báo cáo test cũ.
-- Cần kiểm tra lại dữ liệu seed/demo trước buổi báo cáo để đảm bảo flow QR -> Menu -> Cart -> Order -> KDS -> Tracking luôn có dữ liệu phù hợp.
-- Cần chuẩn bị demo script ngắn cho giáo viên, gồm tài khoản admin/kitchen demo và QR token mẫu.
+| Item | Giá trị |
+|---|---|
+| Platform | Vercel Hobby |
+| Framework | Vite |
+| Root directory | `web-prototype-react/` |
+| Build command | `npm run build` (Vite tự detect) |
+| Output directory | `dist/` |
+| Auto-deploy | ✅ Khi push commit lên nhánh `main` |
 
-## 8. Rủi ro và hướng phát triển
+**Environment Variables:**
 
-### 8.1 Rủi ro
+| Biến | Giá trị |
+|---|---|
+| `VITE_API_URL` | `https://datn-htg-bep-nha-minh-production.up.railway.app/api` |
 
-| Rủi ro | Mức độ | Tác động | Hướng giảm thiểu |
-|---|---|---|---|
-| Phụ thuộc Supabase/env credentials | Cao | Backend/test/deploy có thể fail nếu secret hết hạn | Quy trình rotation, không commit secret, dùng env production/staging riêng |
-| E2E bị lệch implementation khi UI/API đổi | Trung bình | Có thể tạo fail giả nếu test không được cập nhật theo code | Duy trì selector ổn định, cập nhật helper test khi đổi API |
-| Polling chưa tối ưu bằng realtime push | Trung bình | Có độ trễ 3-5 giây | Chấp nhận cho MVP, nâng cấp SSE/WebSocket sau |
-| Test và spec có thể lệch khi nghiệp vụ thay đổi | Trung bình | Fail giả hoặc kết luận sai | Ghi rõ rule nghiệp vụ và cập nhật test cùng lúc với thay đổi spec |
-| Deploy production cần bảo mật secret | Cao | Lộ token/database URL nếu thao tác sai | Dùng env trên hosting, không đưa `.env` vào tài liệu nộp |
+### 6.5 Quy Trình CI/CD
 
-### 8.2 Hướng phát triển tiếp theo
+```
+Developer sửa code
+       │
+       ▼
+git commit + git push new-origin main
+       │
+       ├─────────────────────────────┐
+       │                             │
+       ▼                             ▼
+  Railway trigger              Vercel trigger
+  (detect commit)              (detect commit)
+       │                             │
+       ▼                             ▼
+  Nixpacks build               Vite build
+  (prisma gen + tsc)           (bundle + optimize)
+       │                             │
+       ▼                             ▼
+  Deploy container             Deploy to CDN
+  (prisma migrate              (~2 min)
+   + node server.js)
+  (~2-3 min)
+```
 
-**Ngắn hạn:**
+### 6.6 Các Vấn Đề Đã Giải Quyết Trong Quá Trình Deploy
 
-- Chuẩn hóa README chạy local/deploy.
-- Hoàn thiện demo script cho giáo viên.
-- Rà soát `.env.example`, `.env.production.example` và tài liệu rotation secret.
-- Chốt dữ liệu seed/demo ổn định cho buổi trình bày.
-- Nếu có thời gian, bổ sung ảnh chụp màn hình hoặc video ngắn làm bằng chứng demo.
+| Vấn đề | Nguyên nhân | Giải pháp |
+|---|---|---|
+| "Railpack could not determine how to build" | Railway scan root thấy monorepo, không biết build gì | Tạo `Dockerfile` + `railway.json` ở root |
+| `tsc` build lỗi — thiếu Prisma types | `npm run build` chạy trước `prisma generate` | Đảo thứ tự: `prisma generate` → `tsc` |
+| Container crash — env vars không inject | Railway Dockerfile builder bug với cached registry image | Chuyển sang Nixpacks builder — inject đúng cách |
+| Frontend `/qr/qr-bnm-table-01` báo lỗi | `VITE_API_URL` thiếu `/api` suffix | Cập nhật env var + redeploy fresh (không dùng cache) |
+
+---
+
+## 7. KIỂM THỬ VÀ ĐÁNH GIÁ
+
+### 7.1 Tổng Kết Kiểm Thử
+
+| Lớp test | Framework | Tổng | Pass | Fail | Skip |
+|---|---|---:|---:|---:|---:|
+| Backend unit + integration | Vitest + Supertest | 99 | **99** | 0 | 0 |
+| Frontend E2E | Playwright Chromium | 55 | **54** | 0 | 1 |
+
+> ✅ **Backend:** 99/99 — không có fail  
+> ✅ **Frontend E2E:** 54 pass, 0 fail, 1 skip có chủ đích
+
+### 7.2 Backend Testing (Vitest + Supertest)
+
+**6 nhóm test file:**
+
+| File | Nội dung |
+|---|---|
+| `auth.test.ts` | Login, logout, me, token expire, role check |
+| `public.test.ts` | QR resolve, menu API, submit order, idempotency |
+| `orders.test.ts` | State machine, invalid transitions, cancel |
+| `admin_crud.test.ts` | CRUD categories, menu items, tables |
+| `sessions.test.ts` | Tạo order với session, reset session |
+| `e2e.test.ts` | End-to-end flow: QR → order → KDS → SERVED |
+
+**Kết quả lần chạy mới nhất (23/04/2026):**
+```
+Test Files  6 passed (6)
+Tests      99 passed (99)
+```
+
+**Các điểm chuẩn hóa quan trọng:**
+
+- `KDS-02`: Cập nhật expectation từ "chỉ lấy NEW/PREPARING/READY" → "lấy cả SERVED trong ngày" theo rule nghiệp vụ đã chốt.
+- `SESSION-06`: Sửa dữ liệu test dùng món ACTIVE không có required option, tránh nhận lỗi `400 INVALID_OPTION`.
+
+### 7.3 Frontend E2E Testing (Playwright)
+
+**Tổ chức test:**
+
+```
+tests/
+├── admin.spec.ts       # Admin login, dashboard, menu CRUD, table management
+├── customer.spec.ts    # QR load, menu, cart, submit, tracking, additional order
+├── kitchen.spec.ts     # KDS login, board 4 cột, state machine, cancel
+└── fullflow.spec.ts    # Customer đặt → KDS cập nhật → Admin xem
+```
+
+**Kết quả:**
+
+| Nhóm | Trạng thái |
+|---|---|
+| Customer | ✅ Menu, cart, submit, tracking, gọi thêm, cancelled/served state |
+| KDS | ✅ Login, 4 cột board, polling, NEW→PREPARING→READY→SERVED, cancel |
+| Admin | ✅ Login/RBAC, dashboard, menu CRUD/status, table/reset session |
+| Full-flow | ✅ Customer đặt món → KDS xử lý → Admin xem dashboard |
+
+**Các fix E2E quan trọng:**
+
+- Auth helper dùng đúng `/api/auth/login`, cache session để tránh rate limit, inject `sessionStorage` đúng cách.
+- API menu dùng đúng `/api/public/branches/:branchId/menu`.
+- Toast có class `.toast` để Playwright detect thông báo.
+- Quick-add flow chọn đúng món ACTIVE, tránh món SOLD_OUT hoặc có required option.
+- Dashboard có selector ổn định `.order-history-row` và `.order-detail`.
+
+### 7.4 Manual Testing — Production Smoke Test
+
+Sau khi deploy lên Railway + Vercel (24/04/2026):
+
+| Test | URL | Kết quả |
+|---|---|---|
+| Backend health | `/health` | ✅ `{"status":"ok"}` |
+| QR resolve API | `/api/public/qr/qr-bnm-table-01` | ✅ Trả bàn + session + store data |
+| Frontend load | Vercel URL | ✅ React app load |
+| QR menu page | `/qr/qr-bnm-table-01` | ✅ Hiện menu Bàn 01 |
+| Admin login | `/login` | ✅ Redirect về `/admin` |
+| KDS login | `/login` (bep@bepnhaminh.vn) | ✅ Redirect về `/kds` |
+
+---
+
+## 8. KẾT QUẢ DEMO TRỰC TIẾP
+
+### 8.1 Tài Khoản Demo
+
+| Vai trò | Email | Password |
+|---|---|---|
+| Admin (Store 1) | `admin@bepnhaminh.vn` | `Admin@123456` |
+| Bếp/KDS (Store 1) | `bep@bepnhaminh.vn` | `Kitchen@123456` |
+| Admin (Store 2) | `admin@commientry.vn` | `Admin@654321` |
+
+### 8.2 QR Token Demo
+
+| Bàn | URL trực tiếp |
+|---|---|
+| Bàn 01 | `https://datn-htg-bep-nha-minh.vercel.app/qr/qr-bnm-table-01` |
+| Bàn 02 | `https://datn-htg-bep-nha-minh.vercel.app/qr/qr-bnm-table-02` |
+| Bàn 03 | `https://datn-htg-bep-nha-minh.vercel.app/qr/qr-bnm-table-03` |
+
+### 8.3 Script Demo Ngắn (Cho Giáo Viên)
+
+**Kịch bản demo 5 phút:**
+
+```
+[Trên điện thoại — vai Khách]
+1. Mở URL: datn-htg-bep-nha-minh.vercel.app/qr/qr-bnm-table-01
+2. Xem menu → chọn 1-2 món → giỏ hàng → Đặt món
+3. Màn hình tracking hiện đơn với trạng thái "Đã tiếp nhận"
+
+[Trên máy tính — vai Bếp]
+4. Vào /login → đăng nhập bep@bepnhaminh.vn / Kitchen@123456
+5. KDS board hiện đơn vừa tạo ở cột "Mới nhận"
+6. Nhấn "Bắt đầu chuẩn bị" → đơn chuyển sang cột "Đang chuẩn bị"
+
+[Trên điện thoại — kiểm tra tracking]
+7. Sau ~3 giây polling, tracking page tự cập nhật → "Đang chuẩn bị"
+
+[Trên máy tính — KDS tiếp tục]
+8. Nhấn "Sẵn sàng" → "Đã phục vụ"
+
+[Trên máy tính — vai Admin]
+9. Vào /login → đăng nhập admin@bepnhaminh.vn / Admin@123456
+10. Dashboard hiện đơn đã hoàn tất trong lịch sử
+```
+
+### 8.4 Dữ Liệu Seed Production
+
+| Loại | Số lượng |
+|---|---|
+| Store | 2 |
+| Chi nhánh | 2 |
+| Bàn (Store 1) | 5 bàn (Bàn 01–05) |
+| Danh mục (Store 1) | 5 danh mục |
+| Món ăn (Store 1) | 13 món |
+| Tài khoản | 3 (1 admin Store 1, 1 bếp Store 1, 1 admin Store 2) |
+
+---
+
+## 9. RỦI RO VÀ HƯỚNG PHÁT TRIỂN
+
+### 9.1 Rủi Ro Hiện Tại
+
+| Rủi ro | Mức độ | Hướng giảm thiểu |
+|---|---|---|
+| Supabase credentials hết hạn/revoke | Cao | Quy trình rotation, không commit `.env`, dùng Railway/Vercel dashboard để quản lý |
+| E2E lệch implementation khi UI/API thay đổi | Trung bình | Duy trì selector ổn định, cập nhật helper test cùng lúc với code |
+| Polling không tối ưu bằng realtime push | Thấp | Chấp nhận cho MVP; upgrade SSE/WebSocket ở phase sau |
+| Railway Free tier giới hạn uptime | Trung bình | Upgrade plan hoặc migration sang platform khác khi có user thật |
+| Image upload mất khi container restart | Thấp | Đã dùng Supabase Storage (cloud) thay vì local filesystem |
+
+### 9.2 Hướng Phát Triển
+
+**Ngắn hạn (trong phạm vi đồ án):**
+
+- Chuẩn hóa README — hướng dẫn chạy local đầy đủ cho người mới.
+- Export QR thành ảnh/PDF để in dán lên bàn thật.
+- Thêm thông báo âm thanh khi có order mới trên KDS.
 
 **Trung hạn:**
 
-- Tạo QR export thành ảnh/PDF để in dán lên bàn.
-- Thêm thông báo âm thanh/push cho KDS khi có order mới.
-- Thêm báo cáo doanh thu, top món bán chạy, thời gian xử lý trung bình.
-- Cải thiện upload ảnh món và CDN/storage.
+- Báo cáo doanh thu: top món bán chạy, thời gian xử lý trung bình, thống kê theo ca.
+- Cải thiện tốc độ cập nhật: chuyển từ polling sang Server-Sent Events (SSE).
+- QR multi-language support (khách nước ngoài).
 
 **Dài hạn:**
 
-- Tích hợp thanh toán online.
-- Tích hợp POS.
-- Quản lý kho/nguyên liệu.
-- Multi-branch đầy đủ.
+- Tích hợp thanh toán online (VNPay, MoMo).
+- Tích hợp POS phần cứng.
+- Quản lý kho nguyên liệu và cảnh báo hết hàng.
+- Multi-branch đầy đủ (phân quyền theo chi nhánh).
 - AI gợi ý món/upsell dựa trên lịch sử order.
 
-## 9. Kết luận để báo cáo giáo viên hướng dẫn
+---
 
-Dự án "Bếp Nhà Mình" đang đi theo hướng đúng với mục tiêu đồ án: giải quyết một bài toán thực tế trong lĩnh vực F&B bằng một hệ thống web có quy trình nghiệp vụ rõ ràng. MVP không cố gắng làm đầy đủ tất cả chức năng của POS, mà tập trung vào luồng đặt món tại bàn bằng QR, truyền đơn đến bếp, cập nhật trạng thái và quản lý menu/bàn.
+## 10. KẾT LUẬN
 
-Về mặt kỹ thuật, dự án đã vượt qua mức prototype UI đơn thuần: backend Express/Prisma/PostgreSQL đã được xây dựng, frontend React đã tích hợp API thật, có auth/RBAC, có test backend và E2E frontend. Kết quả kiểm thử mới nhất cho thấy core MVP đã ổn định ở mức có thể demo/báo cáo: backend đạt 99/99 test pass, frontend E2E đạt 54 pass, 1 skip có chủ đích và 0 fail.
+Dự án **Bếp Nhà Mình** đã hoàn thành giai đoạn MVP với đầy đủ các thành phần:
 
-Hướng đi tiếp theo nên là đóng băng scope MVP, chuẩn hóa tài liệu chạy/deploy, chuẩn bị demo script và chỉ bổ sung các cải tiến nhỏ phục vụ báo cáo. Các tính năng lớn như payment, POS, kho và AI nên để ở phase sau để tránh làm phình scope và ảnh hưởng chất lượng core ordering.
+**Về nghiệp vụ:** Hệ thống giải quyết đúng bài toán thực tế trong F&B — số hóa quy trình gọi món tại bàn, truyền đơn trực tiếp về bếp và cho phép khách theo dõi trạng thái. Ba vùng trải nghiệm (Customer, KDS, Admin) đều được triển khai với logic nghiệp vụ rõ ràng, có state machine kiểm soát và business rules đầy đủ.
 
-## 10. Phụ lục: Nguồn đối chiếu trong repo
+**Về kỹ thuật:** Dự án vượt qua mức prototype UI:
+- Backend Express/TypeScript/Prisma/PostgreSQL được xây dựng và test đầy đủ.
+- Frontend React tích hợp API thật, auth/RBAC, polling realtime.
+- Có 99 backend test pass và 54 E2E test pass.
+- **Đã deploy production** trên Railway (backend) và Vercel (frontend) với CI/CD tự động.
 
-Báo cáo này được tổng hợp từ các nhóm file sau:
+**Về chất lượng:** Bộ test tự động (Vitest + Playwright) là bằng chứng cụ thể về độ ổn định của hệ thống ở thời điểm bảo vệ. CI/CD pipeline đảm bảo mỗi commit mới được deploy tự động mà không cần can thiệp thủ công.
 
-- `docs_prototype/01_phan_tich_du_an_va_dinh_huong_san_pham.md`.
-- `docs_prototype/02_quy_trinh_nghiep_vu_thong_nhat.md`.
-- `docs_prototype/03_prd_mvp_va_backlog_po.md`.
-- `docs_prototype/05_kien_truc_ky_thuat_cto.md`.
-- `docs_prototype/06_data_model_api_spec.md`.
-- `docs_prototype/13_tong_ket_du_an_bao_cao_pm_po_ba.md`.
-- `docs_prototype/15_final_testing_report.md`.
-- `SPRINT4_PROGRESS.md`.
-- `TEST_BUG_REPORT.md`.
-- `FE_BUGFIX_REPORT_2026-04-23.md`.
-- `backend-api/package.json`.
-- `backend-api/prisma/schema.prisma`.
-- `backend-api/src/app.ts`.
-- `web-prototype-react/package.json`.
-- `web-prototype-react/src/App.tsx`.
-- `web-prototype-react/src/services/publicApi.ts`.
-- `web-prototype-react/src/services/internalApi.ts`.
-- Kết quả chạy lại `npm test` trong `backend-api` và `web-prototype-react` ngày 23/04/2026.
-- Log kiểm chứng: `test_run_backend_after_kds_session_fix_raw.txt`, `test_run_playwright_after_dashboard_fix_raw.txt`.
+**Hướng đi tiếp theo** nên tiếp tục chuẩn hóa cho buổi bảo vệ: demo script, README rõ ràng và thu thập phản hồi để định hướng phase tiếp theo.
+
+---
+
+## 11. PHỤ LỤC
+
+### 11.1 Cấu Trúc Thư Mục Dự Án
+
+```
+DATN-HTG-Bep-Nha-Minh/
+├── backend-api/              # Express API
+│   ├── src/
+│   │   ├── config/env.ts     # Zod env validation
+│   │   ├── lib/              # Prisma, logger
+│   │   ├── middlewares/      # Auth, error handler
+│   │   └── modules/
+│   │       ├── auth/         # Login/logout/me
+│   │       ├── public/       # QR, menu, order, tracking
+│   │       └── internal/     # KDS, admin CRUD
+│   ├── prisma/
+│   │   ├── schema.prisma     # Data model
+│   │   ├── migrations/       # Migration files
+│   │   └── seed.ts           # Seed data
+│   ├── tests/                # Vitest test files
+│   └── nixpacks.toml         # Railway build config
+├── web-prototype-react/      # React frontend
+│   ├── src/
+│   │   ├── pages/            # Route pages
+│   │   ├── components/       # Shared components
+│   │   ├── services/         # API client layer
+│   │   ├── store/            # Zustand stores
+│   │   └── types/            # TypeScript types
+│   └── tests/                # Playwright E2E tests
+└── docs_prototype/           # Tài liệu nghiệp vụ/kỹ thuật
+```
+
+### 11.2 Công Nghệ Sử Dụng
+
+| Layer | Công nghệ |
+|---|---|
+| Frontend hosting | Vercel |
+| Backend hosting | Railway |
+| Database | Supabase PostgreSQL |
+| Auth | Supabase Auth + JWT |
+| Storage | Supabase Storage |
+| Version control | GitHub |
+| CI/CD | GitHub → Railway/Vercel auto-deploy |
+
+### 11.3 Nguồn Đối Chiếu
+
+- `docs_prototype/` — toàn bộ tài liệu nghiệp vụ và kỹ thuật
+- `SPRINT4_PROGRESS.md` — tiến độ tích hợp API
+- `backend-api/prisma/schema.prisma` — data model chính xác
+- `backend-api/src/app.ts` — route và middleware configuration
+- `web-prototype-react/src/services/` — API integration
+- `test_run_backend_after_kds_session_fix_raw.txt` — evidence backend test
+- Railway deployment log — evidence production build
+
+---
+
+*Tài liệu này được cập nhật lần cuối: 24/04/2026 — sau khi hoàn tất production deployment.*

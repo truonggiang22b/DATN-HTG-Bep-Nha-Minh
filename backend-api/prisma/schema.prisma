@@ -56,9 +56,9 @@ model Store {
   timezone  String   @default("Asia/Ho_Chi_Minh")
   createdAt DateTime @default(now()) @map("created_at")
 
-  branches  Branch[]
-  users     User[]
-  orders    Order[]
+  branches Branch[]
+  users    User[]
+  orders   Order[]
 
   @@map("stores")
 }
@@ -71,10 +71,10 @@ model Branch {
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
 
-  store         Store         @relation(fields: [storeId], references: [id])
-  diningTables  DiningTable[]
-  categories    Category[]
-  orders        Order[]
+  store        Store         @relation(fields: [storeId], references: [id])
+  diningTables DiningTable[]
+  categories   Category[]
+  orders       Order[]
 
   @@map("branches")
 }
@@ -82,16 +82,16 @@ model Branch {
 // ─── Users & Roles ────────────────────────────────────────────────────────────
 
 model User {
-  id                String   @id @default(uuid())
-  supabaseAuthUserId String  @unique @map("supabase_auth_user_id")
-  storeId           String   @map("store_id")
-  defaultBranchId   String?  @map("default_branch_id")
-  displayName       String   @map("display_name")
-  email             String
-  isActive          Boolean  @default(true) @map("is_active")
-  createdAt         DateTime @default(now()) @map("created_at")
+  id                 String   @id @default(uuid())
+  supabaseAuthUserId String   @unique @map("supabase_auth_user_id")
+  storeId            String   @map("store_id")
+  defaultBranchId    String?  @map("default_branch_id")
+  displayName        String   @map("display_name")
+  email              String
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
 
-  store              Store             @relation(fields: [storeId], references: [id])
+  store              Store                @relation(fields: [storeId], references: [id])
   roles              UserRole_Rel[]
   orderStatusHistory OrderStatusHistory[]
 
@@ -123,9 +123,9 @@ model DiningTable {
   status      TableStatus @default(ACTIVE)
   createdAt   DateTime    @default(now()) @map("created_at")
 
-  branch       Branch         @relation(fields: [branchId], references: [id])
-  sessions     TableSession[]
-  orders       Order[]
+  branch   Branch         @relation(fields: [branchId], references: [id])
+  sessions TableSession[]
+  orders   Order[]
 
   @@unique([branchId, tableCode])
   @@map("dining_tables")
@@ -195,7 +195,7 @@ model MenuOptionGroup {
   maxSelect  Int     @default(1) @map("max_select")
   sortOrder  Int     @default(0) @map("sort_order")
 
-  menuItem MenuItem      @relation(fields: [menuItemId], references: [id])
+  menuItem MenuItem     @relation(fields: [menuItemId], references: [id])
   options  MenuOption[]
 
   @@map("menu_option_groups")
@@ -205,7 +205,7 @@ model MenuOption {
   id            String  @id @default(uuid())
   optionGroupId String  @map("option_group_id")
   name          String
-  priceDelta    Decimal @default(0) @db.Decimal(10, 0) @map("price_delta")
+  priceDelta    Decimal @default(0) @map("price_delta") @db.Decimal(10, 0)
   isActive      Boolean @default(true) @map("is_active")
   sortOrder     Int     @default(0) @map("sort_order")
 
@@ -231,11 +231,11 @@ model Order {
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
 
-  store        Store              @relation(fields: [storeId], references: [id])
-  branch       Branch             @relation(fields: [branchId], references: [id])
-  table        DiningTable        @relation(fields: [tableId], references: [id])
-  tableSession TableSession       @relation(fields: [tableSessionId], references: [id])
-  items        OrderItem[]
+  store         Store                @relation(fields: [storeId], references: [id])
+  branch        Branch               @relation(fields: [branchId], references: [id])
+  table         DiningTable          @relation(fields: [tableId], references: [id])
+  tableSession  TableSession         @relation(fields: [tableSessionId], references: [id])
+  items         OrderItem[]
   statusHistory OrderStatusHistory[]
 
   @@unique([tableSessionId, orderCode])
@@ -246,15 +246,15 @@ model Order {
 }
 
 model OrderItem {
-  id                         String  @id @default(uuid())
-  orderId                    String  @map("order_id")
-  menuItemId                 String  @map("menu_item_id")
-  nameSnapshot               String  @map("name_snapshot")
-  priceSnapshot              Decimal @db.Decimal(10, 0) @map("price_snapshot")
-  quantity                   Int
-  selectedOptionsSnapshotJson Json   @default("[]") @map("selected_options_snapshot_json")
-  note                       String? @default("")
-  lineTotal                  Decimal @db.Decimal(10, 0) @map("line_total")
+  id                          String  @id @default(uuid())
+  orderId                     String  @map("order_id")
+  menuItemId                  String  @map("menu_item_id")
+  nameSnapshot                String  @map("name_snapshot")
+  priceSnapshot               Decimal @map("price_snapshot") @db.Decimal(10, 0)
+  quantity                    Int
+  selectedOptionsSnapshotJson Json    @default("[]") @map("selected_options_snapshot_json")
+  note                        String? @default("")
+  lineTotal                   Decimal @map("line_total") @db.Decimal(10, 0)
 
   order    Order    @relation(fields: [orderId], references: [id])
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
@@ -263,16 +263,16 @@ model OrderItem {
 }
 
 model OrderStatusHistory {
-  id              String      @id @default(uuid())
-  orderId         String      @map("order_id")
+  id              String       @id @default(uuid())
+  orderId         String       @map("order_id")
   fromStatus      OrderStatus? @map("from_status")
-  toStatus        OrderStatus @map("to_status")
+  toStatus        OrderStatus  @map("to_status")
   reason          String?
-  changedByUserId String?     @map("changed_by_user_id")
-  changedAt       DateTime    @default(now()) @map("changed_at")
+  changedByUserId String?      @map("changed_by_user_id")
+  changedAt       DateTime     @default(now()) @map("changed_at")
 
-  order         Order  @relation(fields: [orderId], references: [id])
-  changedByUser User?  @relation(fields: [changedByUserId], references: [id])
+  order         Order @relation(fields: [orderId], references: [id])
+  changedByUser User? @relation(fields: [changedByUserId], references: [id])
 
   @@index([orderId, changedAt(sort: Desc)])
   @@map("order_status_history")

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import QRCode from 'qrcode';
 import { useStore } from '../store/useStore';
 import { getTables, createTable, deactivateTable, restoreTableApi, resetTableSession } from '../services/internalApi';
 import '../styles/admin.css';
@@ -20,6 +21,92 @@ const IconTrash = () => (
     <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
   </svg>
 );
+const IconQr = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+    <path d="M14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/>
+  </svg>
+);
+
+// ── QR Modal ──────────────────────────────────────────────────────────────────
+const QRModal = ({ table, onClose }: { table: { displayName: string; qrToken: string }; onClose: () => void }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const url = `${window.location.origin}/qr/${table.qrToken}`;
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      QRCode.toCanvas(canvasRef.current, url, {
+        width: 220, margin: 2,
+        color: { dark: '#1a1a1a', light: '#ffffff' },
+      });
+    }
+  }, [url]);
+
+  const handlePrint = () => {
+    const win = window.open('', '_blank')!;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/png');
+    win.document.write(`
+      <html><head><title>QR — ${table.displayName}</title>
+      <style>
+        body { margin:0; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; }
+        .brand { font-size:20px; font-weight:700; color:#e8521a; margin-bottom:8px; }
+        .table-name { font-size:28px; font-weight:800; margin: 12px 0; }
+        .hint { font-size:13px; color:#666; margin-top:8px; }
+        @media print { body { min-height:unset; } }
+      </style></head>
+      <body>
+        <div class="brand">🍳 Bếp Nhà Mình</div>
+        <img src="${dataUrl}" width="200" height="200" />
+        <div class="table-name">${table.displayName}</div>
+        <div class="hint">Quét QR để xem menu &amp; đặt món</div>
+      </body></html>
+    `);
+    win.document.close();
+    win.print();
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url);
+  };
+
+  return (
+    <div
+      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background:'#fff', borderRadius:20, padding:'28px 32px', minWidth:300, textAlign:'center', boxShadow:'0 12px 48px rgba(0,0,0,0.18)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ fontWeight:700, fontSize:18, marginBottom:4 }}>🍳 Bếp Nhà Mình</div>
+        <div style={{ fontSize:22, fontWeight:800, color:'#e8521a', marginBottom:16 }}>{table.displayName}</div>
+
+        <div style={{ display:'inline-block', padding:12, border:'2px solid #f0ece6', borderRadius:12, marginBottom:16 }}>
+          <canvas ref={canvasRef} />
+        </div>
+
+        <div style={{ fontSize:11, color:'#999', wordBreak:'break-all', marginBottom:16, padding:'0 8px' }}>{url}</div>
+
+        <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
+          <button onClick={handleCopy}
+            style={{ padding:'8px 18px', borderRadius:8, border:'1.5px solid #e8521a', background:'#fff5f0', color:'#e8521a', fontWeight:600, cursor:'pointer', fontSize:13 }}>
+            📋 Copy URL
+          </button>
+          <button onClick={handlePrint}
+            style={{ padding:'8px 18px', borderRadius:8, border:'none', background:'#e8521a', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>
+            🖨️ In QR
+          </button>
+          <button onClick={onClose}
+            style={{ padding:'8px 18px', borderRadius:8, border:'1.5px solid #ddd', background:'#fff', color:'#666', fontWeight:600, cursor:'pointer', fontSize:13 }}>
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export const AdminTablesPage = () => {
@@ -32,6 +119,7 @@ export const AdminTablesPage = () => {
   const [newTable, setNewTable] = useState({ tableCode: '', displayName: '' });
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ACTIVE');
+  const [qrModalTable, setQrModalTable] = useState<{ displayName: string; qrToken: string } | null>(null);
 
   // ── Query ─────────────────────────────────────────────────────────────────
   const { data: tables = [], isLoading } = useQuery({
@@ -207,6 +295,15 @@ export const AdminTablesPage = () => {
                         </td>
                         <td>
                           <div className="quick-actions">
+                            {/* QR Code */}
+                            <button
+                              className="qa-btn"
+                              style={{ borderColor: '#6366f1', color: '#6366f1', display: 'flex', alignItems: 'center', gap: 4 }}
+                              title="Xem QR Code"
+                              onClick={() => setQrModalTable({ displayName: table.displayName, qrToken: table.qrToken })}
+                            >
+                              <IconQr /> Xem QR
+                            </button>
                             {/* Reset session */}
                             {confirmReset === table.id ? (
                               <span style={{ display: 'flex', gap: 4 }}>
@@ -296,6 +393,11 @@ export const AdminTablesPage = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* QR Modal */}
+      {qrModalTable && (
+        <QRModal table={qrModalTable} onClose={() => setQrModalTable(null)} />
       )}
 
       <style>{`
