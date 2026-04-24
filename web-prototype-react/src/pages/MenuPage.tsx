@@ -8,7 +8,6 @@ import { ItemDetailSheet } from '../components/ItemDetailSheet';
 import { formatPrice, getTagBadge } from '../components/Toast';
 import { resolveQR, getMenu } from '../services/publicApi';
 import type { ApiMenuItem } from '../types';
-import { BRAND_NAME } from '../constants';
 import '../styles/customer.css';
 
 interface MenuPageProps {

@@ -3,7 +3,6 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { formatPrice } from '../components/Toast';
 import { trackOrder } from '../services/publicApi';
-import { BRAND_NAME } from '../constants';
 import type { OrderStatus } from '../types';
 import '../styles/customer.css';
 

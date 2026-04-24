@@ -6,7 +6,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { BRAND_NAME } from '../constants';
 
 export const LoginPage = () => {
   const navigate = useNavigate();

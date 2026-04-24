@@ -49,14 +49,7 @@ const IconKDS = () => (
   </svg>
 );
 
-const IconBrand = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2C8 2 4 5 4 9c0 2.4 1 4.5 2.6 6H4v2h16v-2h-2.6C19 13.5 20 11.4 20 9c0-4-4-7-8-7z" />
-    <line x1="8" y1="21" x2="16" y2="21" />
-    <line x1="12" y1="17" x2="12" y2="21" />
-  </svg>
-);
+
 
 const IconStaff = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
