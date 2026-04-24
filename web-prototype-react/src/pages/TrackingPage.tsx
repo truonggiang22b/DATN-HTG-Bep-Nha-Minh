@@ -228,17 +228,37 @@ export const TrackingPage = () => {
         </div>
 
         {/* CTA */}
-        {order.internalStatus !== 'CANCELLED' && order.internalStatus !== 'SERVED' && qrToken && (
-          <button
-            className="btn btn-outline btn-full"
-            onClick={() => navigate(`/qr/${qrToken}`)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />
-            </svg>
-            Gọi thêm món
-          </button>
+        {order.internalStatus !== 'CANCELLED' && qrToken && (
+          order.internalStatus === 'SERVED' ? (
+            /* Đã phục vụ → nổi bật nút order thêm */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button
+                className="btn btn-primary btn-full"
+                onClick={() => navigate(`/qr/${qrToken}`)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 16, padding: '14px' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                Gọi thêm món
+              </button>
+              <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-soy)', margin: 0 }}>
+                Món mới sẽ được gửi thẳng vào bếp — không cần quét lại QR
+              </p>
+            </div>
+          ) : (
+            /* Đang xử lý → nút ghost */
+            <button
+              className="btn btn-outline btn-full"
+              onClick={() => navigate(`/qr/${qrToken}`)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />
+              </svg>
+              Gọi thêm món
+            </button>
+          )
         )}
       </div>
     </div>
