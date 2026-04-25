@@ -2,8 +2,14 @@
  * OnlineTrackingPage.tsx — Theo dõi đơn hàng online
  * Phase 2: Bếp Nhà Mình Online Ordering
  *
+ * Thiết kế nhất quán với Phase 1 (customer.css):
+ * - Warm earthy palette (rice, paper, chili, leaf)
+ * - Không dùng emoji icon — thay bằng SVG thuần hoặc ký hiệu typography
+ * - Timeline giống TrackingPage.tsx Phase 1
+ * - Font: Be Vietnam Pro + Sora
+ *
  * Route: /online-tracking/:orderId
- * Polling mỗi 30s để cập nhật trạng thái giao hàng
+ * Polling mỗi 30s
  */
 
 import { useParams, Link } from 'react-router-dom';
@@ -20,30 +26,87 @@ const fmtDate = (iso: string) =>
     timeStyle: 'short',
   }).format(new Date(iso));
 
-// ─── Delivery Status Config ───────────────────────────────────────────────────
+// ── SVG icons (nhất quán với TrackingPage.tsx Phase 1) ─────────────────────────
 
-type DelivStaus = 'PENDING' | 'ACCEPTED' | 'PREPARING' | 'DELIVERING' | 'DELIVERED' | 'CANCELLED';
+const IconCheck = () => (
+  <svg viewBox="0 0 24 24">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
 
-const DELIVERY_STEPS: { status: DelivStaus; label: string; icon: string }[] = [
-  { status: 'PENDING',    label: 'Đã đặt hàng',   icon: '📋' },
-  { status: 'ACCEPTED',   label: 'Đã xác nhận',    icon: '✅' },
-  { status: 'PREPARING',  label: 'Đang chuẩn bị',  icon: '👨‍🍳' },
-  { status: 'DELIVERING', label: 'Đang giao',       icon: '🛵' },
-  { status: 'DELIVERED',  label: 'Đã giao',         icon: '🎉' },
+const IconClipboard = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+    <rect x="9" y="3" width="6" height="4" rx="1" />
+  </svg>
+);
+
+const IconThumbUp = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+    <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+  </svg>
+);
+
+const IconCook = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M11 21H5a2 2 0 0 1-2-2v-5" />
+    <path d="M3 10a7 7 0 1 1 14 0" />
+    <path d="M21 21v-1a4 4 0 0 0-4-4h-1" />
+    <line x1="9" y1="17" x2="9" y2="21" />
+    <line x1="13" y1="17" x2="13" y2="21" />
+  </svg>
+);
+
+const IconTruck = () => (
+  <svg viewBox="0 0 24 24">
+    <rect x="1" y="3" width="15" height="13" rx="1" />
+    <path d="M16 8h4l3 5v3h-7V8z" />
+    <circle cx="5.5" cy="18.5" r="2.5" />
+    <circle cx="18.5" cy="18.5" r="2.5" />
+  </svg>
+);
+
+const IconHome = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
+  </svg>
+);
+
+const IconX = () => (
+  <svg viewBox="0 0 24 24">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+// ── Delivery Status Config ─────────────────────────────────────────────────────
+
+type DelivStatus = 'PENDING' | 'ACCEPTED' | 'PREPARING' | 'DELIVERING' | 'DELIVERED' | 'CANCELLED';
+
+const DELIVERY_STEPS: { status: DelivStatus; label: string; Icon: () => JSX.Element }[] = [
+  { status: 'PENDING',    label: 'Đã đặt hàng',  Icon: IconClipboard },
+  { status: 'ACCEPTED',   label: 'Đã xác nhận',  Icon: IconThumbUp },
+  { status: 'PREPARING',  label: 'Đang chuẩn bị', Icon: IconCook },
+  { status: 'DELIVERING', label: 'Đang giao',     Icon: IconTruck },
+  { status: 'DELIVERED',  label: 'Đã giao',       Icon: IconHome },
 ];
 
-const STATUS_ORDER: Record<DelivStaus, number> = {
+const STATUS_ORDER: Record<DelivStatus, number> = {
   PENDING: 0, ACCEPTED: 1, PREPARING: 2, DELIVERING: 3, DELIVERED: 4, CANCELLED: -1,
 };
 
 function DeliveryTimeline({ status }: { status: string }) {
-  const currentIdx = STATUS_ORDER[status as DelivStaus] ?? 0;
+  const currentIdx = STATUS_ORDER[status as DelivStatus] ?? 0;
   const isCancelled = status === 'CANCELLED';
 
   if (isCancelled) {
     return (
       <div className="otp__cancelled">
-        <span className="otp__cancelled-icon">🚫</span>
+        <div className="otp__cancelled-icon">
+          <IconX />
+        </div>
         <p>Đơn hàng đã bị hủy</p>
       </div>
     );
@@ -51,21 +114,21 @@ function DeliveryTimeline({ status }: { status: string }) {
 
   return (
     <div className="otp__timeline">
-      {DELIVERY_STEPS.map((step, i) => {
-        const done = i <= currentIdx;
+      {DELIVERY_STEPS.map(({ status: stepStatus, label, Icon }, i) => {
+        const done   = i <= currentIdx;
         const active = i === currentIdx;
         return (
-          <div key={step.status} className={`otp__tl-step${done ? ' done' : ''}${active ? ' active' : ''}`}>
+          <div
+            key={stepStatus}
+            className={`otp__tl-step${done ? ' done' : ''}${active ? ' active' : ''}`}
+          >
             <div className="otp__tl-icon">
-              {done ? step.icon : <span className="otp__tl-num">{i + 1}</span>}
+              {done ? <Icon /> : <span className="otp__tl-num">{i + 1}</span>}
             </div>
             <div className="otp__tl-body">
-              <span className="otp__tl-label">{step.label}</span>
+              <span className="otp__tl-label">{label}</span>
               {active && <span className="otp__tl-badge">Hiện tại</span>}
             </div>
-            {i < DELIVERY_STEPS.length - 1 && (
-              <div className={`otp__tl-line${done ? ' done' : ''}`} aria-hidden />
-            )}
           </div>
         );
       })}
@@ -73,7 +136,7 @@ function DeliveryTimeline({ status }: { status: string }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ── Main Page ──────────────────────────────────────────────────────────────────
 
 export function OnlineTrackingPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -82,7 +145,7 @@ export function OnlineTrackingPage() {
     queryKey: ['online-order', orderId],
     queryFn: () => onlineApi.getOrder(orderId!),
     enabled: !!orderId,
-    refetchInterval: 30_000, // poll mỗi 30s
+    refetchInterval: 30_000,
     retry: 2,
   });
 
@@ -101,10 +164,9 @@ export function OnlineTrackingPage() {
     return (
       <div className="otp">
         <div className="otp__error">
-          <p className="otp__error-icon">😕</p>
           <h2>Không tìm thấy đơn hàng</h2>
-          <p>Mã đơn hàng: <code>{orderId}</code></p>
-          <Link to="/order-online" className="otp__btn-back">
+          <p>Mã đơn: <code>{orderId}</code></p>
+          <Link to="/order-online" className="otp__btn-back-link" id="btn-back-to-landing">
             Đặt hàng mới
           </Link>
         </div>
@@ -118,12 +180,14 @@ export function OnlineTrackingPage() {
     <div className="otp">
       {/* Header */}
       <header className="otp__header">
-        <Link to="/order-online" className="otp__home-link">🏠 Bếp Nhà Mình</Link>
-        <h1 className="otp__title">Theo dõi đơn hàng</h1>
+        <Link to="/order-online" className="otp__home-link" id="link-home">
+          Bếp Nhà Mình
+        </Link>
+        <span className="otp__title">Theo dõi đơn hàng</span>
       </header>
 
       <main className="otp__main">
-        {/* Order code + meta */}
+        {/* Hero — mã đơn + polling note */}
         <div className="otp__card otp__card--hero">
           <div className="otp__order-code">#{order.orderCode}</div>
           <div className="otp__order-meta">
@@ -139,14 +203,14 @@ export function OnlineTrackingPage() {
 
         {/* Delivery Timeline */}
         <div className="otp__card">
-          <h2 className="otp__card-title">📍 Trạng thái giao hàng</h2>
+          <h2 className="otp__card-title">Trạng thái giao hàng</h2>
           <DeliveryTimeline status={deliveryStatus} />
         </div>
 
         {/* Delivery Info */}
         {order.deliveryInfo && (
           <div className="otp__card">
-            <h2 className="otp__card-title">📋 Thông tin giao hàng</h2>
+            <h2 className="otp__card-title">Thông tin giao hàng</h2>
             <div className="otp__info-grid">
               <div className="otp__info-row">
                 <span>Người nhận</span>
@@ -176,7 +240,7 @@ export function OnlineTrackingPage() {
               </div>
               <div className="otp__info-row">
                 <span>Thanh toán</span>
-                <strong>💵 COD — Tiền mặt khi nhận</strong>
+                <strong>COD — Tiền mặt khi nhận</strong>
               </div>
             </div>
           </div>
@@ -184,7 +248,7 @@ export function OnlineTrackingPage() {
 
         {/* Order Items */}
         <div className="otp__card">
-          <h2 className="otp__card-title">🍜 Món đã đặt</h2>
+          <h2 className="otp__card-title">Món đã đặt</h2>
           <div className="otp__items">
             {order.items.map((item) => (
               <div key={item.id} className="otp__item">
@@ -192,13 +256,13 @@ export function OnlineTrackingPage() {
                   <span className="otp__item-name">{item.name}</span>
                   <span className="otp__item-qty">×{item.quantity}</span>
                 </div>
-                {item.note && <p className="otp__item-note">📝 {item.note}</p>}
+                {item.note && <p className="otp__item-note">{item.note}</p>}
                 <span className="otp__item-price">{fmt(item.lineTotal)}</span>
               </div>
             ))}
           </div>
 
-          {/* Bill summary */}
+          {/* Bill */}
           <div className="otp__bill">
             <div className="otp__bill-row">
               <span>Tạm tính</span>
@@ -218,10 +282,10 @@ export function OnlineTrackingPage() {
         {/* Actions */}
         <div className="otp__actions">
           <Link to="/order-online/menu" className="otp__btn-reorder" id="btn-reorder">
-            🍜 Đặt hàng thêm
+            Đặt hàng thêm
           </Link>
           <a href="tel:+84901234567" className="otp__btn-call" id="btn-call-shop">
-            📞 Gọi cho quán
+            Gọi cho quán
           </a>
         </div>
       </main>

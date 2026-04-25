@@ -2,14 +2,16 @@
  * OnlineOrderPage.tsx — Trang đặt hàng online 3 bước
  * Phase 2: Bếp Nhà Mình Online Ordering
  *
- * Bước 1: Chọn món (menu + online cart)
- * Bước 2: Thông tin giao hàng + tính phí ship
- * Bước 3: Xác nhận & đặt hàng
+ * Thiết kế nhất quán với Phase 1:
+ * - Warm earthy palette (rice, paper, chili, leaf, soy, steam)
+ * - Không dùng emoji — tất cả trạng thái dùng text thuần
+ * - Category tabs / menu card / cart bar giống MenuPage.tsx và CartPage.tsx
+ * - Step bar sử dụng vòng tròn số, màu chili (active) và leaf (done)
  *
  * Route: /order-online/menu
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getMenu } from '../services/publicApi';
@@ -22,7 +24,12 @@ import './OnlineOrderPage.css';
 
 const BRANCH_ID = 'branch-bep-nha-minh-q1';
 
-// ─── Step Indicator ───────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+const fmt = (n: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+
+// ── Step Indicator ─────────────────────────────────────────────────────────────
 
 const STEPS = ['Chọn món', 'Thông tin giao', 'Xác nhận'];
 
@@ -34,7 +41,9 @@ function StepBar({ current }: { current: number }) {
           key={label}
           className={`oop__step${i === current ? ' oop__step--active' : i < current ? ' oop__step--done' : ''}`}
         >
-          <div className="oop__step-circle">{i < current ? '✓' : i + 1}</div>
+          <div className="oop__step-circle">
+            {i < current ? '✓' : i + 1}
+          </div>
           <span className="oop__step-label">{label}</span>
           {i < STEPS.length - 1 && <div className="oop__step-line" aria-hidden />}
         </div>
@@ -43,7 +52,7 @@ function StepBar({ current }: { current: number }) {
   );
 }
 
-// ─── Quantity Stepper ─────────────────────────────────────────────────────────
+// ── Quantity Stepper ───────────────────────────────────────────────────────────
 
 function QtyBtn({
   label,
@@ -67,12 +76,7 @@ function QtyBtn({
   );
 }
 
-// ─── Format helpers ───────────────────────────────────────────────────────────
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
-
-// ─── Step 1: Menu ─────────────────────────────────────────────────────────────
+// ── Step 1: Menu ───────────────────────────────────────────────────────────────
 
 function Step1Menu({ onNext }: { onNext: () => void }) {
   const { addItem, items, updateQuantity, getSubtotal, getTotalItems } = useOnlineCart();
@@ -102,8 +106,6 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
     imageUrl?: string;
     optionGroups?: unknown[];
   }) {
-    // Đơn giản hóa: không có option → thêm thẳng
-    // Nếu có option group required → cần mở modal (MVP: bỏ qua option cho online order)
     addItem({
       menuItemId: item.id,
       name: item.name,
@@ -126,7 +128,7 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
   }
 
   return (
-    <div className="oop__step-content">
+    <div className="oop__step-content oop__step-content--menu">
       {/* Category tabs */}
       <div className="oop__cat-tabs" role="tablist">
         {categories.map((cat: { id: string; name: string }) => (
@@ -156,7 +158,7 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
             status: string;
           }) => {
             const qty = cartQty(item.id);
-            const ci = cartItem(item.id);
+            const ci  = cartItem(item.id);
             return (
               <div key={item.id} className="menu-card">
                 {item.imageUrl && (
@@ -181,7 +183,7 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
                         type="button"
                         id={`add-${item.id}`}
                       >
-                        + Thêm
+                        +
                       </button>
                     ) : (
                       <div className="menu-card__stepper">
@@ -203,28 +205,21 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
           })}
       </div>
 
-      {/* Sticky cart summary */}
+      {/* Sticky cart bar — nhất quán với Phase 1 cart-bar */}
       {getTotalItems() > 0 && (
         <div className="oop__cart-bar">
-          <div className="oop__cart-bar-info">
+          <div className="oop__cart-bar-info" onClick={onNext} role="button" tabIndex={0}>
             <span className="oop__cart-badge">{getTotalItems()}</span>
+            <span className="oop__cart-label">Xem giỏ hàng</span>
             <span className="oop__cart-subtotal">{fmt(getSubtotal())}</span>
           </div>
-          <button
-            className="oop__cart-next"
-            onClick={onNext}
-            type="button"
-            id="btn-next-to-delivery"
-          >
-            Tiếp tục →
-          </button>
         </div>
       )}
     </div>
   );
 }
 
-// ─── Step 2: Delivery Info ────────────────────────────────────────────────────
+// ── Step 2: Delivery Info ──────────────────────────────────────────────────────
 
 function Step2Delivery({
   onNext,
@@ -275,18 +270,30 @@ function Step2Delivery({
     }
   }, [lat, lng, setShippingFee]);
 
-  // Auto-estimate when coords become available
-  useState(() => {
-    if (lat && lng) handleEstimate();
-  });
+  // Auto-estimate khi có tọa độ
+  useEffect(() => {
+    if (lat && lng && !estimateResult) handleEstimate();
+  }, [lat, lng]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const canProceed = isInfoComplete();
 
+  // Text label cho nút định vị — không dùng emoji
+  const geoLabel = (() => {
+    if (geoStatus === 'loading') return 'Đang lấy vị trí...';
+    if (geoStatus === 'error')   return 'Thử lại định vị';
+    if (geoStatus === 'success' && isEstimating) return 'Đang tính phí...';
+    if (geoStatus === 'success') return 'Đã lấy vị trí';
+    return 'Xác định vị trí của tôi';
+  })();
+
   return (
     <div className="oop__step-content">
-      <form className="delivery-form" onSubmit={(e) => { e.preventDefault(); if (canProceed) onNext(); }}>
+      <form
+        className="delivery-form"
+        onSubmit={(e) => { e.preventDefault(); if (canProceed) onNext(); }}
+      >
         <div className="delivery-form__section">
-          <h3 className="delivery-form__section-title">📋 Thông tin người nhận</h3>
+          <h3 className="delivery-form__section-title">Thông tin người nhận</h3>
 
           <div className="form-field">
             <label htmlFor="f-name">Họ tên *</label>
@@ -367,7 +374,7 @@ function Step2Delivery({
 
         {/* GPS + Fee estimate */}
         <div className="delivery-form__section">
-          <h3 className="delivery-form__section-title">📍 Tính phí giao hàng</h3>
+          <h3 className="delivery-form__section-title">Tính phí giao hàng</h3>
           <p className="delivery-form__hint">
             Cho phép định vị để tự động tính phí ship chính xác.
           </p>
@@ -375,20 +382,14 @@ function Step2Delivery({
           <button
             type="button"
             className={`geo-btn${geoStatus === 'loading' ? ' geo-btn--loading' : ''}${geoStatus === 'success' ? ' geo-btn--done' : ''}`}
-            onClick={() => {
-              requestLocation();
-            }}
+            onClick={() => requestLocation()}
             disabled={geoStatus === 'loading' || isEstimating}
             id="btn-request-location"
           >
-            {geoStatus === 'loading' && '⏳ Đang lấy vị trí...'}
-            {geoStatus === 'idle' && '📍 Xác định vị trí của tôi'}
-            {geoStatus === 'error' && '🔄 Thử lại định vị'}
-            {geoStatus === 'success' && !isEstimating && '✓ Đã lấy vị trí'}
-            {geoStatus === 'success' && isEstimating && '⏳ Đang tính phí...'}
+            {geoLabel}
           </button>
 
-          {/* Auto-estimate once we have coords */}
+          {/* Manual estimate trigger */}
           {geoStatus === 'success' && lat && lng && !estimateResult && (
             <button
               type="button"
@@ -397,12 +398,12 @@ function Step2Delivery({
               disabled={isEstimating}
               id="btn-estimate-fee"
             >
-              {isEstimating ? '⏳ Đang tính...' : '💰 Tính phí ship'}
+              {isEstimating ? 'Đang tính phí...' : 'Tính phí ship'}
             </button>
           )}
 
           {geoStatus === 'error' && errorMsg && (
-            <div className="geo-error" role="alert">⚠️ {errorMsg}</div>
+            <div className="geo-error" role="alert">{errorMsg}</div>
           )}
 
           {estimateResult && (
@@ -410,29 +411,28 @@ function Step2Delivery({
               {estimateResult.isDeliverable ? (
                 <>
                   <div className="fee-result__row">
-                    <span>📏 Khoảng cách</span>
+                    <span>Khoảng cách</span>
                     <strong>{estimateResult.distanceKm.toFixed(1)} km</strong>
                   </div>
                   <div className="fee-result__row">
-                    <span>💵 Phí giao hàng</span>
+                    <span>Phí giao hàng</span>
                     <strong className="fee-result__fee">{fmt(shippingFee)}</strong>
                   </div>
                   {estimateResult.estimatedMinutes && (
                     <div className="fee-result__row">
-                      <span>⏱️ Dự kiến giao</span>
+                      <span>Dự kiến giao</span>
                       <strong>~{estimateResult.estimatedMinutes} phút</strong>
                     </div>
                   )}
                 </>
               ) : (
                 <p className="fee-result__error">
-                  🚫 {estimateResult.reason ?? 'Địa chỉ ngoài vùng giao hàng'}
+                  {estimateResult.reason ?? 'Địa chỉ ngoài vùng giao hàng'}
                 </p>
               )}
             </div>
           )}
 
-          {/* Manual fee fallback */}
           {(geoStatus === 'error' || geoStatus === 'idle') && (
             <p className="delivery-form__hint delivery-form__hint--small">
               Không dùng định vị? Phí ship sẽ được tính khi xác nhận đơn.
@@ -442,7 +442,7 @@ function Step2Delivery({
 
         <div className="oop__nav-row">
           <button type="button" className="oop__btn-back" onClick={onBack} id="btn-back-to-menu">
-            ← Quay lại
+            Quay lại
           </button>
           <button
             type="submit"
@@ -450,7 +450,7 @@ function Step2Delivery({
             disabled={!canProceed}
             id="btn-next-to-confirm"
           >
-            Xác nhận đơn →
+            Xác nhận đơn
           </button>
         </div>
       </form>
@@ -458,7 +458,7 @@ function Step2Delivery({
   );
 }
 
-// ─── Step 3: Confirm & Submit ─────────────────────────────────────────────────
+// ── Step 3: Confirm & Submit ───────────────────────────────────────────────────
 
 function Step3Confirm({
   onBack,
@@ -523,7 +523,7 @@ function Step3Confirm({
       <div className="confirm-panel">
         {/* Order Items */}
         <div className="confirm-section">
-          <h3 className="confirm-section__title">🍜 Món đã chọn</h3>
+          <h3 className="confirm-section__title">Món đã chọn</h3>
           <div className="confirm-items">
             {items.map((item) => (
               <div key={item.id} className="confirm-item">
@@ -537,7 +537,7 @@ function Step3Confirm({
 
         {/* Delivery Info */}
         <div className="confirm-section">
-          <h3 className="confirm-section__title">📋 Thông tin giao hàng</h3>
+          <h3 className="confirm-section__title">Thông tin giao hàng</h3>
           <div className="confirm-info-grid">
             <div className="confirm-info-row">
               <span>Người nhận</span>
@@ -563,7 +563,7 @@ function Step3Confirm({
             )}
             <div className="confirm-info-row">
               <span>Thanh toán</span>
-              <strong>💵 COD — Tiền mặt khi nhận</strong>
+              <strong>COD — Tiền mặt khi nhận</strong>
             </div>
           </div>
         </div>
@@ -592,7 +592,7 @@ function Step3Confirm({
             disabled={mutation.isPending}
             id="btn-back-to-delivery"
           >
-            ← Sửa thông tin
+            Sửa thông tin
           </button>
           <button
             type="button"
@@ -601,7 +601,7 @@ function Step3Confirm({
             disabled={mutation.isPending}
             id="btn-submit-order"
           >
-            {mutation.isPending ? '⏳ Đang đặt hàng...' : '✅ Đặt hàng ngay'}
+            {mutation.isPending ? 'Đang đặt hàng...' : 'Đặt hàng ngay'}
           </button>
         </div>
       </div>
@@ -609,7 +609,7 @@ function Step3Confirm({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ── Main Page ──────────────────────────────────────────────────────────────────
 
 export function OnlineOrderPage() {
   const [step, setStep] = useState(0);
@@ -625,7 +625,10 @@ export function OnlineOrderPage() {
       {/* Header */}
       <header className="oop__header">
         <div className="oop__header-inner">
-          <h1 className="oop__header-title">🏠 Bếp Nhà Mình — Đặt hàng online</h1>
+          <div className="oop__header-title">
+            <img src="/logo.png" alt="Bếp Nhà Mình" />
+            Đặt hàng online
+          </div>
           {getTotalItems() > 0 && step === 0 && (
             <div className="oop__cart-count">{getTotalItems()} món</div>
           )}
