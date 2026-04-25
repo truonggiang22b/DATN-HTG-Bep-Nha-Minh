@@ -12,7 +12,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { publicApi } from '../services/publicApi';
+import { getMenu } from '../services/publicApi';
 import { onlineApi, type CreateOnlineOrderPayload } from '../services/onlineApi';
 import { useOnlineCart } from '../store/useOnlineCart';
 import { useGuestInfo } from '../store/useGuestInfo';
@@ -80,7 +80,7 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
 
   const { data: menu, isLoading } = useQuery({
     queryKey: ['online-menu', BRANCH_ID],
-    queryFn: () => publicApi.getMenu(BRANCH_ID),
+    queryFn: () => getMenu(BRANCH_ID),
     staleTime: 5 * 60_000,
   });
 
