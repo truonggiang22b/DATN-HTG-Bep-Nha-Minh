@@ -12,7 +12,7 @@ const vietnamesePhone = z
 
 /** Shared order item schema (tái dùng từ order.validator pattern) */
 export const onlineOrderItemSchema = z.object({
-  menuItemId: z.string().uuid('menuItemId phải là UUID'),
+  menuItemId: z.string().min(1, 'menuItemId không được rỗng'),
   quantity: z.number().int().min(1).max(50),
   selectedOptions: z
     .array(
@@ -29,7 +29,7 @@ export const onlineOrderItemSchema = z.object({
 
 /** POST /api/public/delivery/estimate-fee */
 export const estimateFeeSchema = z.object({
-  branchId: z.string().uuid('branchId phải là UUID'),
+  branchId: z.string().min(1, 'branchId không được rỗng'),
   customerLat: z.number().min(-90).max(90),
   customerLng: z.number().min(-180).max(180),
 });
@@ -38,7 +38,7 @@ export type EstimateFeeInput = z.infer<typeof estimateFeeSchema>;
 
 /** POST /api/public/online-orders */
 export const createOnlineOrderSchema = z.object({
-  branchId: z.string().uuid('branchId phải là UUID'),
+  branchId: z.string().min(1, 'branchId không được rỗng'),
   clientSessionId: z.string().min(1, 'clientSessionId là bắt buộc'),
   idempotencyKey: z.string().min(1, 'idempotencyKey là bắt buộc'),
   items: z.array(onlineOrderItemSchema).min(1, 'Giỏ hàng không được rỗng'),

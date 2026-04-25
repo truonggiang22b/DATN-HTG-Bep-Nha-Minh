@@ -1,0 +1,325 @@
+/**
+ * OnlineLandingPage.css — Styles cho trang giới thiệu đặt hàng online
+ * Phase 2: Bếp Nhà Mình
+ */
+
+/* ─── Variables ──────────────────────────────────────────────────────────── */
+:root {
+  --color-brand: #e85d2b;
+  --color-brand-dark: #c44b1e;
+  --color-accent: #f59e0b;
+  --color-text: #1a1a2e;
+  --color-text-muted: #64748b;
+  --color-bg: #0f172a;
+  --color-card: #1e293b;
+  --color-card-border: rgba(255, 255, 255, 0.08);
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --transition: 0.2s ease;
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
+.landing {
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: #f8fafc;
+  font-family: 'Inter', 'Nunito', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+.landing__container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ─── Hero ───────────────────────────────────────────────────────────────── */
+.landing__hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 24px 60px;
+  overflow: hidden;
+}
+
+.landing__hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(232, 93, 43, 0.25) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(245, 158, 11, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.landing__hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+}
+
+.landing__badge {
+  display: inline-block;
+  background: rgba(232, 93, 43, 0.15);
+  border: 1px solid rgba(232, 93, 43, 0.4);
+  color: #fb8c5a;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 100px;
+  margin-bottom: 24px;
+  letter-spacing: 0.5px;
+}
+
+.landing__title {
+  font-size: clamp(32px, 6vw, 58px);
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0 0 20px;
+  color: #f1f5f9;
+}
+
+.landing__title-accent {
+  background: linear-gradient(135deg, #e85d2b, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.landing__subtitle {
+  font-size: 18px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin: 0 0 36px;
+}
+
+.landing__ctas {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.landing__note {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* ─── CTA Buttons ────────────────────────────────────────────────────────── */
+.btn-primary-xl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #e85d2b, #c44b1e);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 16px 36px;
+  border-radius: 100px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition);
+  box-shadow: 0 4px 20px rgba(232, 93, 43, 0.35);
+}
+
+.btn-primary-xl:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(232, 93, 43, 0.5);
+}
+
+.btn-primary-xl:active {
+  transform: translateY(0);
+}
+
+.btn-ghost-xl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  font-size: 17px;
+  font-weight: 600;
+  padding: 16px 36px;
+  border-radius: 100px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.btn-ghost-xl:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ─── Features ───────────────────────────────────────────────────────────── */
+.landing__features {
+  padding: 80px 0;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.landing__section-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 48px;
+  color: #f1f5f9;
+}
+
+.landing__features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+}
+
+.feature-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: 32px 24px;
+  text-align: center;
+  transition: transform var(--transition), border-color var(--transition);
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(232, 93, 43, 0.3);
+}
+
+.feature-card__icon {
+  font-size: 40px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.feature-card__title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #f1f5f9;
+}
+
+.feature-card__desc {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ─── Steps ──────────────────────────────────────────────────────────────── */
+.landing__steps {
+  padding: 80px 0;
+}
+
+.landing__steps-row {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  margin-bottom: 48px;
+  position: relative;
+}
+
+.step-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  text-align: center;
+  flex: 1;
+  min-width: 200px;
+  max-width: 280px;
+  position: relative;
+}
+
+.step-card__num {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e85d2b, #f59e0b);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.step-card__label {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #f1f5f9;
+}
+
+.step-card__desc {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.step-card__arrow {
+  position: absolute;
+  right: -28px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  color: #e85d2b;
+  z-index: 1;
+}
+
+.landing__cta-center {
+  text-align: center;
+}
+
+/* ─── Footer ─────────────────────────────────────────────────────────────── */
+.landing__footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 32px 0;
+  text-align: center;
+}
+
+.landing__footer p {
+  color: #64748b;
+  font-size: 13px;
+  margin: 4px 0;
+}
+
+.landing__footer a {
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.landing__footer a:hover {
+  color: #e85d2b;
+}
+
+/* ─── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .landing__steps-row {
+    flex-direction: column;
+    align-items: center;
+  }
+  .step-card__arrow {
+    display: none;
+  }
+  .landing__ctas {
+    flex-direction: column;
+    align-items: center;
+  }
+  .btn-primary-xl,
+  .btn-ghost-xl {
+    width: 100%;
+    max-width: 320px;
+    justify-content: center;
+  }
+}

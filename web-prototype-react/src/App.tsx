@@ -11,14 +11,18 @@ import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { AdminMenuPage } from './pages/AdminMenuPage';
 import { AdminTablesPage } from './pages/AdminTablesPage';
 import { AdminStaffPage } from './pages/AdminStaffPage';
+// Phase 2: Online Ordering
+import { OnlineLandingPage } from './pages/OnlineLandingPage';
+import { OnlineOrderPage } from './pages/OnlineOrderPage';
+import { OnlineTrackingPage } from './pages/OnlineTrackingPage';
 
 // React Query client — cấu hình mặc định
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 30_000,   // 30s: không refetch nếu data còn "tươi"
-      refetchOnWindowFocus: false, // Không refetch khi focus lại tab
+      staleTime: 30_000,   // 30s
+      refetchOnWindowFocus: false,
     },
     mutations: {
       retry: 0,
@@ -37,15 +41,20 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          {/* ── Customer routes (no auth) ─────────────────────────────── */}
+          {/* ── Phase 1: QR Dine-in (unchanged) ──────────────────────── */}
           <Route path="/qr/:qrToken" element={<MenuPageWrapper />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/order/:orderId/tracking" element={<TrackingPage />} />
 
-          {/* ── Auth ─────────────────────────────────────────────────── */}
+          {/* ── Phase 2: Online Ordering (new) ───────────────────────── */}
+          <Route path="/order-online" element={<OnlineLandingPage />} />
+          <Route path="/order-online/menu" element={<OnlineOrderPage />} />
+          <Route path="/online-tracking/:orderId" element={<OnlineTrackingPage />} />
+
+          {/* ── Auth ──────────────────────────────────────────────────── */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* ── KDS (Kitchen & Admin) ─────────────────────────────────── */}
+          {/* ── KDS ───────────────────────────────────────────────────── */}
           <Route
             path="/kds"
             element={
@@ -55,7 +64,7 @@ function App() {
             }
           />
 
-          {/* ── Admin (Admin only) ────────────────────────────────────── */}
+          {/* ── Admin ─────────────────────────────────────────────────── */}
           <Route
             path="/admin"
             element={
@@ -70,9 +79,9 @@ function App() {
             <Route path="staff" element={<AdminStaffPage />} />
           </Route>
 
-          {/* ── Catch-all ─────────────────────────────────────────────── */}
-          <Route path="/" element={<Navigate to="/qr/qr-bnm-table-01" replace />} />
-          <Route path="*" element={<Navigate to="/qr/qr-bnm-table-01" replace />} />
+          {/* ── Catch-all: redirect / → landing page ──────────────────── */}
+          <Route path="/" element={<Navigate to="/order-online" replace />} />
+          <Route path="*" element={<Navigate to="/order-online" replace />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
