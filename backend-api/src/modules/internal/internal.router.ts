@@ -9,6 +9,7 @@ import { resetTableSession } from './sessions.controller';
 import { getMe } from '../auth/auth.controller';
 import { upload, uploadImage } from './upload.controller';
 import { listStaff, createStaff, updateStaff, updateStaffStatus } from './users.controller';
+import { onlineOrderInternalRouter } from '../public/online-orders/online-order.router';
 
 export const internalRouter = Router();
 
@@ -72,3 +73,11 @@ internalRouter.patch('/users/:id/status', requireRole('ADMIN'), updateStaffStatu
 
 // ─── File Upload ────────────────────────────────────────────────────────
 internalRouter.post('/upload', requireRole('ADMIN', 'MANAGER'), upload.single('file'), uploadImage);
+
+// ─── Phase 2: Delivery Orders & Branch Config ──────────────────────────────────
+// GET/PATCH /delivery-orders, GET/PATCH /branches/:id/delivery-config
+internalRouter.use(
+  '/',
+  requireRole('KITCHEN', 'MANAGER', 'ADMIN'),
+  onlineOrderInternalRouter
+);

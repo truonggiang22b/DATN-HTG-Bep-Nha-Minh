@@ -1,6 +1,6 @@
 # BÁO CÁO DỰ ÁN: BẾP NHÀ MÌNH — QR ORDERING SYSTEM
 
-> **Ngày cập nhật:** 24/04/2026  
+> **Ngày cập nhật:** 25/04/2026  
 > **Đối tượng nhận:** Giáo viên hướng dẫn  
 > **Sinh viên:** Trương Giang (truonggiang22b)  
 > **Phạm vi:** Nghiệp vụ, kiến trúc kỹ thuật, tiến độ, kiểm thử, deployment production  
@@ -151,10 +151,10 @@ NEW/PREPARING → CANCELLED
 |---|---|
 | Quản lý danh mục | Tạo/sửa/xóa mềm (soft-delete) danh mục, khôi phục |
 | Quản lý món ăn | Tạo/sửa món, upload ảnh, đặt trạng thái `ACTIVE`/`SOLD_OUT`/`HIDDEN`, soft-delete/restore |
-| Quản lý bàn & QR | Tạo bàn, xem QR token, theo dõi trạng thái bàn có phiên hoạt động hay không |
+| Quản lý bàn & QR | Tạo bàn, xem/in QR trực tiếp từ modal trong giao diện admin, theo dõi trạng thái bàn |
 | Reset phiên | Đóng phiên bàn cũ sau khi khách rời — bắt buộc để QR phục vụ lượt khách tiếp theo |
 | Dashboard | Xem lịch sử order, thống kê theo trạng thái |
-| Quản lý staff | Xem danh sách nhân viên theo chi nhánh |
+| Quản lý staff | Xem, tạo mới, đổi vai trò (role), khóa/mở tài khoản nhân viên |
 
 ### 3.4 Business Rules Quan Trọng
 
@@ -227,17 +227,17 @@ NEW/PREPARING → CANCELLED
 
 **Routes và phân quyền:**
 
-| Route | Đối tượng | Mục đích |
-|---|---|---|
-| `/qr/:qrToken` | Khách | Mở menu theo QR bàn |
-| `/cart` | Khách | Giỏ hàng và submit order |
-| `/order/:orderId/tracking` | Khách | Theo dõi trạng thái đơn |
-| `/login` | Staff | Đăng nhập admin/kitchen |
-| `/kds` | KITCHEN, MANAGER | Màn hình bếp xử lý order |
-| `/admin` | ADMIN | Dashboard thống kê |
-| `/admin/menu` | ADMIN | Quản lý menu và danh mục |
-| `/admin/tables` | ADMIN | Quản lý bàn, QR, reset phiên |
-| `/admin/staff` | ADMIN | Xem danh sách nhân viên |
+| Route | URL Production | Đối tượng | Mục đích |
+|---|---|---|---|
+| `/qr/:qrToken` | `https://datn-htg-bep-nha-minh.vercel.app/qr/qr-bnm-table-01` | Khách | Mở menu theo QR bàn |
+| `/cart` | `https://datn-htg-bep-nha-minh.vercel.app/cart` | Khách | Giỏ hàng và submit order |
+| `/order/:orderId/tracking` | `https://datn-htg-bep-nha-minh.vercel.app/order/.../tracking` | Khách | Theo dõi trạng thái đơn |
+| `/login` | `https://datn-htg-bep-nha-minh.vercel.app/login` | Staff | Đăng nhập admin/kitchen |
+| `/kds` | `https://datn-htg-bep-nha-minh.vercel.app/kds` | KITCHEN, MANAGER | Màn hình bếp xử lý order |
+| `/admin` | `https://datn-htg-bep-nha-minh.vercel.app/admin` | ADMIN | Dashboard thống kê |
+| `/admin/menu` | `https://datn-htg-bep-nha-minh.vercel.app/admin/menu` | ADMIN | Quản lý menu và danh mục |
+| `/admin/tables` | `https://datn-htg-bep-nha-minh.vercel.app/admin/tables` | ADMIN | Quản lý bàn, QR, reset phiên |
+| `/admin/staff` | `https://datn-htg-bep-nha-minh.vercel.app/admin/staff` | ADMIN | Quản lý tài khoản nhân viên |
 
 **Service layer:**
 
@@ -590,11 +590,11 @@ Sau khi deploy lên Railway + Vercel (24/04/2026):
 
 ### 8.1 Tài Khoản Demo
 
-| Vai trò | Email | Password |
-|---|---|---|
-| Admin (Store 1) | `admin@bepnhaminh.vn` | `Admin@123456` |
-| Bếp/KDS (Store 1) | `bep@bepnhaminh.vn` | `Kitchen@123456` |
-| Admin (Store 2) | `admin@commientry.vn` | `Admin@654321` |
+| Vai trò | Email | Password | Trang sau khi đăng nhập |
+|---|---|---|---|
+| Admin | `admin@bepnhaminh.vn` | `Admin@123456` | `/admin` |
+| Giáo Viên Demo | `giaovien@bepnhaminh.vn` | `GiaoVien@2026` | `/admin` |
+| Bếp/KDS | `bep@bepnhaminh.vn` | `Kitchen@123456` | `/kds` |
 
 ### 8.2 QR Token Demo
 
@@ -603,31 +603,38 @@ Sau khi deploy lên Railway + Vercel (24/04/2026):
 | Bàn 01 | `https://datn-htg-bep-nha-minh.vercel.app/qr/qr-bnm-table-01` |
 | Bàn 02 | `https://datn-htg-bep-nha-minh.vercel.app/qr/qr-bnm-table-02` |
 | Bàn 03 | `https://datn-htg-bep-nha-minh.vercel.app/qr/qr-bnm-table-03` |
+| Bàn 04 | `https://datn-htg-bep-nha-minh.vercel.app/qr/qr-bnm-table-04` |
+| Bàn 05 | `https://datn-htg-bep-nha-minh.vercel.app/qr/qr-bnm-table-05` |
 
 ### 8.3 Script Demo Ngắn (Cho Giáo Viên)
 
-**Kịch bản demo 5 phút:**
+**Kịch bản demo 7 phút:**
 
 ```
 [Trên điện thoại — vai Khách]
-1. Mở URL: datn-htg-bep-nha-minh.vercel.app/qr/qr-bnm-table-01
-2. Xem menu → chọn 1-2 món → giỏ hàng → Đặt món
-3. Màn hình tracking hiện đơn với trạng thái "Đã tiếp nhận"
+1. Quét QR hoặc mở: datn-htg-bep-nha-minh.vercel.app/qr/qr-bnm-table-01
+2. Xem menu → chọn 1-2 món (có thể chọn option/topping) → giỏ hàng → Đặt món
+3. Màn hình tracking hiện mã đơn, danh sách món và trạng thái "Đã tiếp nhận"
 
-[Trên máy tính — vai Bếp]
+[Trên máy tính — vai Bếp/KDS]
 4. Vào /login → đăng nhập bep@bepnhaminh.vn / Kitchen@123456
 5. KDS board hiện đơn vừa tạo ở cột "Mới nhận"
 6. Nhấn "Bắt đầu chuẩn bị" → đơn chuyển sang cột "Đang chuẩn bị"
 
-[Trên điện thoại — kiểm tra tracking]
-7. Sau ~3 giây polling, tracking page tự cập nhật → "Đang chuẩn bị"
+[Trên điện thoại — kiểm tra tracking realtime]
+7. Sau ~3 giây polling, tracking tự cập nhật → "Đang chuẩn bị"
 
-[Trên máy tính — KDS tiếp tục]
+[Trên máy tính — KDS hoàn tất]
 8. Nhấn "Sẵn sàng" → "Đã phục vụ"
 
+[Trên điện thoại — đặt thêm món]
+9. Tracking hiện "Đã phục vụ xong!" + nút "Gọi thêm món" (nổi bật)
+10. Nhấn → về lại menu → chọn thêm món → đặt → KDS nhận Order mới ngay
+
 [Trên máy tính — vai Admin]
-9. Vào /login → đăng nhập admin@bepnhaminh.vn / Admin@123456
-10. Dashboard hiện đơn đã hoàn tất trong lịch sử
+11. Vào /login → đăng nhập admin@bepnhaminh.vn / Admin@123456
+12. Dashboard hiện đơn đã hoàn tất trong lịch sử
+13. Vào Bàn & QR → click "Xem QR" → modal hiện QR + nút In trực tiếp
 ```
 
 ### 8.4 Dữ Liệu Seed Production
@@ -660,7 +667,7 @@ Sau khi deploy lên Railway + Vercel (24/04/2026):
 **Ngắn hạn (trong phạm vi đồ án):**
 
 - Chuẩn hóa README — hướng dẫn chạy local đầy đủ cho người mới.
-- Export QR thành ảnh/PDF để in dán lên bàn thật.
+- ✅ ~~Export QR thành ảnh/PDF để in dán lên bàn thật~~ — **Đã hoàn thành:** Admin có thể xem và in QR ngay trong giao diện `/admin/tables`.
 - Thêm thông báo âm thanh khi có order mới trên KDS.
 
 **Trung hạn:**
@@ -753,4 +760,4 @@ DATN-HTG-Bep-Nha-Minh/
 
 ---
 
-*Tài liệu này được cập nhật lần cuối: 24/04/2026 — sau khi hoàn tất production deployment.*
+*Tài liệu này được cập nhật lần cuối: 25/04/2026 — cập nhật tài khoản demo, QR in ấn, quản lý nhân viên đầy đủ, kịch bản demo "Gọi thêm món".*

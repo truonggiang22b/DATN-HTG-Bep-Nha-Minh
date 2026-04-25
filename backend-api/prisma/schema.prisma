@@ -21,6 +21,20 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum OrderType {
+  DINE_IN
+  ONLINE
+}
+
+enum DeliveryStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  DELIVERING
+  DELIVERED
+  CANCELLED
+}
+
 enum MenuItemStatus {
   ACTIVE
   SOLD_OUT
@@ -70,6 +84,14 @@ model Branch {
   address   String?
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
+
+  // ── Phase 2: Delivery config (optional, null = tính năng chưa bật) ──────────
+  latitude         Float?
+  longitude        Float?
+  deliveryBaseKm   Float?  @default(2)     @map("delivery_base_km")
+  deliveryBaseFee  Int?    @default(15000) @map("delivery_base_fee")
+  deliveryFeePerKm Int?    @default(5000)  @map("delivery_fee_per_km")
+  deliveryMaxKm    Float?  @default(10)    @map("delivery_max_km")
 
   store        Store         @relation(fields: [storeId], references: [id])
   diningTables DiningTable[]
@@ -220,11 +242,12 @@ model Order {
   id              String      @id @default(uuid())
   storeId         String      @map("store_id")
   branchId        String      @map("branch_id")
-  tableId         String      @map("table_id")
-  tableSessionId  String      @map("table_session_id")
+  tableId         String?     @map("table_id")         // nullable: online orders have no table
+  tableSessionId  String?     @map("table_session_id") // nullable: online orders have no session
   clientSessionId String      @map("client_session_id")
   orderCode       String      @map("order_code")
   status          OrderStatus @default(NEW)
+  orderType       OrderType   @default(DINE_IN)        @map("order_type")  // Phase 2
   subtotal        Decimal     @db.Decimal(10, 0)
   customerNote    String?     @map("customer_note")
   idempotencyKey  String      @unique @map("idempotency_key")
@@ -233,15 +256,16 @@ model Order {
 
   store         Store                @relation(fields: [storeId], references: [id])
   branch        Branch               @relation(fields: [branchId], references: [id])
-  table         DiningTable          @relation(fields: [tableId], references: [id])
-  tableSession  TableSession         @relation(fields: [tableSessionId], references: [id])
+  table         DiningTable?         @relation(fields: [tableId], references: [id])
+  tableSession  TableSession?        @relation(fields: [tableSessionId], references: [id])
   items         OrderItem[]
   statusHistory OrderStatusHistory[]
+  deliveryInfo  DeliveryInfo?        // Phase 2: only for ONLINE orders
 
-  @@unique([tableSessionId, orderCode])
   @@index([tableSessionId, createdAt(sort: Desc)])
   @@index([storeId, branchId, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Asc)])
+  @@index([orderType, createdAt(sort: Desc)])            // Phase 2: filter by type
   @@map("orders")
 }
 
@@ -276,4 +300,28 @@ model OrderStatusHistory {
 
   @@index([orderId, changedAt(sort: Desc)])
   @@map("order_status_history")
+}
+
+// ─── Phase 2: Delivery Info ───────────────────────────────────────────────────
+
+model DeliveryInfo {
+  id             String         @id @default(uuid())
+  orderId        String         @unique @map("order_id")
+  customerName   String         @map("customer_name")
+  phone          String
+  address        String
+  ward           String?
+  district       String?
+  customerLat    Float?         @map("customer_lat")
+  customerLng    Float?         @map("customer_lng")
+  distanceKm     Float?         @map("distance_km")
+  shippingFee    Int            @default(0) @map("shipping_fee")
+  deliveryStatus DeliveryStatus @default(PENDING) @map("delivery_status")
+  note           String?
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("delivery_infos")
 }
