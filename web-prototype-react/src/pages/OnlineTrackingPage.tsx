@@ -5,6 +5,7 @@
  * Route: /online-tracking/:orderId | Polling mỗi 30s
  */
 
+import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { onlineApi, type OnlineOrderDetail } from '../services/onlineApi';
@@ -93,7 +94,7 @@ const ICONS = {
 
 type DelivStatus = 'PENDING' | 'ACCEPTED' | 'PREPARING' | 'DELIVERING' | 'DELIVERED' | 'CANCELLED';
 
-const STEPS: { status: DelivStatus; label: string; desc: string; Icon: () => JSX.Element }[] = [
+const STEPS: { status: DelivStatus; label: string; desc: string; Icon: () => React.ReactElement }[] = [
   { status: 'PENDING',    label: 'Đã đặt hàng',   desc: 'Đơn hàng đã được ghi nhận',           Icon: ICONS.Clipboard },
   { status: 'ACCEPTED',   label: 'Đã xác nhận',   desc: 'Bếp đã xác nhận và bắt đầu chuẩn bị', Icon: ICONS.ThumbUp },
   { status: 'PREPARING',  label: 'Đang nấu',       desc: 'Chúng tôi đang chuẩn bị món của bạn', Icon: ICONS.Cook },
@@ -114,7 +115,7 @@ const STATUS_META: Record<DelivStatus, { headline: string; sub: string; badge: s
   CANCELLED:  { headline: 'Đơn hàng đã bị hủy',        sub: 'Liên hệ quán nếu bạn có thắc mắc',                badge: 'Đã hủy',        badgeCls: 'otp__status-badge--cancelled',  iconCls: 'otp__status-icon--cancelled' },
 };
 
-const STATUS_ICON: Record<string, () => JSX.Element> = {
+const STATUS_ICON: Record<string, () => React.ReactElement> = {
   PENDING: ICONS.Clipboard, ACCEPTED: ICONS.ThumbUp, PREPARING: ICONS.Cook,
   DELIVERING: ICONS.Truck, DELIVERED: ICONS.Home, CANCELLED: ICONS.X,
 };

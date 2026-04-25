@@ -25,7 +25,7 @@ body:has(.oop) #root {
    ══════════════════════════════════════════════════════════════════════════════ */
 .oop {
   min-height: 100dvh;
-  background: #f5f0e8;
+  background: var(--color-rice);
   display: flex;
   flex-direction: column;
   font-family: var(--font-primary);
@@ -201,7 +201,7 @@ body:has(.oop) #root {
   .oop__cat-nav {
     display: flex;
     flex-direction: column;
-    background: var(--color-paper);
+    background: #ffffff;
     border-radius: 10px;
     border: 1.5px solid var(--color-steam);
     overflow: hidden;
@@ -242,7 +242,7 @@ body:has(.oop) #root {
 }
 
 .oop__cat-nav-item:hover {
-  background: #f5f0e8;
+  background: var(--color-rice);
   color: var(--color-chili);
 }
 
@@ -293,7 +293,7 @@ body:has(.oop) #root {
   font-size: 13px;
   font-weight: var(--fw-medium);
   color: var(--color-soy);
-  background: var(--color-paper);
+  background: var(--color-rice);
   border: 1.5px solid var(--color-steam);
   cursor: pointer;
   white-space: nowrap;
@@ -392,7 +392,7 @@ body:has(.oop) #root {
    MENU CARD (horizontal list style)
    ══════════════════════════════════════════════════════════════════════════════ */
 .menu-card {
-  background: var(--color-paper);
+  background: #ffffff;
   border-radius: 10px;
   border: 1.5px solid var(--color-steam);
   display: flex;
@@ -559,7 +559,7 @@ body:has(.oop) #root {
   .oop__cart-sidebar {
     display: flex;
     flex-direction: column;
-    background: var(--color-paper);
+    background: #ffffff;
     border-radius: 10px;
     border: 1.5px solid var(--color-steam);
     overflow: hidden;
@@ -638,7 +638,7 @@ body:has(.oop) #root {
   gap: 8px;
   align-items: flex-start;
   padding: 9px 14px;
-  border-bottom: 1px solid var(--color-rice);
+  border-bottom: 1px solid var(--color-paper);
 }
 .oop__cart-item:last-child { border-bottom: none; }
 
@@ -778,7 +778,7 @@ body:has(.oop) #root {
   bottom: 0; left: 0; right: 0;
   z-index: 80;
   padding: 12px 16px 16px;
-  background: rgba(255,248,230,0.97);
+  background: rgba(247,232,201,0.97);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--color-steam);
@@ -850,7 +850,7 @@ body:has(.oop) #root {
 
 /* Card container */
 .oop__form-card {
-  background: var(--color-paper);
+  background: #ffffff;
   border-radius: 14px;
   border: 1.5px solid var(--color-steam);
   overflow: hidden;
@@ -894,7 +894,7 @@ body:has(.oop) #root {
 .oop__input, .oop__textarea {
   width: 100%;
   padding: 10px 14px;
-  background: var(--color-rice);
+  background: var(--color-paper);
   border: 1.5px solid var(--color-steam);
   border-radius: 10px;
   font-family: var(--font-primary);
