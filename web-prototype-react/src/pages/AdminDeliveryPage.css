@@ -1,0 +1,358 @@
+/**
+ * AdminDeliveryPage.css — Styles cho trang quản lý đơn giao hàng
+ * Phase 2: Bếp Nhà Mình
+ */
+
+/* ─── Live badge ──────────────────────────────────────────────────────────── */
+.adp__live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #4ade80;
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.2);
+  padding: 4px 12px;
+  border-radius: 100px;
+}
+
+.adp__pulse {
+  width: 7px;
+  height: 7px;
+  background: #4ade80;
+  border-radius: 50%;
+  animation: adp-pulse 1.5s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes adp-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* ─── Filter bar ──────────────────────────────────────────────────────────── */
+.adp__filter-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 16px 0 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--color-steam, #e2e8f0);
+}
+
+.adp__filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1.5px solid var(--color-steam, #e2e8f0);
+  color: var(--color-soy, #64748b);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.adp__filter-btn:hover {
+  border-color: var(--color-chili, #d83a2e);
+  color: var(--color-chili, #d83a2e);
+}
+
+.adp__filter-btn.active {
+  border-color: var(--color-chili, #d83a2e);
+  color: var(--color-chili, #d83a2e);
+  background: rgba(216, 58, 46, 0.06);
+}
+
+.adp__filter-count {
+  background: var(--color-steam, #e2e8f0);
+  color: var(--color-charcoal, #1e293b);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 6px;
+  border-radius: 100px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 18px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.adp__filter-btn.active .adp__filter-count {
+  color: #fff;
+}
+
+/* ─── Orders grid ─────────────────────────────────────────────────────────── */
+.adp__orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+/* ─── Order Card ─────────────────────────────────────────────────────────── */
+.adp__card {
+  background: var(--color-cream, #fff);
+  border: 1px solid var(--color-steam, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.adp__card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+}
+
+.adp__card--pending    { border-left: 3px solid #f59e0b; }
+.adp__card--accepted   { border-left: 3px solid #3b82f6; }
+.adp__card--preparing  { border-left: 3px solid #8b5cf6; }
+.adp__card--delivering { border-left: 3px solid #0ea5e9; }
+.adp__card--delivered  { border-left: 3px solid #22c55e; }
+.adp__card--cancelled  { border-left: 3px solid #ef4444; opacity: 0.75; }
+
+/* ─── Card header ─────────────────────────────────────────────────────────── */
+.adp__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adp__card-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.adp__order-code {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-charcoal, #1e293b);
+  font-family: var(--font-accent, monospace);
+}
+
+.adp__time {
+  font-size: 12px;
+  color: var(--color-soy, #64748b);
+}
+
+.adp__card-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adp__status-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.adp__btn-next {
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.adp__btn-next:hover:not(:disabled) {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.adp__btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.adp__btn-cancel {
+  background: transparent;
+  border: 1px solid rgba(239,68,68,0.4);
+  color: #ef4444;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.adp__btn-cancel:hover:not(:disabled) {
+  background: rgba(239,68,68,0.08);
+}
+
+.adp__btn-cancel:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Customer info ───────────────────────────────────────────────────────── */
+.adp__card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(0,0,0,0.02);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.adp__info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.adp__info-icon {
+  flex-shrink: 0;
+  width: 16px;
+}
+
+.adp__info-row strong {
+  color: var(--color-charcoal, #1e293b);
+  flex-shrink: 0;
+}
+
+.adp__phone {
+  color: var(--color-chili, #d83a2e);
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.adp__address {
+  color: var(--color-soy, #64748b);
+  line-height: 1.4;
+}
+
+.adp__info-row--note {
+  color: var(--color-soy, #64748b);
+  font-style: italic;
+}
+
+/* ─── Card summary ────────────────────────────────────────────────────────── */
+.adp__card-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.adp__item-count {
+  font-size: 12px;
+  color: var(--color-soy, #64748b);
+  background: var(--color-steam, #f1f5f9);
+  padding: 3px 10px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.adp__distance {
+  font-size: 12px;
+  color: var(--color-soy, #64748b);
+}
+
+.adp__toggle-detail {
+  background: none;
+  border: none;
+  color: var(--color-chili, #d83a2e);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  flex: 1;
+}
+
+.adp__totals {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.adp__ship-fee {
+  font-size: 12px;
+  color: var(--color-soy, #64748b);
+}
+
+.adp__total {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-chili, #d83a2e);
+  font-family: var(--font-accent, monospace);
+}
+
+/* ─── Expanded detail ─────────────────────────────────────────────────────── */
+.adp__detail {
+  border-top: 1px dashed var(--color-steam, #e2e8f0);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.adp__detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--color-soy, #64748b);
+}
+
+.adp__detail-row--total {
+  border-top: 1px solid var(--color-steam, #e2e8f0);
+  padding-top: 8px;
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--color-charcoal, #1e293b);
+}
+
+.adp__detail-total {
+  color: var(--color-chili, #d83a2e);
+  font-size: 16px;
+}
+
+/* ─── Loading / Error / Empty ─────────────────────────────────────────────── */
+.adp__loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-soy, #64748b);
+}
+
+.adp__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(216,58,46,0.15);
+  border-top-color: var(--color-chili, #d83a2e);
+  border-radius: 50%;
+  animation: adp-spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+
+@keyframes adp-spin { to { transform: rotate(360deg); } }
+
+.adp__error {
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 12px;
+  padding: 16px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+.adp__empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-soy, #64748b);
+}
+
+.adp__empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}

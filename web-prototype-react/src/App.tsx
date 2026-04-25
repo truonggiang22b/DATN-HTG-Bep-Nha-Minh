@@ -15,6 +15,9 @@ import { AdminStaffPage } from './pages/AdminStaffPage';
 import { OnlineLandingPage } from './pages/OnlineLandingPage';
 import { OnlineOrderPage } from './pages/OnlineOrderPage';
 import { OnlineTrackingPage } from './pages/OnlineTrackingPage';
+// Phase 2: Admin
+import { AdminDeliveryPage } from './pages/AdminDeliveryPage';
+import { AdminBranchSettingsPage } from './pages/AdminBranchSettingsPage';
 
 // React Query client — cấu hình mặc định
 const queryClient = new QueryClient({
@@ -77,6 +80,8 @@ function App() {
             <Route path="menu" element={<AdminMenuPage />} />
             <Route path="tables" element={<AdminTablesPage />} />
             <Route path="staff" element={<AdminStaffPage />} />
+            <Route path="delivery" element={<AdminDeliveryPage />} />
+            <Route path="branch-settings" element={<AdminBranchSettingsPage />} />
           </Route>
 
           {/* ── Catch-all: redirect / → landing page ──────────────────── */}

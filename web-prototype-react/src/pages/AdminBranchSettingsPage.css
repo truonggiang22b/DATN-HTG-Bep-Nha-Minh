@@ -1,0 +1,277 @@
+/**
+ * AdminBranchSettingsPage.css — Styles cho trang cấu hình chi nhánh
+ */
+
+/* ─── Layout ─────────────────────────────────────────────────────────────── */
+.absp__layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .absp__layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.absp__form-col,
+.absp__preview-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ─── Section ────────────────────────────────────────────────────────────── */
+.absp__section {
+  background: var(--color-cream, #fff);
+  border: 1px solid var(--color-steam, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.absp__section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-charcoal, #1e293b);
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-steam, #e2e8f0);
+}
+
+.absp__section-hint {
+  font-size: 13px;
+  color: var(--color-soy, #64748b);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.absp__link {
+  color: var(--color-chili, #d83a2e);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.absp__link:hover { text-decoration: underline; }
+
+/* ─── Form fields ─────────────────────────────────────────────────────────── */
+.absp__form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.absp__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.absp__field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-charcoal, #1e293b);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.absp__field-hint {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-soy, #64748b);
+}
+
+.absp__field input {
+  padding: 9px 12px;
+  border: 1.5px solid var(--color-steam, #e2e8f0);
+  border-radius: var(--radius-sm, 8px);
+  font-size: 14px;
+  font-family: var(--font-primary, inherit);
+  color: var(--color-charcoal, #1e293b);
+  background: var(--color-paper, #f8fafc);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.absp__field input::-webkit-outer-spin-button,
+.absp__field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.absp__field input:focus {
+  border-color: var(--color-chili, #d83a2e);
+  box-shadow: 0 0 0 3px rgba(216,58,46,0.1);
+}
+
+.absp__preview-inline {
+  font-size: 12px;
+  color: var(--color-leaf, #16a34a);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.absp__verify-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-chili, #d83a2e);
+  font-weight: 600;
+  text-decoration: none;
+  background: rgba(216,58,46,0.06);
+  border: 1px solid rgba(216,58,46,0.2);
+  padding: 6px 14px;
+  border-radius: 8px;
+  transition: all 0.15s;
+}
+
+.absp__verify-link:hover {
+  background: rgba(216,58,46,0.12);
+}
+
+/* ─── Save button ─────────────────────────────────────────────────────────── */
+.absp__btn-save {
+  background: var(--color-chili, #d83a2e);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-md, 12px);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  width: 100%;
+}
+
+.absp__btn-save:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.absp__btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Fee Preview ────────────────────────────────────────────────────────── */
+.absp__fee-preview {
+  background: var(--color-cream, #fff);
+  border: 1px solid var(--color-steam, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  padding: 20px;
+}
+
+.absp__preview-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-charcoal, #1e293b);
+  margin: 0 0 14px;
+}
+
+.absp__preview-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-steam, #e2e8f0);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.absp__preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--color-steam, #e2e8f0);
+}
+
+.absp__preview-row:last-child { border-bottom: none; }
+
+.absp__preview-row--header {
+  background: var(--color-paper, #f8fafc);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-soy, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.absp__preview-fee {
+  font-weight: 700;
+  color: var(--color-chili, #d83a2e);
+}
+
+.absp__preview-row--max {
+  background: rgba(239,68,68,0.04);
+}
+
+.absp__preview-out {
+  font-size: 12px;
+  color: #ef4444;
+  font-style: italic;
+}
+
+/* ─── Formula ────────────────────────────────────────────────────────────── */
+.absp__formula {
+  background: var(--color-cream, #fff);
+  border: 1px solid var(--color-steam, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  padding: 20px;
+}
+
+.absp__formula-box {
+  background: var(--color-paper, #f8fafc);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 10px;
+}
+
+.absp__formula-box p {
+  font-size: 12px;
+  color: var(--color-soy, #64748b);
+  margin: 0 0 4px;
+}
+
+.absp__formula-box code {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-charcoal, #1e293b);
+  background: rgba(0,0,0,0.04);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+/* ─── Branch name ────────────────────────────────────────────────────────── */
+.absp__branch-name {
+  font-size: 13px;
+  color: var(--color-soy, #64748b);
+  background: var(--color-paper, #f8fafc);
+  border: 1px solid var(--color-steam, #e2e8f0);
+  padding: 4px 12px;
+  border-radius: 100px;
+}
+
+/* ─── Loading ────────────────────────────────────────────────────────────── */
+.absp__loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-soy, #64748b);
+}
+
+.absp__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(216,58,46,0.15);
+  border-top-color: var(--color-chili, #d83a2e);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
