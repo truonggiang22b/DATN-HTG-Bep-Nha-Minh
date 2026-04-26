@@ -123,20 +123,52 @@ body:has(.oop) #root {
 
 .oop__header-right { width: 80px; }
 
-/* ── Stepbar ───────────────────────────────────────────────────────────────── */
+/* ── Stepbar – layout cân đối 3 bước ────────────────────────────────────── */
+/*
+  Cấu trúc mới:
+    stepbar = flex row chứa 3 step-item (flex:1 mỗi item)
+    Mỗi step-item = column gồm:
+      • step-row: [half-connector | circle | half-connector]
+      • label bên dưới (text-align: center)
+    Half-connector = flex:1 => đường nối nằm đối xứng quanh circle
+    Step đầu: không có left-connector | Step cuối: không có right-connector
+*/
 .oop__stepbar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   flex: 1;
-  max-width: 440px;
+  max-width: 480px;
 }
 
-.oop__step {
+.oop__step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+/* Hàng ngang: half-connector + circle + half-connector */
+.oop__step-row {
   display: flex;
   align-items: center;
+  width: 100%;
+}
+
+/* Mỗi nửa connector chiếm flex:1 hai bên circle => cân đối */
+.oop__step-connector {
+  flex: 1;
+  height: 1.5px;
+  background: var(--border-color);
+  transition: background 0.25s;
+}
+.oop__step-connector--done { background: #4caf7d; }
+
+/* Ô TRỐNG khi không có connector (step đầu/cuối) => giữ flex balance */
+.oop__step-connector-empty {
   flex: 1;
 }
 
+/* Circle */
 .oop__step-circle {
   width: 28px; height: 28px;
   border-radius: 50%;
@@ -150,45 +182,43 @@ body:has(.oop) #root {
   justify-content: center;
   flex-shrink: 0;
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  position: relative;
+  z-index: 1;
 }
 
-.oop__step--active .oop__step-circle {
+.oop__step-item--active .oop__step-circle {
   background: var(--primary);
   color: #fff;
   box-shadow: 0 0 0 4px rgba(233,79,55,.15);
 }
 
-.oop__step--done .oop__step-circle {
+.oop__step-item--done .oop__step-circle {
   background: #4caf7d;
   color: #fff;
 }
 
+/* Label bên dưới, căn giữa */
 .oop__step-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: var(--fw-medium);
   color: var(--text-sub);
-  margin-left: 7px;
+  margin-top: 5px;
+  text-align: center;
   white-space: nowrap;
+  line-height: 1.3;
 }
 
-.oop__step--active .oop__step-label {
+.oop__step-item--active .oop__step-label {
   color: var(--primary);
   font-weight: var(--fw-semibold);
 }
-.oop__step--done .oop__step-label { color: var(--text-sub); }
 
-.oop__step-line {
-  flex: 1;
-  height: 1.5px;
-  background: var(--border-color);
-  margin: 0 8px;
-}
-.oop__step--done .oop__step-line { background: #4caf7d; }
+.oop__step-item--done .oop__step-label { color: var(--text-sub); }
 
-/* Mobile: ẩn label chữ, chỉ hiện circle + line */
+/* Mobile: ẩn label */
 @media (max-width: 600px) {
   .oop__step-label { display: none; }
-  .oop__stepbar { max-width: 200px; }
+  .oop__stepbar { max-width: 180px; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════

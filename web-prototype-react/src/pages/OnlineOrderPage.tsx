@@ -24,7 +24,7 @@ const fmt = (n: number) =>
 
 // ── Step Indicator ─────────────────────────────────────────────────────────────
 
-const STEPS = ['Chọn món', 'Thông tin giao', 'Xác nhận'];
+const STEPS = ['Chọn món', 'Thông tin giao hàng', 'Xác nhận'];
 
 function StepBar({ current }: { current: number }) {
   return (
@@ -32,23 +32,37 @@ function StepBar({ current }: { current: number }) {
       {STEPS.map((label, i) => (
         <div
           key={label}
-          className={`oop__step${i === current ? ' oop__step--active' : i < current ? ' oop__step--done' : ''}`}
+          className={`oop__step-item${i === current ? ' oop__step-item--active' : i < current ? ' oop__step-item--done' : ''}`}
         >
-          <div className="oop__step-circle">
-            {i < current ? (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
-                strokeLinecap="round" strokeLinejoin="round" width={13} height={13}>
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            ) : i + 1}
+          {/* Circle + connector row */}
+          <div className="oop__step-row">
+            {/* Left side: connector or empty spacer */}
+            {i > 0
+              ? <div className={`oop__step-connector${i <= current ? ' oop__step-connector--done' : ''}`} aria-hidden />
+              : <div className="oop__step-connector-empty" aria-hidden />
+            }
+            <div className="oop__step-circle">
+              {i < current ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
+                  strokeLinecap="round" strokeLinejoin="round" width={13} height={13}>
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : i + 1}
+            </div>
+            {/* Right side: connector or empty spacer */}
+            {i < STEPS.length - 1
+              ? <div className={`oop__step-connector${i < current ? ' oop__step-connector--done' : ''}`} aria-hidden />
+              : <div className="oop__step-connector-empty" aria-hidden />
+            }
           </div>
+          {/* Label below, centered */}
           <span className="oop__step-label">{label}</span>
-          {i < STEPS.length - 1 && <div className="oop__step-line" aria-hidden />}
         </div>
       ))}
     </div>
   );
 }
+
 
 // ── Step 1: Menu ───────────────────────────────────────────────────────────────
 
