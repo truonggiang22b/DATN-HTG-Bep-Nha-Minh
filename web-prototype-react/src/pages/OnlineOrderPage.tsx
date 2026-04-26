@@ -335,6 +335,43 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
   );
 }
 
+// ── Order Summary (sidebar dùng chung Step 2 & 3) ────────────────────────────
+
+function OrderSummary({ shippingFee }: { shippingFee: number }) {
+  const { items, getSubtotal } = useOnlineCart();
+  const subtotal = getSubtotal();
+  const total = subtotal + shippingFee;
+
+  return (
+    <div className="oop__order-summary">
+      <div className="oop__form-card-title">Đơn hàng của bạn</div>
+      <div className="oop__os-items">
+        {items.map((ci) => (
+          <div key={ci.id} className="oop__os-item">
+            <div className="oop__os-qty-badge">{ci.quantity}</div>
+            <span className="oop__os-name">{ci.name}</span>
+            <span className="oop__os-price">{fmt(ci.lineTotal)}</span>
+          </div>
+        ))}
+      </div>
+      <div className="oop__os-footer">
+        <div className="oop__os-row">
+          <span>Tạm tính</span>
+          <span>{fmt(subtotal)}</span>
+        </div>
+        <div className="oop__os-row">
+          <span>Phí giao hàng</span>
+          <span>{shippingFee > 0 ? fmt(shippingFee) : '—'}</span>
+        </div>
+        <div className="oop__os-row oop__os-row--total">
+          <strong>Tổng cộng</strong>
+          <strong className="oop__os-total-val">{fmt(total)}</strong>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Step 2: Delivery Info ──────────────────────────────────────────────────────
 
 function Step2Delivery({
@@ -582,6 +619,9 @@ function Step2Delivery({
             Xem lại đơn hàng
           </button>
         </div>
+
+        {/* ── Order Summary sidebar (col 2 on desktop) ── */}
+        <OrderSummary shippingFee={shippingFee} />
       </div>
     </div>
   );

@@ -897,12 +897,41 @@ body:has(.oop) #root {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   STEP 2 & 3 WRAPPER
+   STEP 2 & 3 WRAPPER — full-width layout (overrides 3-col grid of oop__body)
    ══════════════════════════════════════════════════════════════════════════════ */
+/*
+  Vấn đề: oop__body ở desktop là grid 3 cột (196 | 1fr | 284).
+  Step 2/3 chỉ có 1 child (oop__step-wrapper) → nó lọt vào cột 1 (196px).
+  Fix: cho oop__step-wrapper chiếm toàn bộ 3 cột, rồi tự căn giữa nội dung.
+*/
 .oop__step-wrapper {
-  max-width: 640px;
-  margin: 0 auto;
+  /* Chiếm toàn bộ 3 cột của grid */
+  grid-column: 1 / -1;
   width: 100%;
+  /* Căn giữa nội dung form */
+  max-width: 860px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+/* Desktop: chia 2 cột — form bên trái, order summary bên phải */
+@media (min-width: 860px) {
+  .oop__step-wrapper {
+    grid-template-columns: 1fr 300px;
+    align-items: start;
+  }
+  /* Tất cả form-card bên trong nằm ở cột 1, nav-row chiếm cột 1 cũng vậy */
+  .oop__step-wrapper .oop__form-card { grid-column: 1; }
+  .oop__step-wrapper .oop__nav-row   { grid-column: 1; }
+  /* Card order summary (nếu có) nằm cột 2, sticky */
+  .oop__step-wrapper .oop__order-summary {
+    grid-column: 2;
+    grid-row: 1 / 10; /* sticky across multiple rows */
+    position: sticky;
+    top: 80px;
+  }
 }
 
 /* Card form */
@@ -912,7 +941,7 @@ body:has(.oop) #root {
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .oop__form-card-title {
@@ -1051,6 +1080,88 @@ body:has(.oop) #root {
   font-size: 13px;
   color: var(--primary);
   line-height: 1.5;
+}
+
+/* ── Order Summary sidebar ────────────────────────────────────────────────── */
+.oop__order-summary {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  /* Mobile: hiện sau nav-row */
+}
+
+.oop__os-items {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.oop__os-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+.oop__os-qty-badge {
+  background: var(--bg-highlight);
+  border: 1px solid var(--border-color);
+  color: var(--text-sub);
+  font-family: var(--font-accent);
+  font-weight: var(--fw-bold);
+  font-size: 11px;
+  min-width: 22px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.oop__os-name {
+  flex: 1;
+  line-height: 1.4;
+  font-weight: var(--fw-medium);
+}
+
+.oop__os-price {
+  font-family: var(--font-accent);
+  font-weight: var(--fw-bold);
+  font-size: 13px;
+  color: var(--text-price);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.oop__os-footer {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.oop__os-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-sub);
+}
+
+.oop__os-row--total {
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-color);
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.oop__os-total-val {
+  font-family: var(--font-accent);
+  font-size: 17px;
+  color: var(--primary);
 }
 
 /* Nav row (back/next buttons) */
