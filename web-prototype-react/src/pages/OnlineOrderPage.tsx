@@ -357,6 +357,10 @@ function Step2Delivery({
     reason?: string;
   } | null>(null);
   const [isEstimating, setIsEstimating] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+
+  // Scroll to top when entering Step 2
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, []);
 
   const handleEstimate = useCallback(async () => {
     if (!lat || !lng) return;
@@ -392,6 +396,26 @@ function Step2Delivery({
 
   const canProceed = isInfoComplete();
 
+  // Field-level error flags (shown only after first submit attempt)
+  const nameErr  = showErrors && guestInfo.customerName.trim().length < 2;
+  const phoneErr = showErrors && !/^(0[3-9]\d{8})$/.test(guestInfo.phone);
+  const addrErr  = showErrors && guestInfo.address.trim().length < 5;
+
+  const handleNext = () => {
+    if (!canProceed) {
+      setShowErrors(true);
+      setTimeout(() => {
+        const firstErr = document.querySelector<HTMLElement>('.oop__input--error');
+        if (firstErr) {
+          firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          firstErr.focus();
+        }
+      }, 50);
+      return;
+    }
+    onNext();
+  };
+
   const geoLabel = (() => {
     if (geoStatus === 'loading') return 'Đang lấy vị trí...';
     if (geoStatus === 'error')   return 'Thử lại định vị';
@@ -414,13 +438,14 @@ function Step2Delivery({
               </label>
               <input
                 id="f-name"
-                className="oop__input"
+                className={`oop__input${nameErr ? ' oop__input--error' : ''}`}
                 type="text"
                 placeholder="Nguyễn Văn A"
                 value={guestInfo.customerName}
                 onChange={(e) => setGuestInfo({ customerName: e.target.value })}
                 required minLength={2} maxLength={100}
               />
+              {nameErr && <span className="oop__field-err">Vui lòng nhập họ tên (ít nhất 2 ký tự)</span>}
             </div>
 
             <div className="oop__field">
@@ -429,13 +454,14 @@ function Step2Delivery({
               </label>
               <input
                 id="f-phone"
-                className="oop__input"
+                className={`oop__input${phoneErr ? ' oop__input--error' : ''}`}
                 type="tel"
                 placeholder="0912345678"
                 value={guestInfo.phone}
                 onChange={(e) => setGuestInfo({ phone: e.target.value.replace(/\D/g, '') })}
-                required pattern="^(0[3-9]\d{8})$" maxLength={10}
+                maxLength={10}
               />
+              {phoneErr && <span className="oop__field-err">Số điện thoại không hợp lệ (VD: 0912345678)</span>}
             </div>
 
             <div className="oop__field">
@@ -444,13 +470,13 @@ function Step2Delivery({
               </label>
               <input
                 id="f-address"
-                className="oop__input"
+                className={`oop__input${addrErr ? ' oop__input--error' : ''}`}
                 type="text"
-                placeholder="Số nhà, tên đường, phường/xã"
+                placeholder="Số nhà, tên đường"
                 value={guestInfo.address}
                 onChange={(e) => setGuestInfo({ address: e.target.value })}
-                required minLength={5}
               />
+              {addrErr && <span className="oop__field-err">Vui lòng nhập địa chỉ giao hàng</span>}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -550,8 +576,7 @@ function Step2Delivery({
           <button
             type="button"
             className="oop__btn-next"
-            onClick={() => canProceed && onNext()}
-            disabled={!canProceed}
+            onClick={handleNext}
             id="btn-next-to-confirm"
           >
             Xem lại đơn hàng
