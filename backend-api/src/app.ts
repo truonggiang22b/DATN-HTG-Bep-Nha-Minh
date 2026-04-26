@@ -21,8 +21,11 @@ const app = express();
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
-// Support nhiều origin: dev localhost + production FRONTEND_URL
+// Support nhiều origin: dev localhost + production + Vercel preview URLs
 const allowedOrigins = new Set<string>([env.FRONTEND_URL]);
+
+// Regex cho phép tất cả Vercel preview URL của project này
+const VERCEL_PREVIEW_RE = /^https:\/\/datn-htg-bep-nha-minh[a-z0-9\-]*\.vercel\.app$/;
 
 app.use(
   cors({
@@ -33,6 +36,8 @@ app.use(
         return callback(null, true);
       }
       if (allowedOrigins.has(origin)) return callback(null, true);
+      // Allow all Vercel preview deployments của project này
+      if (VERCEL_PREVIEW_RE.test(origin)) return callback(null, true);
       callback(new Error(`CORS blocked: ${origin}`));
     },
     credentials: true,
