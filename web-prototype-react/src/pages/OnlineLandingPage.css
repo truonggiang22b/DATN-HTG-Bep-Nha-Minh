@@ -10,11 +10,19 @@
 .landing *::after { box-sizing: border-box; }
 
 .landing h1, .landing h2, .landing h3,
-.landing p, .landing a {
+.landing p {
   font-family: var(--font-primary);
   letter-spacing: normal;
   text-align: unset;
   color: unset;
+  margin: 0;
+}
+
+/* Links: reset font/spacing only, NOT color — let button classes own their color */
+.landing a {
+  font-family: var(--font-primary);
+  letter-spacing: normal;
+  text-align: unset;
   margin: 0;
 }
 
