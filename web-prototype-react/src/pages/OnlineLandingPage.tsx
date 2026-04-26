@@ -52,9 +52,9 @@ const STEPS = [
 ];
 
 const INFO = [
-  { value: '10km',   label: 'Bán kính giao hàng' },
-  { value: 'COD',    label: 'Thanh toán khi nhận' },
-  { value: "30'",    label: 'Thời gian giao trung bình' },
+  { Icon: IconPin,      value: '10km',  label: 'Bán kính giao hàng' },
+  { Icon: IconCash,     value: 'COD',   label: 'Thanh toán khi nhận' },
+  { Icon: IconClock,    value: "30'",   label: 'Giao trung bình' },
 ];
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -118,10 +118,21 @@ export function OnlineLandingPage() {
             </div>
           </div>
 
-          {/* Cột phải: visual (ẩn trên mobile) */}
+          {/* Cột phải: food photo (ẩn trên mobile) */}
           <div className="landing__hero-visual">
-            <div className="landing__logo-wrap">
-              <img src="/logo.png" alt="Bếp Nhà Mình" className="landing__logo" />
+            <div className="landing__hero-photo-wrap">
+              <img
+                src="/hero-food.png"
+                alt="Cơm tấm sườn — Bếp Nhà Mình"
+                className="landing__hero-photo"
+                loading="eager"
+                width={520}
+                height={390}
+              />
+              <div className="landing__hero-photo-badge">
+                <span className="landing__hero-photo-badge-dot" aria-hidden="true" />
+                Giao ngay hôm nay
+              </div>
             </div>
           </div>
 
@@ -131,10 +142,13 @@ export function OnlineLandingPage() {
       {/* Info strip — 3 số liệu */}
       <div className="landing__info-strip">
         <div className="landing__info-strip-inner">
-          {INFO.map((item) => (
-            <div key={item.label} className="info-card">
-              <div className="info-card__value">{item.value}</div>
-              <div className="info-card__label">{item.label}</div>
+          {INFO.map(({ Icon, value, label }) => (
+            <div key={label} className="info-card">
+              <div className="info-card__icon-wrap" aria-hidden="true">
+                <Icon />
+              </div>
+              <div className="info-card__value">{value}</div>
+              <div className="info-card__label">{label}</div>
             </div>
           ))}
         </div>
