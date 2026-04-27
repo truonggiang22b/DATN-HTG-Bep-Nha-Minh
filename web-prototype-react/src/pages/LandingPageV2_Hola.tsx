@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { createTimeline, stagger, animate } from 'animejs';
+// Animations handled via CSS transitions (no external dependency)
 import './LandingPageV2.css';
 
 // ── SVG PICTOS ───────────────────────────────────────────────────────────────
@@ -180,35 +180,34 @@ export function LandingPageV2_Hola() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Anime.js Staggered Reveal for Hero (v4 API)
+  // Staggered Reveal for Hero — vanilla CSS transitions
   useEffect(() => {
     if (!heroRef.current) return;
-
-    const elements = Array.from(heroRef.current.querySelectorAll('[data-hero-reveal]'));
+    const elements = Array.from(
+      heroRef.current.querySelectorAll('[data-hero-reveal]')
+    ) as HTMLElement[];
     const bgImg = heroRef.current.querySelector('.ed-hero__bg img') as HTMLElement | null;
 
-    // Reset opacity initially
-    elements.forEach((el: any) => { el.style.opacity = '0'; el.style.transform = 'translateY(40px)'; });
-    if (bgImg) bgImg.style.opacity = '0';
+    // Set initial invisible state
+    elements.forEach(el => { el.style.opacity = '0'; el.style.transform = 'translateY(40px)'; });
+    if (bgImg) { bgImg.style.opacity = '0'; bgImg.style.transform = 'scale(1.05)'; }
 
-    // Staggered reveal using v4 createTimeline
-    const tl = createTimeline({ defaults: { ease: 'outExpo' } });
-
-    tl.add(elements, {
-      opacity: [0, 1],
-      translateY: [40, 0],
-      duration: 900,
-      delay: stagger(150, { start: 300 }),
+    // Staggered reveal via setTimeout + CSS transition
+    elements.forEach((el, i) => {
+      setTimeout(() => {
+        el.style.transition = 'opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1)';
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      }, 300 + i * 150);
     });
 
+    // Background image pan-in
     if (bgImg) {
-      animate(bgImg, {
-        opacity: [0, 1],
-        scale: [1.05, 1],
-        duration: 1800,
-        ease: 'outQuart',
-        delay: 200,
-      });
+      setTimeout(() => {
+        bgImg.style.transition = 'opacity 1.8s cubic-bezier(0.25,1,0.5,1), transform 1.8s cubic-bezier(0.25,1,0.5,1)';
+        bgImg.style.opacity = '1';
+        bgImg.style.transform = 'scale(1)';
+      }, 200);
     }
   }, []); // Run once on mount
 
