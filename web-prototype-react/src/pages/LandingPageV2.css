@@ -302,7 +302,7 @@
 
 /* ── 3. MENU PREVIEWS ── */
 .ed-menu {
-  background-color: var(--v2-surface);
+  background-color: var(--v2-bg); /* Cream — consistent with page rhythm */
   padding: var(--v2-pad-y) 0;
   border-top: 1px solid var(--v2-border);
   border-bottom: 1px solid var(--v2-border);
@@ -312,10 +312,11 @@
   gap: 2rem;
 }
 .ed-menu-card {
-  background-color: var(--v2-bg);
+  background-color: var(--v2-surface); /* White — elevated above cream bg */
   border-radius: var(--v2-radius);
   overflow: hidden;
-  border: 1px solid transparent;
+  border: 1px solid var(--v2-border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 .ed-menu-card:hover {
@@ -430,9 +431,9 @@
 
 /* ── 7. FINALE ── */
 .ed-finale {
-  background-color: #F0E9E0;
+  background-color: var(--v2-bg); /* Match main cream — seamless rhythm */
   padding: calc(var(--v2-pad-y) * 1.5) 0;
-  border-top: 2px solid rgba(0,0,0,0.08);
+  border-top: 1px solid var(--v2-border);
   position: relative;
   overflow: hidden;
 }
@@ -509,11 +510,11 @@
   gap: 1.5rem;
 }
 .ed-info-card {
-  background-color: #FFFFFF;
-  border: 1.5px solid rgba(0,0,0,0.10);
+  background-color: var(--v2-surface); /* Warm white, consistent with card surface */
+  border: 1.5px solid var(--v2-border);
   padding: 1.5rem;
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
   display: flex;
   align-items: flex-start;
   gap: 1.25rem;
