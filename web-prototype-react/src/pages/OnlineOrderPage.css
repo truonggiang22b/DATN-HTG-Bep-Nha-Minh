@@ -932,6 +932,16 @@ body:has(.oop) #root {
     position: sticky;
     top: 80px;
   }
+
+  /* Step 3 (Confirm) — không có order-summary → 1 cột, thu nhỏ và căn giữa */
+  .oop__step-wrapper:not(:has(.oop__order-summary)) {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+  }
+  .oop__step-wrapper:not(:has(.oop__order-summary)) .oop__form-card,
+  .oop__step-wrapper:not(:has(.oop__order-summary)) .oop__nav-row {
+    grid-column: 1;
+  }
 }
 
 /* Card form */

@@ -1,574 +1,362 @@
 /**
- * LandingPageV2.tsx — Bếp Nhà Mình · Story-First Landing
- * Design philosophy: Emotion → Empathy → Trust → Hunger → Action
- * "Đây không phải trang bán đồ ăn. Đây là nơi mang bữa cơm gia đình đến cho bạn."
+ * LandingPageV2.tsx — Bếp Nhà Mình · Editorial & Editorial Landing
+ * UX Strategy: Editorial aesthetics, fast ordering context, reliable kitchen.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './LandingPageV2.css';
 
-// ── Data ─────────────────────────────────────────────────────────────────────
+// ── SVG PICTOS ───────────────────────────────────────────────────────────────
 
-const EMPATHY_MOMENTS = [
+const IconOffice = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+    <line x1="8" y1="21" x2="16" y2="21"/>
+    <line x1="12" y1="17" x2="12" y2="21"/>
+  </svg>
+);
+
+const IconPerson = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
+const IconHeart = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+  </svg>
+);
+
+const IconCheck = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 10l4 4 8-8"/>
+  </svg>
+);
+
+const IconMenu = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 6h16M4 12h16M4 18h7"/>
+  </svg>
+);
+
+const IconPot = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 12h16c.3 3.6-2.7 7-6.3 7h-3.4c-3.6 0-6.6-3.4-6.3-7z"/>
+    <path d="M3 12h18"/>
+    <path d="M8 8v4"/>
+    <path d="M12 7v5"/>
+    <path d="M16 8v4"/>
+  </svg>
+);
+
+const IconDelivery = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="12" height="10" rx="1"/>
+    <path d="M15 11h3l2 4v6h-5"/>
+    <circle cx="7" cy="21" r="2"/>
+    <circle cx="17" cy="21" r="2"/>
+  </svg>
+);
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const INSIGHTS = [
   {
-    id: 'busy',
-    time: '20:14',
-    scene: 'Bạn vẫn đang ngồi bàn làm việc.',
-    feeling: 'Bụng đói từ trưa. Bếp ở nhà chắc nguội lâu rồi.',
-    icon: '💻',
+    icon: <IconOffice />,
+    title: 'Tan làm muộn',
+    desc: 'Không cần ghé chợ, không cần nhóm bếp. Chọn món, bếp nấu và giao đến.',
   },
   {
-    id: 'alone',
-    time: '18:45',
-    scene: 'Về đến nhà, mở tủ lạnh ra.',
-    feeling: 'Nấu cho một người thôi thì... thôi kệ.',
-    icon: '🏠',
+    icon: <IconPerson />,
+    title: 'Ăn một mình vẫn chu đáo',
+    desc: 'Một phần cơm nóng, có rau, có canh, có món mặn — đủ cho một bữa tử tế.',
   },
   {
-    id: 'away',
-    time: '19:30',
-    scene: 'Ngửi mùi cơm nhà hàng xóm bên kia tường.',
-    feeling: 'Nhớ mùi canh chua mẹ nấu. Hôm nay lại không về kịp.',
-    icon: '🌃',
+    icon: <IconHeart />,
+    title: 'Đặt cho người thân',
+    desc: 'Gửi một bữa ăn nóng đến nhà bố mẹ, người yêu hoặc bạn bè khi bạn không ở gần.',
   },
 ];
 
-const FOOD_STORIES = [
+const MENU_PREVIEWS = [
   {
     img: '/v2-bua-com.png',
-    dish: 'Cơm tấm sườn nướng',
-    memory: 'Bữa sáng mẹ hay mua khi còn nhỏ',
-    emotion: 'Cằm không có gì ổn định hơn một dĩa cơm tấm quen quen.',
-    tag: 'Ký ức sáng sớm',
-    color: '#D83A2E',
+    name: 'Cơm tấm sườn nướng',
+    desc: 'Sườn cốt lết nướng than hoa, chả trứng hấp, bì heo chua ngọt.',
+    price: '55.000đ',
   },
   {
     img: '/v2-canh-chua.png',
-    dish: 'Canh chua cá bông lau',
-    memory: 'Mùi canh chua là mùi của nhà',
-    emotion: 'Ai cũng có một nồi canh chua để nhớ về. Của bạn là gì?',
-    tag: 'Hương vị tuổi thơ',
-    color: '#5A3928',
+    name: 'Canh chua cá bông lau',
+    desc: 'Nước dùng chua thanh từ me, cá tươi xắt khúc, thơm cà đậu bắp chua ngọt.',
+    price: '75.000đ',
   },
   {
-    img: '/v2-hero.png',
-    dish: 'Bữa cơm gia đình',
-    memory: 'Bữa tối đầy đủ nhất là bữa tối có mặt mọi người',
-    emotion: 'Không cần sang trọng. Chỉ cần ấm và đủ.',
-    tag: 'Bữa cơm sum họp',
-    color: '#2F7D4E',
+    img: '/v2-com-tam.png',
+    name: 'Cơm gà kho sả ớt',
+    desc: 'Gà ta kho keo đậm vị sả ớt, kèm phần dưa leo, cà chua giải ngấy.',
+    price: '48.000đ',
   },
 ];
 
-const TESTIMONIALS = [
+const REVIEWS = [
   {
-    name: 'Thúy',
-    age: 28,
-    job: 'Nhân viên văn phòng',
-    avatar: '👩',
-    messages: [
-      { text: 'Ăn ở đây lần đầu vì bạn giới thiệu 😊', delay: 0 },
-      { text: 'Mà cơm ngon thiệt. Không phải cơm hộp cảm giác nhựa đó.', delay: 0.4 },
-      { text: 'Giờ tuần nào cũng order 🙈', delay: 0.8 },
-    ],
+    text: 'Cơm giao tới vẫn còn nóng, phần vừa đủ no. Hôm nào về trễ mình đặt ở đây cho nhanh để có bữa tối đàng hoàng.',
+    author: 'Anh Minh / Nhân viên văn phòng'
   },
   {
-    name: 'Anh Minh',
-    age: 34,
-    job: 'Kỹ sư phần mềm',
-    avatar: '👨‍💻',
-    messages: [
-      { text: 'Order lúc 6h30 tối', delay: 0.2 },
-      { text: 'Đến nơi mình đang còn họp thêm 20 phút 😅', delay: 0.5 },
-      { text: 'Mà về tới nơi vẫn còn ấm, canh vẫn còn thơm. Ổn quá!', delay: 0.9 },
-    ],
+    text: 'Không phải kiểu cơm hộp ăn cho xong. Có rau xanh, có canh ngọt, vị vừa miệng như cơm nhà nấu.',
+    author: 'Lan Anh / Quận 3'
   },
   {
-    name: 'Chị Lan',
-    age: 41,
-    job: 'Mẹ của 2 bé, Quận 3',
-    avatar: '👩‍👧',
-    messages: [
-      { text: 'Nhà mình đặt mỗi thứ 6 vì cuối tuần mệt không muốn nấu', delay: 0 },
-      { text: 'Con gái hay kêu "Mẹ ơi đặt cơm Bếp Nhà Mình đi" 😄', delay: 0.6 },
-      { text: 'Thích cái là không có mì chính, mấy đứa con ăn yên tâm hơn', delay: 1.1 },
-    ],
+    text: 'Mình hay đặt cho mẹ ở nhà ăn trưa. Bếp gọi xác nhận kỹ đơn vị, giao cũng đúng giờ bảo đảm.',
+    author: 'Quốc Bảo / Khách quen'
+  }
+];
+
+const OB_STEPS = [
+  {
+    icon: <IconMenu />,
+    title: 'Chọn món hôm nay',
+    desc: 'Xem thực đơn đang mở bán mỗi ngày và lựa chọn một món ăn bạn muốn.',
+  },
+  {
+    icon: <IconPot />,
+    title: 'Bếp nấu & xác nhận',
+    desc: 'Bếp ghi nhận đơn, nấu ngay món ăn và cập nhật thời gian giao cho bạn.',
+  },
+  {
+    icon: <IconDelivery />,
+    title: 'Nhận món tận nơi',
+    desc: 'Thanh toán trực tiếp khi nhận hàng. Bữa cơm giao đến luôn đảm bảo đủ nóng.',
   },
 ];
 
-const ORDER_STEPS = [
-  {
-    num: '01',
-    title: 'Chọn món bạn thèm',
-    desc: 'Duyệt thực đơn hôm nay. Mỗi món đều có câu chuyện riêng.',
-    detail: 'Menu thay đổi theo ngày, luôn có món mới',
-    icon: (
-      <svg viewBox="0 0 48 48" fill="none">
-        <rect x="8" y="8" width="32" height="36" rx="4" strokeWidth="2.5" stroke="currentColor" />
-        <line x1="16" y1="18" x2="32" y2="18" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round" />
-        <line x1="16" y1="26" x2="28" y2="26" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round" />
-        <line x1="16" y1="34" x2="24" y2="34" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    num: '02',
-    title: 'Tụi mình nấu tươi',
-    desc: 'Không đun lại, không frozen. Nấu sau khi bạn đặt.',
-    detail: 'Nguyên liệu mới nhập mỗi buổi sáng',
-    icon: (
-      <svg viewBox="0 0 48 48" fill="none">
-        <path d="M12 36 C12 36 8 28 8 20 C8 14 13 10 18 12" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round" />
-        <ellipse cx="28" cy="22" rx="12" ry="8" strokeWidth="2.5" stroke="currentColor" />
-        <path d="M16 22 L40 22" strokeWidth="2" stroke="currentColor" strokeLinecap="round" />
-        <path d="M20 14 Q24 10 28 14" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round" fill="none" />
-        <path d="M26 10 Q28 6 30 10" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round" fill="none" />
-      </svg>
-    ),
-  },
-  {
-    num: '03',
-    title: 'Giao đến tận cửa',
-    desc: 'Ship trong 10km · COD · Còn ấm khi đến nơi.',
-    detail: 'Ước tính thời gian ngay khi đặt',
-    icon: (
-      <svg viewBox="0 0 48 48" fill="none">
-        <rect x="4" y="16" width="28" height="20" rx="3" strokeWidth="2.5" stroke="currentColor" />
-        <path d="M32 24 L40 24 L44 32 L44 36 L32 36 Z" strokeWidth="2.5" stroke="currentColor" strokeLinejoin="round" />
-        <circle cx="12" cy="38" r="4" strokeWidth="2.5" stroke="currentColor" />
-        <circle cx="36" cy="38" r="4" strokeWidth="2.5" stroke="currentColor" />
-      </svg>
-    ),
-  },
-];
-
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── COMPONENT ─────────────────────────────────────────────────────────────────
 
 export function LandingPageV2() {
   const [stickyVisible, setStickyVisible] = useState(false);
-  const [activeStory, setActiveStory] = useState<number | null>(null);
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const heroRef = useRef<HTMLElement>(null);
-  const [heroParallax, setHeroParallax] = useState(0);
 
-  // Scroll-based effects
   useEffect(() => {
     const handleScroll = () => {
-      const y = window.scrollY;
-      setStickyVisible(y > 480);
-      // Parallax for hero image
-      if (heroRef.current) {
-        setHeroParallax(y * 0.35);
-      }
+      setStickyVisible(window.scrollY > 500);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // IntersectionObserver for scroll-reveal
+  // IntersectionObserver for soft entrance
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => entries.forEach(e => {
         if (e.isIntersecting) {
-          e.target.classList.add('v2-visible');
+          e.target.classList.add('ed-reveal-in');
           observer.unobserve(e.target);
         }
       }),
-      { threshold: 0.08, rootMargin: '0px 0px -48px 0px' }
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
     );
     document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
     return () => observer.disconnect();
   }, []);
 
-  // Testimonial auto-rotate
-  useEffect(() => {
-    const t = setInterval(() => setActiveTestimonial(i => (i + 1) % TESTIMONIALS.length), 5000);
-    return () => clearInterval(t);
-  }, []);
-
   return (
-    <div className="v2">
+    <div className="ed-landing">
 
-      {/* ── STICKY NAV ── */}
-      <nav className="v2-nav">
-        <div className="v2-nav__inner">
-          <Link to="/order-online" className="v2-nav__brand">
+      {/* ── NAV ── */}
+      <nav className="ed-nav">
+        <div className="ed-nav__inner">
+          <Link to="/order-online" className="ed-nav__brand">
             <img src="/logo.png" alt="Bếp Nhà Mình" />
             <span>Bếp Nhà Mình</span>
           </Link>
-          <div className="v2-nav__links">
-            <a href="#stories" className="v2-nav__link">Món ăn</a>
-            <a href="#steps" className="v2-nav__link">Cách đặt</a>
+          <div className="ed-nav__right">
+            <Link to="/order-online/menu" className="ed-nav__link">Thực đơn</Link>
+            <Link to="/order-online/menu" className="ed-btn ed-btn--primary ed-btn--sm">
+              Trang đặt món
+            </Link>
           </div>
-          <Link to="/order-online/menu" className="v2-nav__cta" id="nav-cta-order">
-            Đặt ngay
-          </Link>
         </div>
       </nav>
 
-      {/* ── S1: HERO ── */}
-      <section className="v2-hero" ref={heroRef} aria-label="Hero">
-        {/* Dark dramatic background */}
-        <div className="v2-hero__bg">
-          <div
-            className="v2-hero__bg-img"
-            style={{ transform: `translateY(${heroParallax}px)` }}
-          >
-            <img src="/v2-hero.png" alt="" aria-hidden="true" />
-          </div>
-          <div className="v2-hero__bg-overlay" />
-          <div className="v2-hero__grain" aria-hidden="true" />
+      {/* ── 1. HERO ── */}
+      <section className="ed-hero">
+        <div className="ed-hero__bg">
+          <img src="/v2-bua-com.png" alt="Bữa cơm gia đình" />
+          <div className="ed-hero__gradient" />
         </div>
-
-        {/* Steam particles */}
-        <div className="v2-hero__steam" aria-hidden="true">
-          {[...Array(6)].map((_, i) => (
-            <span key={i} className={`v2-steam-particle v2-steam-particle--${i + 1}`} />
-          ))}
-        </div>
-
-        {/* Content */}
-        <div className="v2-hero__content">
-          <div className="v2-hero__eyebrow">
-            <span className="v2-hero__eyebrow-dot" aria-hidden="true" />
-            Giao hàng tận nơi · Hôm nay
-          </div>
-
-          <h1 className="v2-hero__headline">
-            <span className="v2-hero__line v2-hero__line--1" data-reveal>
-              8 giờ tối.
-            </span>
-            <span className="v2-hero__line v2-hero__line--2" data-reveal>
-              Bụng đói.
-            </span>
-            <span className="v2-hero__line v2-hero__line--accent" data-reveal>
-              Bếp nguội.
-            </span>
-          </h1>
-
-          <p className="v2-hero__sub" data-reveal>
-            Không sao.<br />
-            <strong>Bếp Nhà Mình có đây rồi.</strong>
-          </p>
-
-          <div className="v2-hero__actions" data-reveal>
-            <Link
-              to="/order-online/menu"
-              className="v2-btn-fire"
-              id="hero-cta-main"
-            >
-              <span>Đặt bữa cơm hôm nay</span>
-              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" />
-              </svg>
-            </Link>
-            <div className="v2-hero__trust-badges">
-              <span>⏱ Giao trong 30 phút</span>
-              <span>💵 Thanh toán khi nhận</span>
-              <span>📍 Ship 10km</span>
+        
+        <div className="ed-hero__container">
+          <div className="ed-hero__content">
+            <div className="ed-badge" data-reveal>Giao tận nơi · Hôm nay</div>
+            <h1 className="ed-hero__title" data-reveal>Đói lúc nào,<br/>bếp lo lúc đó.</h1>
+            <p className="ed-hero__sub" data-reveal>
+              Món quen nấu mới mỗi ngày, giao tận nơi khi bạn cần một bữa ăn nóng và tử tế.
+            </p>
+            <div className="ed-hero__actions" data-reveal>
+              <Link to="/order-online/menu" className="ed-btn ed-btn--primary ed-btn--lg">
+                Chọn món & đặt ngay
+              </Link>
+            </div>
+            <div className="ed-hero__meta" data-reveal>
+              <span>Bếp nhận đơn rồi mới nấu</span>
+              <span className="ed-dot" />
+              <span>Giao dự kiến 30–45 phút</span>
+              <span className="ed-dot" />
+              <span>Thanh toán khi nhận</span>
             </div>
           </div>
         </div>
-
-        {/* Scroll indicator */}
-        <div className="v2-hero__scroll-hint" aria-hidden="true">
-          <div className="v2-hero__scroll-mouse">
-            <div className="v2-hero__scroll-wheel" />
-          </div>
-          <span>Kéo xuống xem thêm</span>
-        </div>
       </section>
 
-      {/* ── S2: EMPATHY ── */}
-      <section className="v2-empathy" aria-label="Câu chuyện người dùng">
-        <div className="v2-container">
-          <div className="v2-section-label" data-reveal>Bạn có quen không?</div>
-          <h2 className="v2-section-title" data-reveal>
-            Những khoảnh khắc<br />
-            <em>ai cũng đã từng trải qua</em>
-          </h2>
-
-          <div className="v2-empathy__cards">
-            {EMPATHY_MOMENTS.map((m, i) => (
-              <div
-                key={m.id}
-                className="v2-empathy-card"
-                data-reveal
-                style={{ '--card-delay': `${i * 0.15}s` } as React.CSSProperties}
-              >
-                <div className="v2-empathy-card__time">{m.time}</div>
-                <div className="v2-empathy-card__icon">{m.icon}</div>
-                <p className="v2-empathy-card__scene">{m.scene}</p>
-                <p className="v2-empathy-card__feeling">"{m.feeling}"</p>
-                <div className="v2-empathy-card__cta">
-                  <Link to="/order-online/menu">Đặt ngay cho tối nay →</Link>
-                </div>
+      {/* ── 2. INSIGHT ── */}
+      <section className="ed-insight">
+        <div className="ed-container">
+          <div className="ed-insight__grid">
+            {INSIGHTS.map((item, i) => (
+              <div key={item.title} className="ed-insight-card" data-reveal style={{ transitionDelay: `${i * 100}ms` }}>
+                <div className="ed-insight-card__icon">{item.icon}</div>
+                <h3 className="ed-insight-card__title">{item.title}</h3>
+                <p className="ed-insight-card__desc">{item.desc}</p>
+                <Link to="/order-online/menu" className="ed-link">Chọn món ngay →</Link>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── S3: FOOD STORIES ── */}
-      <section className="v2-stories" id="stories" aria-label="Câu chuyện món ăn">
-        <div className="v2-container">
-          <div className="v2-section-label" data-reveal>Không chỉ là món ăn</div>
-          <h2 className="v2-section-title" data-reveal>
-            Mỗi món là<br />
-            <em>một ký ức</em>
-          </h2>
-        </div>
+      {/* ── 3. MENU PREVIEWS ── */}
+      <section className="ed-menu">
+        <div className="ed-container">
+          <header className="ed-section-head" data-reveal>
+            <h2 className="ed-section-title">Hôm nay bếp có món gì?</h2>
+            <p className="ed-section-sub">Thực đơn thay đổi theo ngày, món nào cũng dễ ăn, đủ no và hợp bữa.</p>
+          </header>
 
-        <div className="v2-stories__grid">
-          {FOOD_STORIES.map((story, i) => (
-            <div
-              key={story.dish}
-              className={`v2-story-card ${activeStory === i ? 'v2-story-card--active' : ''}`}
-              data-reveal
-              style={{ '--story-delay': `${i * 0.12}s`, '--story-color': story.color } as React.CSSProperties}
-              onMouseEnter={() => setActiveStory(i)}
-              onMouseLeave={() => setActiveStory(null)}
-              onFocus={() => setActiveStory(i)}
-              onBlur={() => setActiveStory(null)}
-            >
-              <div className="v2-story-card__img-wrap">
-                <img src={story.img} alt={story.dish} loading="lazy" />
-                <div className="v2-story-card__overlay" />
-              </div>
-              <div className="v2-story-card__tag">{story.tag}</div>
-              <div className="v2-story-card__content">
-                <h3 className="v2-story-card__dish">{story.dish}</h3>
-                <p className="v2-story-card__memory">{story.memory}</p>
-                <p className="v2-story-card__emotion">{story.emotion}</p>
-                <Link
-                  to="/order-online/menu"
-                  className="v2-story-card__order"
-                  id={`story-cta-${i}`}
-                >
-                  Đặt món này
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── S4: KITCHEN TRUTH ── */}
-      <section className="v2-kitchen" aria-label="Bếp thật của chúng tôi">
-        <div className="v2-kitchen__inner">
-          <div className="v2-kitchen__visual" data-reveal>
-            <img src="/v2-bua-com.png" alt="Bếp Nhà Mình nấu ăn" className="v2-kitchen__photo" />
-            <div className="v2-kitchen__photo-accent" aria-hidden="true" />
-            {/* Floating stats */}
-            <div className="v2-kitchen__stat v2-kitchen__stat--1" data-reveal>
-              <span className="v2-kitchen__stat-num">100%</span>
-              <span className="v2-kitchen__stat-label">Nguyên liệu tươi</span>
-            </div>
-            <div className="v2-kitchen__stat v2-kitchen__stat--2" data-reveal>
-              <span className="v2-kitchen__stat-num">0</span>
-              <span className="v2-kitchen__stat-label">Bột ngọt, chất bảo quản</span>
-            </div>
-          </div>
-
-          <div className="v2-kitchen__text">
-            <div className="v2-section-label" data-reveal>Bếp thật</div>
-            <h2 className="v2-kitchen__title" data-reveal>
-              Chúng tôi nấu<br />
-              <em>như mẹ bạn nấu</em>
-            </h2>
-            <p className="v2-kitchen__desc" data-reveal>
-              Không có bếp công nghiệp, không có thức ăn đông lạnh.
-              Mỗi bữa được nấu sau khi bạn đặt — từ nguyên liệu mới
-              nhập buổi sáng hôm đó.
-            </p>
-            <ul className="v2-kitchen__promises" data-reveal>
-              {[
-                'Rau củ nhập chợ mỗi sáng sớm',
-                'Nấu theo đơn, không để sẵn',
-                'Không phụ gia, không bột ngọt',
-                'Thử trước, bán sau — tụi mình ăn cùng nhau',
-              ].map(p => (
-                <li key={p} className="v2-kitchen__promise-item">
-                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                    <path d="M5 10l4 4 6-8" strokeWidth="2.5" stroke="#2F7D4E" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  {p}
-                </li>
-              ))}
-            </ul>
-            <Link
-              to="/order-online/menu"
-              className="v2-btn-warm"
-              id="kitchen-cta"
-              data-reveal
-            >
-              Xem thực đơn hôm nay
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── S5: SOCIAL PROOF ── */}
-      <section className="v2-proof" aria-label="Nhận xét từ khách">
-        <div className="v2-container">
-          <div className="v2-section-label" data-reveal>Họ nói gì về chúng tôi</div>
-          <h2 className="v2-section-title v2-section-title--light" data-reveal>
-            Không phải 5 sao.<br />
-            <em>Là lời thật từ người thật.</em>
-          </h2>
-
-          <div className="v2-proof__testimonials">
-            {TESTIMONIALS.map((t, tIdx) => (
-              <div
-                key={t.name}
-                className={`v2-testimonial ${activeTestimonial === tIdx ? 'v2-testimonial--active' : ''}`}
-                onClick={() => setActiveTestimonial(tIdx)}
-                role="button"
-                tabIndex={0}
-                aria-label={`Xem nhận xét của ${t.name}`}
-                onKeyDown={e => e.key === 'Enter' && setActiveTestimonial(tIdx)}
-              >
-                <div className="v2-testimonial__header">
-                  <div className="v2-testimonial__avatar">{t.avatar}</div>
-                  <div>
-                    <div className="v2-testimonial__name">{t.name}, {t.age} tuổi</div>
-                    <div className="v2-testimonial__job">{t.job}</div>
+          <div className="ed-menu__grid">
+            {MENU_PREVIEWS.map((menu, i) => (
+              <div key={menu.name} className="ed-menu-card" data-reveal style={{ transitionDelay: `${i * 100}ms` }}>
+                <div className="ed-menu-card__img">
+                  <img src={menu.img} alt={menu.name} loading="lazy" />
+                </div>
+                <div className="ed-menu-card__body">
+                  <h3 className="ed-menu-card__name">{menu.name}</h3>
+                  <p className="ed-menu-card__desc">{menu.desc}</p>
+                  <div className="ed-menu-card__foot">
+                    <span className="ed-menu-card__price">{menu.price}</span>
+                    <Link to="/order-online/menu" className="ed-btn ed-btn--secondary ed-btn--sm">
+                      Thêm vào giỏ
+                    </Link>
                   </div>
                 </div>
-                <div className="v2-testimonial__chat">
-                  {t.messages.map((msg, mIdx) => (
-                    <div
-                      key={mIdx}
-                      className="v2-chat-bubble"
-                      style={{ '--bubble-delay': `${msg.delay}s` } as React.CSSProperties}
-                    >
-                      {msg.text}
-                    </div>
-                  ))}
-                </div>
               </div>
-            ))}
-          </div>
-
-          {/* Dots */}
-          <div className="v2-proof__dots" aria-hidden="true">
-            {TESTIMONIALS.map((_, i) => (
-              <button
-                key={i}
-                className={`v2-proof__dot ${activeTestimonial === i ? 'v2-proof__dot--active' : ''}`}
-                onClick={() => setActiveTestimonial(i)}
-                aria-label={`Xem nhận xét ${i + 1}`}
-              />
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── S6: HOW IT WORKS ── */}
-      <section className="v2-steps" id="steps" aria-label="Cách đặt hàng">
-        <div className="v2-container">
-          <div className="v2-section-label" data-reveal>Đặt hàng dễ thôi</div>
-          <h2 className="v2-section-title" data-reveal>
-            Ba bước.<br />
-            <em>Một bữa cơm ấm.</em>
-          </h2>
-
-          <div className="v2-steps__flow">
-            {ORDER_STEPS.map((step, i) => (
-              <div key={step.num} className="v2-step" data-reveal
-                style={{ '--step-delay': `${i * 0.18}s` } as React.CSSProperties}>
-                <div className="v2-step__icon-wrap">
-                  {step.icon}
-                  <div className="v2-step__num">{step.num}</div>
-                </div>
-                <div className="v2-step__body">
-                  <div className="v2-step__title">{step.title}</div>
-                  <div className="v2-step__desc">{step.desc}</div>
-                  <div className="v2-step__detail">{step.detail}</div>
-                </div>
-                {i < ORDER_STEPS.length - 1 && (
-                  <div className="v2-step__connector" aria-hidden="true" />
-                )}
-              </div>
-            ))}
+      {/* ── 4. KITCHEN TRUTH ── */}
+      <section className="ed-trust">
+        <div className="ed-container ed-trust__inner">
+          <div className="ed-trust__text" data-reveal>
+            <h2 className="ed-section-title">Bếp nhỏ,<br/>nấu kỹ từng phần.</h2>
+            <p className="ed-section-sub">
+              Bếp chuẩn bị nguyên liệu trong ngày, nhận đơn rồi mới hoàn thiện món và đóng gói cẩn thận trước khi giao.
+            </p>
+            <ul className="ed-trust__list">
+              <li><IconCheck /> <span>Nguyên liệu chuẩn bị mới trong ngày</span></li>
+              <li><IconCheck /> <span>Hoàn thiện món sau khi xác nhận đơn</span></li>
+              <li><IconCheck /> <span>Đóng gói kỹ để giữ nhiệt tốt hơn</span></li>
+              <li><IconCheck /> <span>Bếp gọi xác nhận trước khi giao</span></li>
+              <li><IconCheck /> <span>Không bán món để qua ngày</span></li>
+            </ul>
           </div>
-
-          <div className="v2-steps__cta" data-reveal>
-            <Link to="/order-online/menu" className="v2-btn-fire" id="steps-cta">
-              <span>Bắt đầu đặt hàng</span>
-              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" />
-              </svg>
-            </Link>
+          <div className="ed-trust__visual" data-reveal>
+            <img src="/v2-canh-chua.png" alt="Bếp nấu" />
           </div>
         </div>
       </section>
 
-      {/* ── S7: FINALE CTA ── */}
-      <section className="v2-finale" aria-label="Kết thúc">
-        <div className="v2-finale__bg" aria-hidden="true" />
-        <div className="v2-container v2-finale__content">
-          <div className="v2-finale__question" data-reveal>
-            Hôm nay bạn muốn ăn gì?
+      {/* ── 5. SOCIAL PROOF ── */}
+      <section className="ed-proof">
+        <div className="ed-container">
+          <h2 className="ed-section-title" data-reveal>Khách quen nói gì về bếp?</h2>
+          <div className="ed-proof__grid">
+            {REVIEWS.map((rev, i) => (
+              <div key={i} className="ed-proof-card" data-reveal style={{ transitionDelay: `${i * 100}ms` }}>
+                <p className="ed-proof-card__text">“{rev.text}”</p>
+                <p className="ed-proof-card__author">{rev.author}</p>
+              </div>
+            ))}
           </div>
-          <p className="v2-finale__sub" data-reveal>
-            Thực đơn mỗi ngày đều có món mới. Xem ngay — đặt luôn hôm nay.
-          </p>
-          <Link
-            to="/order-online/menu"
-            className="v2-btn-fire v2-btn-fire--lg"
-            id="finale-cta"
-            data-reveal
-          >
-            <span>Xem thực đơn & đặt món</span>
-            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" />
-            </svg>
+        </div>
+      </section>
+
+      {/* ── 6. HOW IT WORKS ── */}
+      <section className="ed-steps">
+        <div className="ed-container">
+          <header className="ed-section-head ed-section-head--center" data-reveal>
+            <h2 className="ed-section-title">Ba bước là có bữa ăn nóng.</h2>
+          </header>
+          <div className="ed-steps__grid">
+            {OB_STEPS.map((step, i) => (
+              <div key={i} className="ed-step" data-reveal style={{ transitionDelay: `${i * 150}ms` }}>
+                <div className="ed-step__icon">{step.icon}</div>
+                <h3 className="ed-step__title">{step.title}</h3>
+                <p className="ed-step__desc">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7. FINALE ── */}
+      <section className="ed-finale">
+        <div className="ed-container" data-reveal>
+          <h2 className="ed-section-title">Hôm nay bạn muốn ăn gì?</h2>
+          <p className="ed-section-sub">Thực đơn thay đổi theo ngày. Chọn món đang có và đặt ngay trong vài bước.</p>
+          <Link to="/order-online/menu" className="ed-btn ed-btn--primary ed-btn--lg">
+            Xem thực đơn & đặt món
           </Link>
-          <div className="v2-finale__trust" data-reveal>
-            <span>⏱ 30 phút</span>
-            <span>·</span>
-            <span>💵 COD</span>
-            <span>·</span>
-            <span>📍 10km</span>
-            <span>·</span>
-            <span>❌ Không bột ngọt</span>
+          <div className="ed-finale__meta">
+            <span>Giao tận nơi</span>
+            <span className="ed-dot" />
+            <span>Thanh toán khi nhận</span>
+            <span className="ed-dot" />
+            <span>Món nấu trong ngày</span>
           </div>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="v2-footer">
-        <div className="v2-container v2-footer__inner">
-          <div className="v2-footer__brand">
+      <footer className="ed-footer">
+        <div className="ed-container ed-footer__inner">
+          <div className="ed-footer__brand">
             <img src="/logo.png" alt="Bếp Nhà Mình" />
-            <div>
-              <div className="v2-footer__brand-name">Bếp Nhà Mình</div>
-              <div className="v2-footer__brand-line">Hương vị gia đình · Giao tận nơi</div>
+            <div className="ed-footer__brand-text">
+              <strong>Bếp Nhà Mình</strong>
+              <span>Ấm cúng · Món quen · Giao tận nơi</span>
             </div>
           </div>
-          <div className="v2-footer__links">
+          <div className="ed-footer__links">
             <Link to="/qr/qr-bnm-table-01">Đặt bàn tại quán</Link>
             <a href="tel:+84901234567">0901 234 567</a>
           </div>
-          <div className="v2-footer__copy">© 2025 Bếp Nhà Mình</div>
         </div>
       </footer>
 
-      {/* ── STICKY ORDER BAR ── */}
-      <div
-        className={`v2-sticky-bar ${stickyVisible ? 'v2-sticky-bar--visible' : ''}`}
-        role="complementary"
-        aria-label="Đặt hàng nhanh"
-      >
-        <div className="v2-sticky-bar__inner">
-          <div className="v2-sticky-bar__text">
-            <span className="v2-sticky-bar__dot" aria-hidden="true" />
-            Bếp đang mở · Giao ngay trong 30 phút
+      {/* ── STICKY BAR ── */}
+      <div className={`ed-sticky-bar ${stickyVisible ? 'is-visible' : ''}`}>
+        <div className="ed-sticky-bar__inner">
+          <div className="ed-sticky-bar__text">
+            <span className="ed-status-dot" aria-label="Đang nhận đơn" />
+            <span>Bếp đang nhận đơn · Giao dự kiến 30–45 phút</span>
           </div>
-          <Link to="/order-online/menu" className="v2-sticky-bar__btn" id="sticky-cta">
-            Đặt ngay
+          <Link to="/order-online/menu" className="ed-btn ed-btn--primary">
+            Đặt món
           </Link>
         </div>
       </div>

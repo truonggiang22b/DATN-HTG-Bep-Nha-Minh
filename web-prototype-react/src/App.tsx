@@ -18,8 +18,10 @@ import { OnlineTrackingPage } from './pages/OnlineTrackingPage';
 // Phase 2: Admin
 import { AdminDeliveryPage } from './pages/AdminDeliveryPage';
 import { AdminBranchSettingsPage } from './pages/AdminBranchSettingsPage';
-// Landing V2 — Story-First redesign
+// Landing V2 — Redesign variants
 import { LandingPageV2 } from './pages/LandingPageV2';
+import { LandingPageV2_Student } from './pages/LandingPageV2_Student';
+import { LandingPageV2_Hola } from './pages/LandingPageV2_Hola';
 
 // React Query client — cấu hình mặc định
 const queryClient = new QueryClient({
@@ -57,6 +59,8 @@ function App() {
           <Route path="/online-tracking/:orderId" element={<OnlineTrackingPage />} />
           {/* Landing V2 — Story-First redesign (preview) */}
           <Route path="/landing-v2" element={<LandingPageV2 />} />
+          <Route path="/landing-v2-student" element={<LandingPageV2_Student />} />
+          <Route path="/landing-v2-hola" element={<LandingPageV2_Hola />} />
 
           {/* ── Auth ──────────────────────────────────────────────────── */}
           <Route path="/login" element={<LoginPage />} />
