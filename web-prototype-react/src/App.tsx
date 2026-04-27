@@ -12,6 +12,9 @@ import { AdminMenuPage } from './pages/AdminMenuPage';
 import { AdminTablesPage } from './pages/AdminTablesPage';
 import { AdminStaffPage } from './pages/AdminStaffPage';
 
+// Phase 2: Landing page (online ordering — preview)
+import { OnlineLandingPage } from './pages/OnlineLandingPage';
+
 // React Query client — cấu hình mặc định
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -69,6 +72,9 @@ function App() {
             <Route path="tables" element={<AdminTablesPage />} />
             <Route path="staff" element={<AdminStaffPage />} />
           </Route>
+
+          {/* ── Phase 2: Landing page (online ordering) ────────────────── */}
+          <Route path="/order-online" element={<OnlineLandingPage />} />
 
           {/* ── Catch-all ─────────────────────────────────────────────── */}
           <Route path="/" element={<Navigate to="/qr/qr-bnm-table-01" replace />} />
