@@ -3,6 +3,7 @@
  * Phase 2: Bếp Nhà Mình Online Ordering
  */
 
+import { randomBytes, timingSafeEqual } from 'crypto';
 import { prisma } from '../../../lib/prisma';
 import { AppError } from '../../../utils/errors';
 import { generateOrderCode } from '../../../utils/orderCode';
@@ -13,6 +14,8 @@ import {
   BranchDeliveryConfig,
 } from './geo.utils';
 import { EstimateFeeInput, CreateOnlineOrderInput } from './online-order.schema';
+import { publishOrderEvent } from '../../realtime/realtime.bus';
+import type { RealtimeDeliveryStatus } from '../../realtime/realtime.types';
 
 // ─── Estimate Delivery Fee ────────────────────────────────────────────────────
 
@@ -72,6 +75,7 @@ export async function createOnlineOrderService(input: CreateOnlineOrderInput) {
   if (existing) {
     return {
       order: formatOrderResponse(existing),
+      trackingToken: existing.trackingToken,
       deliveryInfo: existing.deliveryInfo,
       isIdempotent: true,
     };
@@ -89,7 +93,7 @@ export async function createOnlineOrderService(input: CreateOnlineOrderInput) {
   // 3. Validate + price menu items
   const menuItemIds = input.items.map((i) => i.menuItemId);
   const menuItems = await prisma.menuItem.findMany({
-    where: { id: { in: menuItemIds } },
+    where: { id: { in: menuItemIds }, category: { branchId: input.branchId } },
     include: { optionGroups: { include: { options: true } } },
   });
   const menuItemMap = new Map(menuItems.map((m) => [m.id, m]));
@@ -111,9 +115,36 @@ export async function createOnlineOrderService(input: CreateOnlineOrderInput) {
     });
   }
 
-  // 4. Validate options
+  // 4a. Build optionPriceMap từ DB data (đã được include) — không tin priceDelta từ client
+  type DbOption = { id: string; priceDelta: number; groupId: string; menuItemId: string };
+  const optionPriceMap = new Map<string, DbOption>();
+  for (const mi of menuItems) {
+    for (const og of (mi as any).optionGroups ?? []) {
+      for (const opt of og.options ?? []) {
+        optionPriceMap.set(opt.id, {
+          id: opt.id,
+          priceDelta: Number(opt.priceDelta),
+          groupId: og.id,
+          menuItemId: mi.id,
+        });
+      }
+    }
+  }
+
+  // 4b. Validate optionId thuộc món + validate required groups
   for (const reqItem of input.items) {
     const mi = menuItemMap.get(reqItem.menuItemId)!;
+
+    for (const opt of reqItem.selectedOptions) {
+      const dbOpt = optionPriceMap.get(opt.optionId);
+      if (!dbOpt) {
+        throw AppError.badRequest('INVALID_OPTION', `Option không tồn tại: ${opt.optionId}`);
+      }
+      if (dbOpt.menuItemId !== mi.id) {
+        throw AppError.badRequest('INVALID_OPTION', `Option không thuộc món "${mi.name}"`);
+      }
+    }
+
     for (const og of mi.optionGroups) {
       if (!og.isRequired) continue;
       const selected = reqItem.selectedOptions.filter((o) => o.optionGroupId === og.id);
@@ -126,22 +157,32 @@ export async function createOnlineOrderService(input: CreateOnlineOrderInput) {
     }
   }
 
-  // 5. Calculate subtotal
+  // 5. Calculate subtotal — dùng giá DB
   let subtotal = 0;
   const orderItemsData = input.items.map((reqItem) => {
     const mi = menuItemMap.get(reqItem.menuItemId)!;
     const basePrice = Number(mi.price);
-    const optionsDelta = reqItem.selectedOptions.reduce((sum, o) => sum + (o.priceDelta ?? 0), 0);
+    const optionsDelta = reqItem.selectedOptions.reduce((sum, o) => {
+      const dbOpt = optionPriceMap.get(o.optionId)!;
+      return sum + dbOpt.priceDelta; // giá từ DB
+    }, 0);
     const unitPrice = basePrice + optionsDelta;
     const lineTotal = unitPrice * reqItem.quantity;
     subtotal += lineTotal;
+
+    const sanitizedOptions = reqItem.selectedOptions.map((o) => ({
+      optionGroupId: o.optionGroupId,
+      optionId: o.optionId,
+      name: o.name,
+      priceDelta: optionPriceMap.get(o.optionId)!.priceDelta,
+    }));
 
     return {
       menuItemId: mi.id,
       nameSnapshot: mi.name,
       priceSnapshot: unitPrice,
       quantity: reqItem.quantity,
-      selectedOptionsSnapshotJson: reqItem.selectedOptions,
+      selectedOptionsSnapshotJson: sanitizedOptions,
       note: reqItem.note ?? '',
       lineTotal,
     };
@@ -149,6 +190,7 @@ export async function createOnlineOrderService(input: CreateOnlineOrderInput) {
 
   // 6. Verify shipping fee on server-side (anti-tampering)
   let verifiedShippingFee = input.deliveryInfo.shippingFee;
+  let verifiedDistanceKm: number | null = null;
   if (input.deliveryInfo.customerLat && input.deliveryInfo.customerLng && branch.latitude && branch.longitude) {
     const config: BranchDeliveryConfig = {
       deliveryBaseKm: branch.deliveryBaseKm ?? 2,
@@ -156,18 +198,21 @@ export async function createOnlineOrderService(input: CreateOnlineOrderInput) {
       deliveryFeePerKm: branch.deliveryFeePerKm ?? 5000,
       deliveryMaxKm: branch.deliveryMaxKm ?? 10,
     };
-    const distanceKm = haversineKm(
+    verifiedDistanceKm = haversineKm(
       branch.latitude,
       branch.longitude,
       input.deliveryInfo.customerLat,
       input.deliveryInfo.customerLng
     );
-    const feeResult = calcShippingFee(distanceKm, config);
+    const feeResult = calcShippingFee(verifiedDistanceKm, config);
     if (!feeResult.isDeliverable) {
       throw AppError.badRequest('OUT_OF_RANGE', feeResult.reason ?? 'Địa chỉ ngoài vùng giao hàng');
     }
     verifiedShippingFee = feeResult.fee;
   }
+
+  // 7a. Generate secure trackingToken for tracking endpoint
+  const trackingToken = randomBytes(16).toString('hex');
 
   // 7. Generate order code for online orders
   const orderCode = `ONL-${Date.now().toString(36).toUpperCase()}`;
@@ -187,6 +232,7 @@ export async function createOnlineOrderService(input: CreateOnlineOrderInput) {
         subtotal,
         customerNote: input.deliveryInfo.note ?? null,
         idempotencyKey: input.idempotencyKey,
+        trackingToken,
         items: { create: orderItemsData },
         statusHistory: {
           create: { fromStatus: null, toStatus: 'NEW' },
@@ -200,6 +246,7 @@ export async function createOnlineOrderService(input: CreateOnlineOrderInput) {
             district: input.deliveryInfo.district ?? null,
             customerLat: input.deliveryInfo.customerLat ?? null,
             customerLng: input.deliveryInfo.customerLng ?? null,
+            distanceKm: verifiedDistanceKm,
             shippingFee: verifiedShippingFee,
             deliveryStatus: 'PENDING',
             note: input.deliveryInfo.note ?? null,
@@ -211,8 +258,21 @@ export async function createOnlineOrderService(input: CreateOnlineOrderInput) {
     return newOrder;
   });
 
+  publishOrderEvent({
+    type: 'order.created',
+    orderId: order.id,
+    orderCode: order.orderCode,
+    storeId: order.storeId,
+    branchId: order.branchId,
+    orderType: order.orderType,
+    status: order.status,
+    deliveryStatus: order.deliveryInfo?.deliveryStatus as RealtimeDeliveryStatus | undefined,
+    updatedAt: order.updatedAt.toISOString(),
+  });
+
   return {
     order: formatOrderResponse(order),
+    trackingToken: order.trackingToken,
     deliveryInfo: order.deliveryInfo,
     isIdempotent: false,
   };
@@ -220,21 +280,8 @@ export async function createOnlineOrderService(input: CreateOnlineOrderInput) {
 
 // ─── Track Online Order ───────────────────────────────────────────────────────
 
-export async function getOnlineOrderService(orderId: string) {
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: {
-      items: true,
-      deliveryInfo: true,
-      branch: true,
-    },
-  });
-
-  if (!order) throw AppError.notFound('Đơn hàng');
-  if (order.orderType !== 'ONLINE') {
-    throw AppError.forbidden('Đây không phải đơn hàng online');
-  }
-
+export async function getOnlineOrderService(orderId: string, trackingToken: string) {
+  const order = await verifyOnlineOrderTrackingAccessService(orderId, trackingToken);
   return {
     id: order.id,
     orderCode: order.orderCode,
@@ -267,8 +314,38 @@ export async function getOnlineOrderService(orderId: string) {
           note: order.deliveryInfo.note,
         }
       : null,
-    total: Number(order.subtotal) + (order.deliveryInfo?.shippingFee ?? 0),
+    total: Number(order.subtotal) + (order.deliveryInfo ? Number(order.deliveryInfo.shippingFee) : 0),
   };
+}
+
+export async function verifyOnlineOrderTrackingAccessService(orderId: string, trackingToken: string) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      items: true,
+      deliveryInfo: true,
+      branch: true,
+    },
+  });
+
+  if (!order) throw AppError.notFound('Don hang');
+  if (order.orderType !== 'ONLINE') {
+    throw AppError.forbidden('Day khong phai don hang online');
+  }
+
+  if (!isValidTrackingToken(order.trackingToken, trackingToken)) {
+    throw AppError.forbidden('Token khong hop le - khong the xem don hang nay');
+  }
+
+  return order;
+}
+
+function isValidTrackingToken(storedToken: string | null, providedToken: string) {
+  if (!storedToken || !providedToken) return false;
+  const stored = Buffer.from(storedToken, 'utf8');
+  const provided = Buffer.from(providedToken, 'utf8');
+  if (stored.length !== provided.length) return false;
+  return timingSafeEqual(stored, provided);
 }
 
 // ─── Admin: List Delivery Orders ─────────────────────────────────────────────
@@ -279,23 +356,27 @@ export async function listDeliveryOrdersService(filters: {
   deliveryStatus?: string;
   date?: string;
 }) {
-  const where: Record<string, unknown> = {
+  // Build top-level order where clause
+  const orderWhere: Record<string, unknown> = {
     orderType: 'ONLINE',
     storeId: filters.storeId,
   };
-
-  if (filters.branchId) where.branchId = filters.branchId;
-
+  if (filters.branchId) orderWhere.branchId = filters.branchId;
   if (filters.date) {
     const start = new Date(filters.date);
     start.setHours(0, 0, 0, 0);
     const end = new Date(filters.date);
     end.setHours(23, 59, 59, 999);
-    where.createdAt = { gte: start, lte: end };
+    orderWhere.createdAt = { gte: start, lte: end };
+  }
+
+  // Push deliveryStatus filter into Prisma (avoid full-table memory filter)
+  if (filters.deliveryStatus) {
+    orderWhere.deliveryInfo = { deliveryStatus: filters.deliveryStatus };
   }
 
   const orders = await prisma.order.findMany({
-    where,
+    where: orderWhere,
     include: {
       deliveryInfo: true,
       items: true,
@@ -304,30 +385,27 @@ export async function listDeliveryOrdersService(filters: {
     orderBy: { createdAt: 'desc' },
   });
 
-  // Filter by deliveryStatus if provided
-  const filtered = filters.deliveryStatus
-    ? orders.filter((o) => o.deliveryInfo?.deliveryStatus === filters.deliveryStatus)
-    : orders;
-
-  return filtered.map((o) => ({
+  return orders.map((o) => ({
     id: o.id,
     orderCode: o.orderCode,
     status: o.status,
     createdAt: o.createdAt,
+    updatedAt: o.updatedAt,
     branchName: o.branch.name,
     subtotal: Number(o.subtotal),
-    shippingFee: o.deliveryInfo?.shippingFee ?? 0,
-    total: Number(o.subtotal) + (o.deliveryInfo?.shippingFee ?? 0),
     itemCount: o.items.reduce((sum, item) => sum + item.quantity, 0),
     deliveryInfo: o.deliveryInfo
       ? {
+          id: o.deliveryInfo.id,
           customerName: o.deliveryInfo.customerName,
           phone: o.deliveryInfo.phone,
           address: o.deliveryInfo.address,
           ward: o.deliveryInfo.ward,
           district: o.deliveryInfo.district,
-          distanceKm: o.deliveryInfo.distanceKm,
+          distanceKm: o.deliveryInfo.distanceKm ? Number(o.deliveryInfo.distanceKm) : null,
+          shippingFee: Number(o.deliveryInfo.shippingFee),
           deliveryStatus: o.deliveryInfo.deliveryStatus,
+          note: o.deliveryInfo.note,
         }
       : null,
   }));
@@ -338,7 +416,8 @@ export async function listDeliveryOrdersService(filters: {
 export async function updateDeliveryStatusService(
   orderId: string,
   deliveryStatus: string,
-  reason?: string
+  reason?: string,
+  storeId?: string
 ) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -346,6 +425,9 @@ export async function updateDeliveryStatusService(
   });
 
   if (!order) throw AppError.notFound('Đơn hàng');
+  if (storeId && order.storeId !== storeId) {
+    throw AppError.forbidden('Forbidden for this order');
+  }
   if (order.orderType !== 'ONLINE') {
     throw AppError.badRequest('WRONG_TYPE', 'Không phải đơn hàng online');
   }
@@ -353,12 +435,35 @@ export async function updateDeliveryStatusService(
     throw AppError.badRequest('NO_DELIVERY', 'Đơn hàng không có thông tin giao hàng');
   }
 
-  // Also update order.status to reflect delivery progress
+  // Map delivery status → kitchen order status
+  // ACCEPTED được giữ backward compatible (có thể có đơn cũ trong DB)
+  const currentDeliveryStatus = order.deliveryInfo.deliveryStatus;
+  const terminalDeliveryStatuses = new Set(['DELIVERED', 'CANCELLED']);
+  if (terminalDeliveryStatuses.has(currentDeliveryStatus)) {
+    throw AppError.badRequest('INVALID_TRANSITION', 'Delivery order is already terminal');
+  }
+  if (deliveryStatus === 'CANCELLED' && !reason?.trim()) {
+    throw AppError.badRequest('REASON_REQUIRED', 'Cancel reason is required');
+  }
+
+  const allowedTransitions: Record<string, string[]> = {
+    PENDING: ['PREPARING', 'CANCELLED'],
+    ACCEPTED: ['PREPARING', 'CANCELLED'],
+    PREPARING: ['DELIVERING', 'CANCELLED'],
+    DELIVERING: ['DELIVERED', 'CANCELLED'],
+  };
+  if (!allowedTransitions[currentDeliveryStatus]?.includes(deliveryStatus)) {
+    throw AppError.badRequest(
+      'INVALID_TRANSITION',
+      `Cannot transition delivery status from ${currentDeliveryStatus} to ${deliveryStatus}`
+    );
+  }
+
   const orderStatusMap: Record<string, 'NEW' | 'PREPARING' | 'READY' | 'SERVED'> = {
-    ACCEPTED: 'NEW',
-    PREPARING: 'PREPARING',
+    ACCEPTED:   'PREPARING', // backward compat (Admin cũ có thể gửi ACCEPTED)
+    PREPARING:  'PREPARING', // Admin mới gửi PREPARING trực tiếp
     DELIVERING: 'READY',
-    DELIVERED: 'SERVED',
+    DELIVERED:  'SERVED',
   };
   const newOrderStatus = orderStatusMap[deliveryStatus];
 
@@ -384,12 +489,43 @@ export async function updateDeliveryStatusService(
     }
   });
 
-  return { success: true, deliveryStatus, orderId };
+  // Return shape matching FE deliveryApi.updateStatus expectation
+  const updatedOrder = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: {
+      id: true,
+      orderCode: true,
+      storeId: true,
+      branchId: true,
+      orderType: true,
+      status: true,
+      updatedAt: true,
+    },
+  });
+
+  if (updatedOrder) {
+    publishOrderEvent({
+      type: 'delivery.status.updated',
+      orderId: updatedOrder.id,
+      orderCode: updatedOrder.orderCode,
+      storeId: updatedOrder.storeId,
+      branchId: updatedOrder.branchId,
+      orderType: updatedOrder.orderType,
+      status: updatedOrder.status,
+      deliveryStatus: deliveryStatus as RealtimeDeliveryStatus,
+      updatedAt: updatedOrder.updatedAt.toISOString(),
+    });
+  }
+
+  return {
+    order: { id: updatedOrder!.id, orderCode: updatedOrder!.orderCode },
+    deliveryStatus,
+  };
 }
 
 // ─── Admin: Get/Update Branch Delivery Config ─────────────────────────────────
 
-export async function getBranchDeliveryConfigService(branchId: string) {
+export async function getBranchDeliveryConfigService(branchId: string, storeId?: string) {
   const branch = await prisma.branch.findUnique({
     where: { id: branchId },
     select: {
@@ -401,10 +537,15 @@ export async function getBranchDeliveryConfigService(branchId: string) {
       deliveryBaseFee: true,
       deliveryFeePerKm: true,
       deliveryMaxKm: true,
+      storeId: true,
     },
   });
   if (!branch) throw AppError.notFound('Chi nhánh');
-  return branch;
+  if (storeId && branch.storeId !== storeId) {
+    throw AppError.forbidden('Forbidden for this branch');
+  }
+  const { storeId: _storeId, ...config } = branch;
+  return config;
 }
 
 export async function updateBranchDeliveryConfigService(
@@ -416,10 +557,15 @@ export async function updateBranchDeliveryConfigService(
     deliveryBaseFee: number;
     deliveryFeePerKm: number;
     deliveryMaxKm: number;
-  }>
+  }>,
+  storeId?: string
 ) {
   const branch = await prisma.branch.findUnique({ where: { id: branchId } });
   if (!branch) throw AppError.notFound('Chi nhánh');
+
+  if (storeId && branch.storeId !== storeId) {
+    throw AppError.forbidden('Forbidden for this branch');
+  }
 
   const updated = await prisma.branch.update({
     where: { id: branchId },

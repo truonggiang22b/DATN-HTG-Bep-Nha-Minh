@@ -2,7 +2,7 @@
 export type ItemStatus = 'ACTIVE' | 'SOLD_OUT' | 'HIDDEN';
 export type OrderStatus = 'NEW' | 'PREPARING' | 'READY' | 'SERVED' | 'CANCELLED';
 export type SessionStatus = 'OPEN' | 'SERVING' | 'CLOSED';
-export type UserRole = 'ADMIN' | 'KITCHEN' | 'MANAGER';
+export type UserRole = 'ADMIN' | 'KITCHEN' | 'MANAGER' | 'SHIPPER';
 
 // ─── Cart (per-client, NOT in shared store) ──────────────────────────────────
 export interface SelectedOption {
