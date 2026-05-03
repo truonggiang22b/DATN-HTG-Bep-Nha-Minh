@@ -8,14 +8,14 @@ import { z } from 'zod';
 const createStaffSchema = z.object({
   displayName: z.string().min(1).max(100),
   email: z.string().email(),
-  role: z.enum(['ADMIN', 'MANAGER', 'KITCHEN']),
+  role: z.enum(['ADMIN', 'MANAGER', 'KITCHEN', 'SHIPPER']),
   defaultBranchId: z.string().uuid().optional(),
   temporaryPassword: z.string().min(8, 'Mật khẩu tạm phải ít nhất 8 ký tự'),
 });
 
 const updateStaffSchema = z.object({
   displayName: z.string().min(1).max(100).optional(),
-  role: z.enum(['ADMIN', 'MANAGER', 'KITCHEN']).optional(),
+  role: z.enum(['ADMIN', 'MANAGER', 'KITCHEN', 'SHIPPER']).optional(),
   defaultBranchId: z.string().uuid().nullable().optional(),
 });
 

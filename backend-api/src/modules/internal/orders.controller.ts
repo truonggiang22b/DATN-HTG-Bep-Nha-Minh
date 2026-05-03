@@ -5,6 +5,8 @@ import { success } from '../../utils/apiResponse';
 import { updateStatusSchema, orderHistoryQuerySchema } from './orders.validator';
 import { isValidTransition } from '../../utils/statusTransitions';
 import { OrderStatus } from '@prisma/client';
+import { publishOrderEvent } from '../realtime/realtime.bus';
+import type { RealtimeDeliveryStatus } from '../realtime/realtime.types';
 
 /** GET /api/internal/orders/active — KDS */
 export async function getActiveOrders(req: Request, res: Response, next: NextFunction) {
@@ -31,18 +33,16 @@ export async function getActiveOrders(req: Request, res: Response, next: NextFun
       where: {
         storeId: user.storeId,
         ...(targetBranchId && { branchId: targetBranchId }),
-        // NEW/PREPARING/READY: lấy tất cả (không giới hạn ngày — cần xử lý)
-        // SERVED: chỉ lấy đơn trong ngày hôm nay để KDS không bị ngập đơn cũ
-        // CANCELLED: không hiện trên KDS
         OR: [
           { status: { in: ['NEW', 'PREPARING', 'READY'] } },
           { status: 'SERVED', createdAt: { gte: todayStart } },
         ],
       },
-      orderBy: { createdAt: 'asc' }, // FIFO
+      orderBy: { createdAt: 'asc' },
       include: {
         table: true,
         items: true,
+        deliveryInfo: { select: { customerName: true, phone: true } }, // Phase 2
       },
     });
 
@@ -51,7 +51,11 @@ export async function getActiveOrders(req: Request, res: Response, next: NextFun
         id: o.id,
         orderCode: o.orderCode,
         status: o.status,
-        tableDisplayName: o.table.displayName,
+        orderType: o.orderType,
+        tableDisplayName: o.table?.displayName ?? null,
+        // Phân biệt đơn online: hiển tên khách thay vì bàn
+        customerName: o.orderType === 'ONLINE' ? (o as any).deliveryInfo?.customerName ?? null : null,
+        customerPhone: o.orderType === 'ONLINE' ? (o as any).deliveryInfo?.phone ?? null : null,
         tableId: o.tableId,
         customerNote: o.customerNote,
         subtotal: Number(o.subtotal),
@@ -120,6 +124,58 @@ export async function updateOrderStatus(req: Request, res: Response, next: NextF
       return up;
     });
 
+    // ── Sync deliveryInfo.deliveryStatus cho đơn ONLINE ───────────────────────────────
+    // Khi bếp đổi trạng thái đơn, khách và admin cũng thấy thay đổi
+    let syncedDeliveryStatus: RealtimeDeliveryStatus | undefined;
+    if (updated.orderType === 'ONLINE') {
+      const kdsToDelivery: Partial<Record<string, string>> = {
+        PREPARING:  'PREPARING',   // bếp nhận đơn & bắt đầu nấu
+        // READY: không đổi — bếp đang gói, chưa giao cho shipper
+        SERVED:     'DELIVERING',  // bếp đưa cho shipper = shipper đang trên đường
+                                   // ⚠️ DELIVERED chỉ khi SHIPPER xác nhận tay
+        CANCELLED:  'CANCELLED',   // hủy từ KDS → khách cũng biết
+      };
+      const newDelivStatus = kdsToDelivery[input.toStatus];
+      if (newDelivStatus) {
+        const deliveryUpdate = await prisma.deliveryInfo.updateMany({
+          where: {
+            orderId: id,
+            // An toàn: không ghi đè nếu đã DELIVERED hoặc CANCELLED
+            deliveryStatus: { notIn: ['DELIVERED', 'CANCELLED'] as any },
+          },
+          data: { deliveryStatus: newDelivStatus as any },
+        });
+        if (deliveryUpdate.count > 0) {
+          syncedDeliveryStatus = newDelivStatus as RealtimeDeliveryStatus;
+        }
+      }
+    }
+
+    publishOrderEvent({
+      type: updated.status === 'CANCELLED' ? 'order.cancelled' : 'order.status.updated',
+      orderId: updated.id,
+      orderCode: updated.orderCode,
+      storeId: updated.storeId,
+      branchId: updated.branchId,
+      orderType: updated.orderType,
+      status: updated.status,
+      updatedAt: updated.updatedAt.toISOString(),
+    });
+
+    if (syncedDeliveryStatus) {
+      publishOrderEvent({
+        type: 'delivery.status.updated',
+        orderId: updated.id,
+        orderCode: updated.orderCode,
+        storeId: updated.storeId,
+        branchId: updated.branchId,
+        orderType: updated.orderType,
+        status: updated.status,
+        deliveryStatus: syncedDeliveryStatus,
+        updatedAt: updated.updatedAt.toISOString(),
+      });
+    }
+
     return success(res, {
       id: updated.id,
       orderCode: updated.orderCode,
@@ -182,7 +238,8 @@ export async function getOrderHistory(req: Request, res: Response, next: NextFun
         id: o.id,
         orderCode: o.orderCode,
         status: o.status,
-        tableDisplayName: o.table.displayName,
+        tableDisplayName: o.table?.displayName ?? null,
+        orderType: o.orderType,
         subtotal: Number(o.subtotal),
         customerNote: o.customerNote,
         createdAt: o.createdAt,

@@ -1,0 +1,658 @@
+/**
+ * ShipperPage.css — Mobile-first, thumb-optimized
+ * Thiết kế cho điện thoại cầm tay, dùng một tay khi đi ship
+ * Touch targets: min 48px | Font: Be Vietnam Pro / Sora
+ * Palette: charcoal #25211B · chili #D83A2E · leaf #2F7D4E · rice #FFF8EA
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Sora:wght@600;700&display=swap');
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+.sip {
+  min-height: 100dvh;
+  background: var(--color-rice, #FFF8EA);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-primary, 'Be Vietnam Pro', sans-serif);
+  color: var(--color-charcoal, #25211B);
+  /* Ngăn chữ bị resize khi xoay màn hình */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ── Header — compact, sticky ─────────────────────────────────────────────── */
+.sip__header {
+  background: var(--color-charcoal, #25211B);
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  /* Safe area top (iPhone notch) */
+  padding-top: env(safe-area-inset-top, 0);
+  height: calc(56px + env(safe-area-inset-top, 0));
+}
+.sip__header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sip__header-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.15);
+}
+.sip__header-info { display: flex; flex-direction: column; gap: 0; }
+.sip__header-title {
+  font-family: var(--font-accent, 'Sora', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.15;
+}
+.sip__header-sub {
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.4);
+}
+.sip__logout {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 100px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  /* touch target */
+  min-height: 36px;
+}
+
+/* ── Tab bar ──────────────────────────────────────────────────────────────── */
+.sip__tabs {
+  display: flex;
+  background: var(--color-charcoal, #25211B);
+  padding: 0 16px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.sip__tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 13px 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.4);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s, border-color 0.15s;
+  /* minimum touch target */
+  min-height: 48px;
+}
+.sip__tab--active {
+  color: #fff;
+  font-weight: 700;
+  border-bottom-color: var(--color-chili, #D83A2E);
+}
+.sip__tab-badge {
+  background: var(--color-chili, #D83A2E);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Scroll content area ──────────────────────────────────────────────────── */
+.sip__content {
+  flex: 1;
+  padding: 14px 12px 100px; /* bottom padding cho confirm button tránh bị che */
+  /* Quan trọng: để vùng scroll chừa chỗ cho safe-area-inset-bottom (iPhone) */
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 0));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Section meta ─────────────────────────────────────────────────────────── */
+.sip__section-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+.sip__section-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-soy, #5A3928);
+}
+.sip__refresh-hint {
+  font-size: 11px;
+  color: #b0a090;
+}
+
+/* ── Date bar ─────────────────────────────────────────────────────────────── */
+.sip__date-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border: 1px solid var(--color-steam, #E8DDCC);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  min-height: 52px;
+}
+.sip__date-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-soy, #5A3928);
+}
+.sip__date-select {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-charcoal, #25211B);
+  background: var(--color-rice, #FFF8EA);
+  border: 1px solid var(--color-steam, #E8DDCC);
+  border-radius: 8px;
+  padding: 7px 10px;
+  min-height: 40px;
+  cursor: pointer;
+  outline: none;
+  max-width: 180px;
+}
+
+/* ── Summary strip ────────────────────────────────────────────────────────── */
+.sip__summary-strip {
+  display: flex;
+  align-items: stretch;
+  background: var(--color-leaf, #2F7D4E);
+  border-radius: 12px;
+  padding: 16px 0;
+  margin-bottom: 14px;
+}
+.sip__summary-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0 8px;
+}
+.sip__summary-value {
+  font-family: var(--font-accent, 'Sora', sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+.sip__summary-key {
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.6);
+}
+.sip__summary-divider {
+  width: 1px;
+  background: rgba(255,255,255,0.18);
+  margin: 4px 0;
+}
+
+/* ── Cards ────────────────────────────────────────────────────────────────── */
+.sip__cards { display: flex; flex-direction: column; gap: 10px; }
+
+/* ── Spinner ──────────────────────────────────────────────────────────────── */
+.sip__spinner-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+.sip__spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--color-steam, #E8DDCC);
+  border-top-color: var(--color-chili, #D83A2E);
+  border-radius: 50%;
+  animation: sip-spin 0.7s linear infinite;
+}
+@keyframes sip-spin { to { transform: rotate(360deg); } }
+
+/* ── Empty ────────────────────────────────────────────────────────────────── */
+.sip__empty {
+  text-align: center;
+  padding: 48px 24px;
+}
+.sip__empty-illustration {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px; height: 80px;
+  background: var(--color-steam, #E8DDCC);
+  border-radius: 50%;
+  color: var(--color-soy, #5A3928);
+  margin-bottom: 16px;
+}
+.sip__empty-illustration--muted {
+  background: #e6f2ec;
+  color: var(--color-leaf, #2F7D4E);
+}
+.sip__empty-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-charcoal, #25211B);
+  margin: 0 0 8px;
+}
+.sip__empty-sub {
+  font-size: 14px;
+  color: #9b8b7a;
+  line-height: 1.6;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ORDER CARD — mobile-optimized
+══════════════════════════════════════════════════════════════════════════ */
+.sip-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid var(--color-steam, #E8DDCC);
+  overflow: hidden;
+  transition: opacity 0.3s;
+  /* subtle shadow cho depth */
+  box-shadow: 0 1px 4px rgba(37,33,27,0.06), 0 0 0 1px rgba(37,33,27,0.03);
+}
+.sip-card--done { opacity: 0.55; }
+.sip-card--completed { border-color: rgba(47,125,78,0.2); }
+
+/* Header — big touch target */
+.sip-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid #f5ede0;
+}
+.sip-card__code-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sip-card__dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sip-card__dot--blue {
+  background: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.18);
+}
+.sip-card__dot--green { background: var(--color-leaf, #2F7D4E); }
+.sip-card__code {
+  font-family: var(--font-accent, 'Sora', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-charcoal, #25211B);
+  letter-spacing: 0.02em;
+}
+.sip-card__time { font-size: 12px; color: #b0a090; }
+.sip-card__expand-btn {
+  color: #b0a090;
+  background: none;
+  border: none;
+  cursor: pointer;
+  /* 44px touch target */
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  margin: -8px -8px -8px 0;
+  transition: background 0.15s;
+}
+.sip-card__expand-btn:active { background: #f5ede0; }
+
+/* Customer section */
+.sip-card__customer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 6px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sip-card__customer-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-charcoal, #25211B);
+}
+.sip-card__customer-name svg { color: #b0a090; flex-shrink: 0; }
+
+/* Phone — big tap target */
+.sip-card__phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-chili, #D83A2E);
+  text-decoration: none;
+  background: rgba(216,58,46,0.08);
+  border-radius: 100px;
+  padding: 8px 16px;
+  min-height: 40px;
+  transition: background 0.15s;
+}
+.sip-card__phone:active { background: rgba(216,58,46,0.18); }
+
+/* Chip */
+.sip-card__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 100px;
+  min-height: 28px;
+}
+.sip-card__chip--green {
+  background: rgba(47,125,78,0.1);
+  color: var(--color-leaf, #2F7D4E);
+}
+
+/* Address — tap to open maps */
+.sip-card__address {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  color: var(--color-soy, #5A3928);
+  text-decoration: none;
+  background: var(--color-rice, #FFF8EA);
+  border-top: 1px solid #f5ede0;
+  border-bottom: 1px solid #f5ede0;
+  line-height: 1.5;
+  min-height: 48px; /* tap target */
+}
+.sip-card__address svg:first-child { flex-shrink: 0; color: var(--color-chili, #D83A2E); margin-top: 2px; }
+.sip-card__ext { margin-left: auto; flex-shrink: 0; color: #b0a090; margin-top: 2px; }
+.sip-card__address--static { cursor: default; pointer-events: none; }
+
+/* Note */
+.sip-card__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-style: italic;
+  color: #78350f;
+  background: #fffbf0;
+  border-bottom: 1px solid rgba(251,191,36,0.25);
+}
+.sip-card__note svg { flex-shrink: 0; color: #f59e0b; margin-top: 1px; }
+
+/* Detail expanded */
+.sip-card__detail {
+  padding: 12px 14px;
+  background: #faf8f5;
+  border-top: 1px dashed var(--color-steam, #E8DDCC);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sip-card__detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13.5px;
+  color: var(--color-soy, #5A3928);
+}
+.sip-card__detail-row--total {
+  padding-top: 8px;
+  border-top: 1px solid var(--color-steam, #E8DDCC);
+  font-weight: 600;
+  color: var(--color-charcoal, #25211B);
+}
+.sip-card__detail-row--total strong {
+  font-family: var(--font-accent, 'Sora', sans-serif);
+  font-size: 16px;
+  color: var(--color-chili, #D83A2E);
+}
+
+/* Footer */
+.sip-card__footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid #f5ede0;
+}
+.sip-card__footer--compact { padding-top: 10px; padding-bottom: 10px; }
+.sip-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.sip-card__items {
+  font-size: 12px;
+  color: #b0a090;
+  background: #f5ede0;
+  border-radius: 100px;
+  padding: 3px 10px;
+  font-weight: 500;
+}
+.sip-card__total {
+  font-family: var(--font-accent, 'Sora', sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-chili, #D83A2E);
+}
+.sip-card__total--muted {
+  font-size: 15px;
+  color: var(--color-soy, #5A3928);
+}
+
+/* ── Confirm button — full width, big, thumb-friendly ───────────────────── */
+.sip-card__btn-confirm {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--color-chili, #D83A2E);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0 16px;
+  height: 48px; /* minimum comfortable mobile tap target */
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  box-shadow: 0 3px 10px rgba(216,58,46,0.28);
+  transition: background 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.sip-card__btn-confirm:active:not(:disabled) {
+  background: #b52e22;
+  transform: scale(0.98);
+}
+.sip-card__btn-confirm:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.sip-card__btn-confirm--done {
+  background: var(--color-leaf, #2F7D4E) !important;
+  box-shadow: none !important;
+}
+
+/* ── Safe area bottom padding (iPhone home indicator) ───────────────────── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .sip__content {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DESKTOP RESPONSIVE — ≥ 768px
+════════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+
+  /* Header — taller, more breathing room */
+  .sip__header {
+    height: 68px;
+    padding: 0 40px;
+  }
+  .sip__header-logo { width: 40px; height: 40px; }
+  .sip__header-title { font-size: 17px; }
+  .sip__header-sub { font-size: 12px; }
+  .sip__logout {
+    font-size: 13px;
+    padding: 8px 18px;
+    gap: 7px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .sip__logout:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+  /* Tabs — centered, not full-width stretch */
+  .sip__tabs {
+    padding: 0 40px;
+    gap: 8px;
+  }
+  .sip__tab {
+    flex: none;
+    padding: 14px 28px 15px;
+    font-size: 14.5px;
+    min-height: auto;
+  }
+  .sip__tab:hover { color: rgba(255,255,255,0.8); }
+
+  /* Content — centered with max-width */
+  .sip__content {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 40px 60px;
+    width: 100%;
+  }
+
+  /* Section meta */
+  .sip__section-meta { margin-bottom: 16px; }
+  .sip__section-count { font-size: 15px; }
+
+  /* Date bar — more refined */
+  .sip__date-bar {
+    padding: 14px 20px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+  .sip__date-label { font-size: 14.5px; gap: 8px; }
+  .sip__date-select {
+    font-size: 14.5px;
+    padding: 8px 14px;
+    max-width: 240px;
+    border-radius: 10px;
+  }
+  .sip__date-select:hover { border-color: var(--color-soy, #5A3928); }
+  .sip__date-select:focus { border-color: var(--color-chili, #D83A2E); }
+
+  /* Summary strip — more prominent on desktop */
+  .sip__summary-strip {
+    padding: 22px 0;
+    margin-bottom: 20px;
+    border-radius: 16px;
+  }
+  .sip__summary-value { font-size: 24px; }
+  .sip__summary-key { font-size: 13px; }
+
+  /* Cards grid — 2 columns on wide screens */
+  .sip__cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  /* Card hover on desktop */
+  .sip-card {
+    border-radius: 16px;
+    transition: opacity 0.3s, box-shadow 0.2s, transform 0.15s;
+  }
+  .sip-card:hover {
+    box-shadow: 0 8px 28px rgba(37,33,27,0.12);
+    transform: translateY(-2px);
+  }
+  .sip-card--done:hover { transform: none; box-shadow: none; }
+
+  .sip-card__header { padding: 16px 18px 12px; }
+  .sip-card__code { font-size: 14.5px; }
+  .sip-card__customer { padding: 12px 18px 8px; }
+  .sip-card__customer-name { font-size: 15.5px; }
+  .sip-card__phone:hover { background: rgba(216,58,46,0.14); }
+  .sip-card__address { padding: 13px 18px; font-size: 14px; min-height: auto; }
+  .sip-card__address:not(.sip-card__address--static):hover { background: #fff0db; }
+  .sip-card__note { padding: 10px 18px; font-size: 13.5px; }
+  .sip-card__detail { padding: 14px 18px; }
+  .sip-card__footer { padding: 14px 18px; }
+
+  /* Confirm button — hover on desktop */
+  .sip-card__btn-confirm {
+    height: 44px;
+    font-size: 14px;
+  }
+  .sip-card__btn-confirm:hover:not(:disabled) {
+    background: #c0321f;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(216,58,46,0.32);
+  }
+  .sip-card__btn-confirm:active:not(:disabled) { transform: none; }
+
+  /* Expand button hover */
+  .sip-card__expand-btn:hover { background: #f5ede0; color: var(--color-charcoal, #25211B); }
+
+  /* Empty state bigger on desktop */
+  .sip__empty { padding: 80px 24px; }
+  .sip__empty-illustration { width: 100px; height: 100px; margin-bottom: 20px; }
+  .sip__empty-title { font-size: 20px; }
+  .sip__empty-sub { font-size: 15px; max-width: 320px; }
+}
+
+/* ── Large desktop ≥ 1200px — 3 columns for completed ───────────────────── */
+@media (min-width: 1200px) {
+  .sip__content { max-width: 1280px; padding: 32px 60px 60px; }
+
+  /* Tab "Đã hoàn thành" → 3 cột */
+  .sip__cards--completed {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .sip__summary-value { font-size: 28px; }
+}
