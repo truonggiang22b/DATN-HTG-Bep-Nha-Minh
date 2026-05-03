@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '../store/useStore';
@@ -8,6 +8,7 @@ import { getActiveOrders, updateOrderStatus, cancelOrder } from '../services/int
 import { BRAND_NAME, KDS_STATUS_LABELS, KDS_CTA_LABELS, KDS_COLUMNS } from '../constants';
 import type { ApiOrder, OrderStatus } from '../types';
 import { useElapsedTime } from '../hooks/useClientSession';
+import { useRealtimeOrders } from '../hooks/useRealtimeOrders';
 import '../styles/kds.css';
 
 export const KDSPage = () => {
@@ -24,11 +25,17 @@ export const KDSPage = () => {
     return () => clearInterval(id);
   }, []);
 
+  const handleRealtimeEvent = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['activeOrders'] });
+  }, [queryClient]);
+
+  const realtime = useRealtimeOrders({ onEvent: handleRealtimeEvent });
+
   // ── Polling active orders mỗi 5 giây ─────────────────────────────────────
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['activeOrders'],
     queryFn: getActiveOrders,
-    refetchInterval: 5000,
+    refetchInterval: realtime.isRealtime ? 30_000 : 5000,
     staleTime: 0, // Luôn re-fetch
   });
 
@@ -85,7 +92,8 @@ export const KDSPage = () => {
             <>
               {orders.filter((o) => o.status === 'NEW').length} đơn mới •{' '}
               {orders.filter((o) => o.status === 'PREPARING').length} đang làm •{' '}
-              {orders.filter((o) => o.status === 'SERVED').length} hoàn thành hôm nay
+              {orders.filter((o) => o.status === 'SERVED').length} hoàn thành hôm nay •{' '}
+              {realtime.statusText}
             </>
           )}
         </div>
@@ -169,14 +177,27 @@ const KDSOrderCard = ({
     order.status === 'READY' ? 'kds-btn-primary--ready' : '',
   ].filter(Boolean).join(' ');
 
-  // Lấy tên bàn từ order items (API trả về qua join)
-  const displayName = (order as any).tableName ?? order.table?.displayName ?? `Bàn ${(order.tableId ?? '???').slice(-4)}`;
+  // Phân biệt đơn online vs đơn tại quán
+  const isOnline = (order as any).orderType === 'ONLINE';
+  const customerName = (order as any).customerName;
+  const displayName = isOnline
+    ? (customerName ? `Giao — ${customerName}` : 'Giao hàng')
+    : (order as any).tableName ?? order.table?.displayName ?? `Bàn ${(order.tableId ?? '???').slice(-4)}`;
+
+  const shortLabel = isOnline
+    ? 'ONLINE'
+    : displayName.replace('Bàn ', '');
 
   return (
     <div className={cardClass}>
       <div className="kds-card__header">
-        <div className="kds-card__table">{displayName.replace('Bàn ', '')}</div>
+        <div className={`kds-card__table${isOnline ? ' kds-card__table--online' : ''}`}>
+          {shortLabel}
+        </div>
         <div className="kds-card__meta">
+          {isOnline && (
+            <div className="kds-card__online-badge">🛵 Giao tận nơi</div>
+          )}
           <div className="kds-card__code">{order.orderCode}</div>
           <div className="kds-card__time">{elapsed}</div>
         </div>

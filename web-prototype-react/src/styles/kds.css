@@ -148,6 +148,25 @@
   color: rgba(255,255,255,0.4);
   margin-top: 2px;
 }
+/* Badge đơn giao hàng online */
+.kds-card__table--online {
+  font-size: 22px !important;
+  line-height: 1.2;
+  color: #fb923c !important; /* màu cam — khác hẳn đơn tại bàn */
+}
+.kds-card__online-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #fb923c;
+  background: rgba(251,146,60,0.15);
+  border: 1px solid rgba(251,146,60,0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-bottom: 4px;
+  display: inline-block;
+  text-transform: uppercase;
+}
 .kds-card__items {
   display: flex;
   flex-direction: column;

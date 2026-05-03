@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { createTimeline, stagger, animate } from 'animejs';
 import './LandingPageV2.css';
+import './LandingPageV2_Hola.css';
 
 // ── SVG PICTOS ───────────────────────────────────────────────────────────────
 
@@ -71,30 +72,29 @@ const IconMapPin = () => (
   </svg>
 );
 
-const IconCreditCard = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-    <line x1="1" y1="10" x2="23" y2="10"/>
-  </svg>
-);
-
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
 const INSIGHTS = [
   {
     icon: <IconOffice />,
-    title: 'Deadline & OT lu bù',
-    desc: 'Dù là cày đồ án hay mải chạy task văn phòng. Chẳng cần úp mì, một phần món ấm nóng dọn sẵn sẽ cứu đói ngay.',
+    eyebrow: 'Giờ cao điểm',
+    title: 'Deadline, OT, tan ca muộn',
+    desc: 'Đến bữa nhưng chưa kịp nghĩ xem ăn gì. Bếp nhận đơn gọn, nấu nóng và giao thẳng tới nơi bạn đang kẹt việc.',
+    accent: 'Có đồ ăn tử tế mà không phải rời guồng.',
   },
   {
     icon: <IconHeart />,
-    title: 'Góc chill Món Âu',
-    desc: 'Bít-tết mềm mọng, Mì Ý sốt béo ngậy. Trải nghiệm món Tây cực xịn mà ví vẫn rủng rỉnh cuối tháng.',
+    eyebrow: 'Đổi mood',
+    title: 'Một quán, hai mood ăn',
+    desc: 'Muốn cơm Việt chắc bụng hay muốn đổi gió sang món Âu cho bữa tối nhẹ đầu, menu vẫn giữ cảm giác gần mà không nhàm.',
+    accent: 'Không phải chọn giữa no bụng và vui miệng.',
   },
   {
     icon: <IconPerson />,
-    title: 'Nhanh nhưng phải ngon',
-    desc: 'Lịch học và làm việc đặc kín không có nghĩa là ăn tạm bợ. Bữa ăn đóng hộp kín đáo, đầy đủ dưỡng chất.',
+    eyebrow: 'Ăn cho ra ăn',
+    title: 'Nhanh nhưng vẫn có chăm chút',
+    desc: 'Khẩu phần đầy, đóng gói gọn, món lên tay vẫn sạch sẽ và đủ cảm giác bữa ăn thật chứ không phải chống đói cho xong.',
+    accent: 'Đó là phần khác biệt người ta nhớ lại để đặt lần sau.',
   },
 ];
 
@@ -104,32 +104,38 @@ const MENU_PREVIEWS = [
     name: 'Bít-tết Chảo Gang (Steak)',
     desc: 'Bò Úc mềm mọng xèo xèo, khoai tây chiên giòn rụm cùng sốt tiêu đen đậm đà. Ăn cực "cuốn".',
     price: '75.000đ',
+    tag: 'Đổi gió sau giờ làm',
   },
   {
     img: '/v2-canh-chua.png',
     name: 'Mì Ý Bò Bằm (Bolognese)',
     desc: 'Sốt bò bằm hầm cà chua chua ngọt ngọt, phủ phô mai béo ngậy. Giao chớp nhoáng tới KTX.',
     price: '45.000đ',
+    tag: 'Món dễ gọi buổi tối',
   },
   {
     img: '/v2-com-tam.png',
     name: 'Cơm Gà Khìa Nước Dừa',
     desc: 'Quen thuộc nhưng hao cơm. Gà khìa đậm vị, ăn cùng dưa leo thanh mát 100% no nê.',
     price: '48.000đ',
+    tag: 'Chắc bụng lúc cần nạp lại',
   },
 ];
 
 const REVIEWS = [
   {
-    text: 'Cứ mỗi mùa thi là mình đóng họ ở đây. Có hôm thèm cơm nhà, có hôm tụ tập ăn bít-tết, chân đủ mọi góc ở Hòa Lạc.',
+    label: 'Mùa thi',
+    text: 'Cứ tới tuần thi là mình gần như sống ở thư viện. Có hôm gọi cơm cho chắc bụng, có hôm đổi gió sang bít-tết. Đồ tới vẫn nóng nên ăn xong tỉnh người làm tiếp.',
     author: 'Minh Tuấn / Sinh viên FPTU'
   },
   {
-    text: 'Hiếm có quán nào vừa bán đồ bình dân vừa có món Âu tươm tất thế này. Buổi trưa công ty gọi đồ giao tận nơi vẫn nóng hổi.',
-    author: 'Trâm Anh / NV Cụm doanh nghiệp CNC'
+    label: 'Giờ trưa F-Town',
+    text: 'Team mình hay gọi theo nhóm vào giờ trưa. Điểm ăn tiền là món tới nơi vẫn chỉn chu, không bị cảm giác cơm hộp công nghiệp.',
+    author: 'Trâm Anh / Nhân viên khu CNC'
   },
   {
-    text: 'Phục vụ mượt, đồ ngon, hộp đựng rất chỉn chu. Cuối tháng tụi bạn thân toàn rủ ra đây ăn chung.',
+    label: 'Cuối ngày',
+    text: 'Lúc OT về muộn, chỉ cần một phần ăn nóng giao tới sảnh là thấy ngày đỡ gắt hẳn. Hộp gọn, món sạch, ăn xong không ngán.',
     author: 'Khánh Vy / Cư dân Hòa Lạc'
   }
 ];
@@ -137,18 +143,18 @@ const REVIEWS = [
 const OB_STEPS = [
   {
     icon: <IconMenu />,
-    title: 'Chọn gu hôm nay',
-    desc: 'Thèm cơm nhà ấm bụng hay đổi gió sang Món Âu cực chill? Bếp đều có đủ.',
+    title: 'Mở menu lúc đang bận',
+    desc: 'Không cần nghĩ nhiều. Vào menu, lướt nhanh vài món đúng mood hôm đó rồi chốt đơn trong vài nhịp.',
   },
   {
     icon: <IconPot />,
-    title: 'Bếp xèo xèo lửa',
-    desc: 'Không làm sẵn. Bếp chỉ thổi lửa sau khi bạn đặt để giữ trọn vẹn vị tươi mới nhất.',
+    title: 'Bếp xác nhận và nấu ngay',
+    desc: 'Đơn vào là bếp bắt đầu hoàn thiện món, đóng gói gọn và báo lại thời gian giao để bạn chủ động việc đang làm.',
     },
   {
     icon: <IconDelivery />,
-    title: 'Vui vẻ xơi thôi',
-    desc: 'Giao lẹ tận sảnh tòa nhà hay cửa phòng Dom KTX. Bữa ngon sẵn sàng cứu đói lúc deadline.',
+    title: 'Nhận món tại đúng điểm hẹn',
+    desc: 'Từ sảnh tòa nhà tới khu ký túc, đồ ăn tới tay vẫn đủ nóng để bữa đó không còn là giải pháp tạm bợ.',
   },
 ];
 
@@ -184,11 +190,11 @@ export function LandingPageV2_Hola() {
   useEffect(() => {
     if (!heroRef.current) return;
 
-    const elements = Array.from(heroRef.current.querySelectorAll('[data-hero-reveal]'));
+    const elements = Array.from(heroRef.current.querySelectorAll<HTMLElement>('[data-hero-reveal]'));
     const bgImg = heroRef.current.querySelector('.ed-hero__bg img') as HTMLElement | null;
 
     // Reset opacity initially
-    elements.forEach((el: any) => { el.style.opacity = '0'; el.style.transform = 'translateY(40px)'; });
+    elements.forEach((el) => { el.style.opacity = '0'; el.style.transform = 'translateY(40px)'; });
     if (bgImg) bgImg.style.opacity = '0';
 
     // Staggered reveal using v4 createTimeline
@@ -256,7 +262,7 @@ export function LandingPageV2_Hola() {
   }, []);
 
   return (
-    <div className="ed-landing">
+    <div className="ed-landing ed-landing--hola">
 
       {/* ── NAV ── */}
       <nav className="ed-nav">
@@ -266,9 +272,10 @@ export function LandingPageV2_Hola() {
             <span>Bếp Nhà Mình</span>
           </Link>
           <div className="ed-nav__right">
-            <Link to="/order-online/menu" className="ed-nav__link">Thực đơn</Link>
+            <span className="ed-nav__microcopy">Giao nội khu Hòa Lạc</span>
+            <Link to="/order-online/menu" className="ed-nav__link">Xem menu</Link>
             <Link to="/order-online/menu" className="ed-btn ed-btn--primary ed-btn--sm">
-              Trang đặt món
+              Đặt món ngay
             </Link>
           </div>
         </div>
@@ -283,25 +290,25 @@ export function LandingPageV2_Hola() {
         
         <div className="ed-hero__container">
           <div className="ed-hero__content">
-            <div className="ed-badge" data-hero-reveal style={{ willChange: 'transform, opacity' }}>Trạm sạc năng lượng Hòa Lạc</div>
+            <div className="ed-badge" data-hero-reveal style={{ willChange: 'transform, opacity' }}>Bữa tử tế cho nhịp sống Hòa Lạc</div>
             <h1 className="ed-hero__title" data-hero-reveal style={{ willChange: 'transform, opacity' }}>Chạy deadline?<br/>Có <span className="ed-highlight">bếp chiều.</span></h1>
             <p className="ed-hero__sub" data-hero-reveal style={{ willChange: 'transform, opacity' }}>
-              Góc chân ái của giới trẻ và dân văn phòng Hola với những suất ẩm thực tươm tất, từ mớ rau cơm nhà đến Món Âu chill-out.
+              Từ KTX, khu CNC đến những hôm tan ca muộn, đây là chỗ để gọi một bữa ăn đủ ngon, đủ gọn và đủ nóng khi bạn không còn thời gian lo cho mình.
             </p>
             <div className="ed-hero__actions" data-hero-reveal style={{ willChange: 'transform, opacity' }}>
               <Link 
                 to="/order-online/menu" 
                 className="ed-btn ed-btn--primary ed-btn--lg"
-                ref={btnRef as any}
+                ref={btnRef}
                 style={{ transition: 'transform 0.1s ease-out, background-color 0.2s, box-shadow 0.2s', willChange: 'transform' }}
               >
                 Chọn món & đặt ngay
               </Link>
             </div>
             <div className="ed-hero__meta" data-hero-reveal style={{ willChange: 'transform, opacity' }}>
-              <div className="ed-hero__meta-item"><IconCheck /> Chuẩn gu hai thế hệ</div>
+              <div className="ed-hero__meta-item"><IconCheck /> Cơm Việt lẫn món Âu đều vào gu</div>
               <div className="ed-hero__meta-item"><IconCheck /> Giao chớp nhoáng 30 phút</div>
-              <div className="ed-hero__meta-item"><IconCheck /> Giá cực êm</div>
+              <div className="ed-hero__meta-item"><IconCheck /> Giá vẫn dễ vào ngay cả cuối tháng</div>
             </div>
           </div>
         </div>
@@ -310,13 +317,19 @@ export function LandingPageV2_Hola() {
       {/* ── 2. INSIGHT ── */}
       <section className="ed-insight">
         <div className="ed-container">
+          <header className="ed-section-head ed-section-head--narrow" data-reveal>
+            <h2 className="ed-section-title">Không chỉ là chỗ đặt đồ ăn.</h2>
+            <p className="ed-section-sub">Đây là kiểu quán bạn nhớ tới ngay khi đói mà vẫn muốn ăn cho ra một bữa.</p>
+          </header>
           <div className="ed-insight__grid">
             {INSIGHTS.map((item, i) => (
-              <div key={item.title} className="ed-insight-card" data-reveal style={{ transitionDelay: `${i * 100}ms` }}>
+              <div key={item.title} className="ed-insight-card ed-insight-card--hola" data-reveal style={{ transitionDelay: `${i * 100}ms` }}>
                 <div className="ed-insight-card__icon">{item.icon}</div>
+                <div className="ed-insight-card__eyebrow">{item.eyebrow}</div>
                 <h3 className="ed-insight-card__title">{item.title}</h3>
                 <p className="ed-insight-card__desc">{item.desc}</p>
-                <Link to="/order-online/menu" className="ed-link">Chọn món ngay →</Link>
+                <p className="ed-insight-card__accent">{item.accent}</p>
+                <Link to="/order-online/menu" className="ed-link">Xem menu phù hợp →</Link>
               </div>
             ))}
           </div>
@@ -327,23 +340,24 @@ export function LandingPageV2_Hola() {
       <section className="ed-menu">
         <div className="ed-container">
           <header className="ed-section-head" data-reveal>
-            <h2 className="ed-section-title">Hôm nay đổi gió món gì?</h2>
-            <p className="ed-section-sub">Từ mâm cơm Việt quen thuộc bảo đảm chắc bụng, đến Món Âu trải nghiệm xịn xò.</p>
+            <h2 className="ed-section-title">Nhìn món là muốn bấm đặt ngay.</h2>
+            <p className="ed-section-sub">Menu nên làm hai việc cùng lúc: cứu đói nhanh và khiến bạn thấy bữa đó đáng để chờ vài chục phút.</p>
           </header>
 
           <div className="ed-menu__grid">
             {MENU_PREVIEWS.map((menu, i) => (
-              <div key={menu.name} className="ed-menu-card" data-reveal style={{ transitionDelay: `${i * 100}ms` }}>
+              <div key={menu.name} className="ed-menu-card ed-menu-card--hola" data-reveal style={{ transitionDelay: `${i * 100}ms` }}>
                 <div className="ed-menu-card__img">
                   <img src={menu.img} alt={menu.name} loading="lazy" />
                 </div>
                 <div className="ed-menu-card__body">
+                  <div className="ed-menu-card__tag">{menu.tag}</div>
                   <h3 className="ed-menu-card__name">{menu.name}</h3>
                   <p className="ed-menu-card__desc">{menu.desc}</p>
                   <div className="ed-menu-card__foot">
                     <span className="ed-menu-card__price">{menu.price}</span>
                     <Link to="/order-online/menu" className="ed-btn ed-btn--secondary ed-btn--sm">
-                      Thêm vào giỏ
+                      Xem món này
                     </Link>
                   </div>
                 </div>
@@ -378,10 +392,11 @@ export function LandingPageV2_Hola() {
       {/* ── 5. SOCIAL PROOF ── */}
       <section className="ed-proof">
         <div className="ed-container">
-          <h2 className="ed-section-title" data-reveal>Góc review từ Hola</h2>
+          <h2 className="ed-section-title" data-reveal>Người ở Hòa Lạc nhớ điều gì nhất?</h2>
           <div className="ed-proof__grid">
             {REVIEWS.map((rev, i) => (
-              <div key={i} className="ed-proof-card" data-reveal style={{ transitionDelay: `${i * 100}ms` }}>
+              <div key={i} className="ed-proof-card ed-proof-card--hola" data-reveal style={{ transitionDelay: `${i * 100}ms` }}>
+                <div className="ed-proof-card__label">{rev.label}</div>
                 <p className="ed-proof-card__text">“{rev.text}”</p>
                 <p className="ed-proof-card__author">{rev.author}</p>
               </div>
@@ -394,7 +409,8 @@ export function LandingPageV2_Hola() {
       <section className="ed-steps">
         <div className="ed-container">
           <header className="ed-section-head ed-section-head--center" data-reveal>
-            <h2 className="ed-section-title">Chỉ 3 bước để có bữa ngon.</h2>
+            <h2 className="ed-section-title">Một cơn đói ở Hòa Lạc thường kết thúc như thế này.</h2>
+            <p className="ed-section-sub">Flow đủ rõ để không phải nghĩ nhiều, đủ nhanh để không làm vỡ mạch công việc.</p>
           </header>
           <div className="ed-steps__grid">
             {OB_STEPS.map((step, i) => (
@@ -415,15 +431,15 @@ export function LandingPageV2_Hola() {
           <div className="ed-finale__grid">
             <div className="ed-finale__left" data-reveal>
               <div className="ed-finale__subtitle">Bếp Đang Mở</div>
-              <h2 className="ed-section-title">Hôm nay bạn muốn ăn gì?</h2>
-              <p className="ed-section-sub">Xem thực đơn đang mở bán và đặt món trong vài bước. Bếp sẽ liên hệ xác nhận trước khi giao.</p>
+              <h2 className="ed-section-title">Nếu đã đói, đừng để bữa tối thành giải pháp tạm.</h2>
+              <p className="ed-section-sub">Mở menu để chọn ngay một món hợp mood hôm nay. Bếp xác nhận, hoàn thiện món và giao đến điểm hẹn trong nội khu Hòa Lạc.</p>
               
               <div className="ed-finale__actions">
                 <Link to="/order-online/menu" className="ed-btn ed-btn--primary ed-btn--lg">
                   Xem thực đơn & đặt món
                 </Link>
                 <a href="tel:+84901234567" className="ed-btn ed-btn--secondary ed-btn--lg">
-                  Gọi bếp xác nhận
+                  Cần hỏi nhanh? Gọi bếp
                 </a>
               </div>
 
@@ -431,7 +447,7 @@ export function LandingPageV2_Hola() {
                 <span className="ed-finale__badge">Món nấu trong ngày</span>
                 <span className="ed-finale__badge">Giao tận nơi</span>
                 <span className="ed-finale__badge">Thanh toán khi nhận</span>
-                <span className="ed-finale__badge">Bếp đang nhận đơn</span>
+                <span className="ed-finale__badge">Hợp cả giờ trưa lẫn cuối ngày</span>
               </div>
             </div>
 
@@ -453,10 +469,10 @@ export function LandingPageV2_Hola() {
               </div>
 
               <div className="ed-info-card ed-delay-3" data-reveal>
-                <div className="ed-info-card__icon"><IconCreditCard /></div>
+                <div className="ed-info-card__icon"><IconDelivery /></div>
                 <div className="ed-info-card__text">
-                  <h4>Hình thức thanh toán</h4>
-                  <p>Tiền mặt, Chuyển khoản, Thẻ ghi nợ</p>
+                  <h4>Nhịp giao thường gặp</h4>
+                  <p>Hợp nhất cho giờ trưa, đầu tối và những hôm OT về muộn</p>
                 </div>
               </div>
             </div>
@@ -486,7 +502,7 @@ export function LandingPageV2_Hola() {
         <div className="ed-sticky-bar__inner">
           <div className="ed-sticky-bar__text">
             <span className="ed-status-dot" aria-label="Đang nhận đơn" />
-            <span>Bếp đang đỏ lửa · Sẵn sàng nạp năng lượng!</span>
+            <span>Bếp đang nhận đơn nội khu Hòa Lạc</span>
           </div>
           <Link to="/order-online/menu" className="ed-btn ed-btn--primary">
             Đặt món
