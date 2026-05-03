@@ -8,12 +8,14 @@ import { app } from '../src/app';
 
 describe('Auth Module', () => {
   let adminToken: string;
+  let adminRefreshToken: string;
 
   beforeAll(async () => {
     const res = await request(app)
       .post('/api/auth/login')
       .send({ email: 'admin@bepnhaminh.vn', password: 'Admin@123456' });
     adminToken = res.body.data.accessToken;
+    adminRefreshToken = res.body.data.refreshToken;
   });
 
   // ── Login ──────────────────────────────────────────────────────────────────
@@ -82,6 +84,28 @@ describe('Auth Module', () => {
       .send({ email: 'admin@bepnhaminh.vn', password: 'short' });
 
     expect(res.status).toBe(400);
+  });
+
+  // ── Refresh token ─────────────────────────────────────────────────────────
+
+  it('REFRESH-01: Valid refresh token → 200 with new access token', async () => {
+    const res = await request(app)
+      .post('/api/auth/refresh')
+      .send({ refreshToken: adminRefreshToken });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveProperty('accessToken');
+    expect(res.body.data).toHaveProperty('refreshToken');
+    expect(res.body.data).toHaveProperty('expiresIn');
+  });
+
+  it('REFRESH-02: Missing refresh token → 400 Validation error', async () => {
+    const res = await request(app)
+      .post('/api/auth/refresh')
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
 
   // ── Protected routes ───────────────────────────────────────────────────────

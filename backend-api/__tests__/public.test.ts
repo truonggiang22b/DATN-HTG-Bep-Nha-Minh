@@ -302,15 +302,10 @@ describe('Public Customer APIs', () => {
 
   // ── Order Tracking ────────────────────────────────────────────────────────
 
-  it('TRACK-01: Valid orderId → 200 with status and items', async () => {
+  it('TRACK-01: Valid orderId without qrToken → 403 Forbidden', async () => {
     if (!createdOrderId) return;
     const res = await request(app).get(`/api/public/orders/${createdOrderId}`);
-    expect(res.status).toBe(200);
-    expect(res.body.data).toHaveProperty('orderCode');
-    expect(res.body.data).toHaveProperty('internalStatus');
-    expect(res.body.data).toHaveProperty('customerStatus'); // localized label
-    expect(res.body.data.items).toBeInstanceOf(Array);
-    expect(res.body.data.items.length).toBeGreaterThan(0);
+    expect(res.status).toBe(403);
   });
 
   it('TRACK-02: Valid orderId with matching qrToken → 200', async () => {
@@ -319,6 +314,11 @@ describe('Public Customer APIs', () => {
       `/api/public/orders/${createdOrderId}?qrToken=${QR_VALID}`
     );
     expect(res.status).toBe(200);
+    expect(res.body.data).toHaveProperty('orderCode');
+    expect(res.body.data).toHaveProperty('internalStatus');
+    expect(res.body.data).toHaveProperty('customerStatus'); // localized label
+    expect(res.body.data.items).toBeInstanceOf(Array);
+    expect(res.body.data.items.length).toBeGreaterThan(0);
   });
 
   it('TRACK-03: Valid orderId with WRONG qrToken → 403 Forbidden', async () => {
