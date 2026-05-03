@@ -76,8 +76,8 @@ export function calcShippingFee(
  * ~3 km/phút xe máy trong thành phố + 10 phút chuẩn bị
  */
 export function estimateDeliveryMinutes(distanceKm: number): number {
-  const travelMinutes = Math.ceil(distanceKm / 3 * 60 / 60 * 60); // 30 km/h = 0.5 km/min
-  return 10 + Math.ceil(distanceKm / 0.5); // 10 mins prep + travel
+  // 30 km/h = 2 min/km; add 10 mins kitchen preparation
+  return 10 + Math.ceil(distanceKm * 2);
 }
 
 function toRad(deg: number): number {
