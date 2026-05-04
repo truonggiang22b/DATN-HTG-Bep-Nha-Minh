@@ -5,7 +5,7 @@ import { getActiveOrders, updateOrderStatus, getOrderHistory } from './orders.co
 import { listCategories, createCategory, updateCategory, deleteCategory, restoreCategory } from './categories.controller';
 import { listMenuItems, createMenuItem, updateMenuItem, updateMenuItemStatus, deleteMenuItem, restoreMenuItem } from './menuItems.controller';
 import { listTables, createTable, updateTable, deactivateTable, restoreTable } from './tables.controller';
-import { resetTableSession } from './sessions.controller';
+import { getCurrentTableSession, resetTableSession } from './sessions.controller';
 import { getMe } from '../auth/auth.controller';
 import { upload, uploadImage } from './upload.controller';
 import { listStaff, createStaff, updateStaff, updateStaffStatus } from './users.controller';
@@ -45,6 +45,12 @@ internalRouter.get(
 );
 
 // ─── Table Session Reset (MANAGER, ADMIN) ─────────────────────────────────────
+internalRouter.get(
+  '/tables/:id/current-session',
+  requireRole('MANAGER', 'ADMIN'),
+  getCurrentTableSession
+);
+
 internalRouter.post(
   '/tables/:id/reset-session',
   requireRole('MANAGER', 'ADMIN'),

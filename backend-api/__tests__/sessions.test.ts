@@ -197,4 +197,17 @@ describe('Session Management', () => {
       );
     }
   });
+
+  it('SESSION-07: Admin can view current table session orders and payable total', async () => {
+    const res = await request(app)
+      .get(`/api/internal/tables/${tableId}/current-session`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.table.id).toBe(tableId);
+    expect(res.body.data.session).not.toBeNull();
+    expect(res.body.data.session.orders.length).toBeGreaterThan(0);
+    expect(res.body.data.session.payableTotal).toBeGreaterThan(0);
+    expect(res.body.data.session.activeOrderCount).toBeGreaterThan(0);
+  });
 });
