@@ -393,16 +393,23 @@ body:has(.oop) #root {
   background: linear-gradient(to right, var(--border-color), transparent);
 }
 
-/* Menu list */
+/* Menu list — 2 cột mobile, 3 cột desktop */
 .oop__menu-list {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 @media (min-width: 960px) {
   .oop__menu-list {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .oop__menu-list {
+    grid-template-columns: 1fr;
     gap: 10px;
   }
 }
@@ -434,78 +441,182 @@ body:has(.oop) #root {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   MENU CARD
+   MENU CARD — Premium vertical card
    ══════════════════════════════════════════════════════════════════════════════ */
 .menu-card {
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
+  background: #fff;
+  border-radius: 16px;
+  border: 1.5px solid #eedfc8;
+  box-shadow: 0 2px 12px rgba(180,120,60,.07);
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 12px;
-  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  flex-direction: column;
+  overflow: hidden;
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  min-width: 0;
+  width: 100%;
+  text-align: left; /* override text-align:center từ index.css */
 }
 
 .menu-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: rgba(233,79,55,.35);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(180,100,60,.14);
+  border-color: rgba(233,79,55,.5);
+}
+
+.menu-card:active {
+  transform: translateY(-1px) scale(0.99);
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
 }
 
 .menu-card--soldout {
-  opacity: 0.55;
+  opacity: 0.48;
   pointer-events: none;
 }
 
-/* Ảnh */
+/* ── Ảnh ── */
 .menu-card__img-wrap {
   position: relative;
-  flex-shrink: 0;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  background: #f5ede0;
+  overflow: hidden;
 }
 
 .menu-card__img {
-  width: 88px; height: 80px;
-  border-radius: var(--radius-sm);
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  background: var(--bg-soft);
   display: block;
+  transition: transform 0.35s ease;
 }
 
-.menu-card__soldout-badge {
+.menu-card:hover .menu-card__img {
+  transform: scale(1.07);
+}
+
+/* Badge số lượng trong giỏ — nổi góc trái trên */
+.menu-card__qty-badge {
   position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.45);
-  border-radius: var(--radius-sm);
+  top: 8px;
+  left: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  min-width: 26px;
+  height: 26px;
+  border-radius: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: var(--fw-bold);
-  color: #fff;
-  letter-spacing: .04em;
+  padding: 0 7px;
+  box-shadow: 0 2px 8px rgba(233,79,55,.5);
+  z-index: 3;
+  letter-spacing: -0.01em;
 }
 
-/* Body */
+/* Nút + nổi góc phải dưới ảnh */
+.menu-card__add-fab {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(233,79,55,.55);
+  z-index: 3;
+  transition: transform 0.18s ease, background 0.15s;
+  pointer-events: none;
+}
+
+.menu-card:hover .menu-card__add-fab {
+  transform: scale(1.15);
+  background: #c93d28;
+}
+
+/* Stepper ngoài ảnh khi đã có trong giỏ */
+.menu-card__stepper-fab {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1.5px solid #eedfc8;
+  border-radius: 50px;
+  padding: 3px;
+  gap: 0;
+  box-shadow: 0 3px 10px rgba(0,0,0,.14);
+  z-index: 3;
+}
+
+.fab-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s, transform 0.1s;
+}
+.fab-btn:hover  { background: #c93d28; }
+.fab-btn:active { transform: scale(0.88); }
+
+.fab-qty {
+  min-width: 26px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-main);
+  font-family: var(--font-accent);
+}
+
+/* ── Text body dưới ảnh ── */
 .menu-card__body {
-  flex: 1;
-  min-width: 0;
+  padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: left !important;
 }
 
 .menu-card__name {
-  font-weight: var(--fw-semibold);
+  font-weight: 700;
   font-size: 14px;
-  color: var(--text-main);
-  line-height: 1.5;
+  color: #2c1f18;
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  min-width: 0;
+  margin: 0;
+  text-align: left !important;
 }
 
 .menu-card__desc {
@@ -513,85 +624,47 @@ body:has(.oop) #root {
   color: var(--text-sub);
   line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  margin: 0;
+  text-align: left !important;
 }
 
 .menu-card__footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-top: auto;
-  padding-top: 8px;
-  gap: 8px;
+  margin-top: 6px;
+  text-align: left !important;
 }
 
 .menu-card__price {
   font-family: var(--font-accent);
-  font-weight: var(--fw-bold);
+  font-weight: 800;
   font-size: 15px;
-  color: var(--text-price);
-}
-
-/* Nút + (chưa chọn món) */
-.menu-card__add {
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  font-size: 20px;
-  font-weight: 300;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  line-height: 1;
-  transition: background 0.12s, transform 0.12s, box-shadow 0.12s;
-}
-.menu-card__add:hover {
-  background: var(--primary-hover);
-  transform: scale(1.1);
-  box-shadow: 0 3px 10px rgba(233,79,55,.35);
-}
-
-/* Stepper (đã chọn món) — đồng nhất với cart */
-.menu-card__stepper {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  background: var(--bg-highlight);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-pill);
-  height: 32px;
-  overflow: hidden;
-}
-
-.qty-btn {
-  width: 28px; height: 32px;
-  background: transparent;
   color: var(--primary);
-  font-size: 18px;
-  font-weight: var(--fw-bold);
-  border: none;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.1s;
-  flex-shrink: 0;
-  line-height: 1;
+  align-items: baseline;
+  gap: 2px;
 }
-.qty-btn:hover { background: rgba(233,79,55,.1); }
-.qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.menu-card__qty {
-  font-family: var(--font-accent);
-  font-weight: var(--fw-bold);
+/* Ký tự đ — dùng Be Vietnam Pro (cùng font tên món), nhỏ hơn số */
+.menu-card__price-unit {
+  font-family: var(--font-primary);
+  font-weight: 600;
   font-size: 13px;
-  min-width: 18px;
-  text-align: center;
-  color: var(--text-main);
+  color: var(--primary);
+  letter-spacing: 0;
+  text-decoration: none;
+}
+
+/* Hidden legacy */
+.menu-card__add,
+.menu-card__stepper,
+.qty-btn,
+.menu-card__qty,
+.menu-card__opts-hint {
+  display: none;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -931,6 +1004,16 @@ body:has(.oop) #root {
     grid-row: 1 / 10; /* sticky across multiple rows */
     position: sticky;
     top: 80px;
+  }
+
+  /* Step 3 (Confirm) — không có order-summary → 1 cột, thu nhỏ và căn giữa */
+  .oop__step-wrapper:not(:has(.oop__order-summary)) {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+  }
+  .oop__step-wrapper:not(:has(.oop__order-summary)) .oop__form-card,
+  .oop__step-wrapper:not(:has(.oop__order-summary)) .oop__nav-row {
+    grid-column: 1;
   }
 }
 

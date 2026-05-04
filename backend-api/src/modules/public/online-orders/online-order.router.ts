@@ -16,6 +16,7 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import { AppError } from '../../../utils/errors';
 import { success } from '../../../utils/apiResponse';
 import {
   estimateFeeSchema,
@@ -27,11 +28,13 @@ import {
   estimateDeliveryFeeService,
   createOnlineOrderService,
   getOnlineOrderService,
+  verifyOnlineOrderTrackingAccessService,
   listDeliveryOrdersService,
   updateDeliveryStatusService,
   getBranchDeliveryConfigService,
   updateBranchDeliveryConfigService,
 } from './online-order.service';
+import { subscribePublicOrderEvents } from '../../realtime/realtime.bus';
 
 export const onlineOrderPublicRouter = Router();
 
@@ -65,10 +68,32 @@ onlineOrderPublicRouter.post(
 
 // ─── GET /online-orders/:orderId ─────────────────────────────────────────────
 onlineOrderPublicRouter.get(
+  '/online-orders/:orderId/events',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const orderId = routeParam(req.params.orderId, 'orderId');
+      const { token } = req.query as { token?: string };
+      if (!token) {
+        throw AppError.badRequest('MISSING_TOKEN', 'Can token de xem don hang');
+      }
+      await verifyOnlineOrderTrackingAccessService(orderId, token);
+      subscribePublicOrderEvents(req, res, orderId);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+onlineOrderPublicRouter.get(
   '/online-orders/:orderId',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const order = await getOnlineOrderService(req.params.orderId);
+      const orderId = routeParam(req.params.orderId, 'orderId');
+      const { token } = req.query as { token?: string };
+      if (!token) {
+        throw AppError.badRequest('MISSING_TOKEN', 'Can token de xem don hang');
+      }
+      const order = await getOnlineOrderService(orderId, token);
       return success(res, order);
     } catch (err) {
       next(err);
@@ -81,7 +106,7 @@ onlineOrderPublicRouter.get(
   '/branches/:branchId/delivery-config',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const config = await getBranchDeliveryConfigService(req.params.branchId);
+      const config = await getBranchDeliveryConfigService(routeParam(req.params.branchId, 'branchId'));
       return success(res, config);
     } catch (err) {
       next(err);
@@ -123,9 +148,10 @@ onlineOrderInternalRouter.patch(
     try {
       const input = updateDeliveryStatusSchema.parse(req.body);
       const result = await updateDeliveryStatusService(
-        req.params.id,
+        routeParam(req.params.id, 'id'),
         input.deliveryStatus,
-        input.reason
+        input.reason,
+        req.user?.storeId
       );
       return success(res, result);
     } catch (err) {
@@ -139,7 +165,8 @@ onlineOrderInternalRouter.get(
   '/branches/:id/delivery-config',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const config = await getBranchDeliveryConfigService(req.params.id);
+      assertManagerOrAdmin(req);
+      const config = await getBranchDeliveryConfigService(routeParam(req.params.id, 'id'), req.user?.storeId);
       return success(res, config);
     } catch (err) {
       next(err);
@@ -153,10 +180,25 @@ onlineOrderInternalRouter.patch(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const input = updateDeliveryConfigSchema.parse(req.body);
-      const updated = await updateBranchDeliveryConfigService(req.params.id, input);
+      assertManagerOrAdmin(req);
+      const updated = await updateBranchDeliveryConfigService(routeParam(req.params.id, 'id'), input, req.user?.storeId);
       return success(res, updated);
     } catch (err) {
       next(err);
     }
   }
 );
+
+function assertManagerOrAdmin(req: Request) {
+  const roles = req.user?.roles ?? [];
+  if (!roles.includes('ADMIN') && !roles.includes('MANAGER')) {
+    throw AppError.forbidden('Requires ADMIN or MANAGER role');
+  }
+}
+
+function routeParam(value: string | string[], name: string) {
+  if (Array.isArray(value)) {
+    throw AppError.badRequest('VALIDATION_ERROR', `${name} must be a string`);
+  }
+  return value;
+}

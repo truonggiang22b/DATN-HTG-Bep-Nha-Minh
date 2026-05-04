@@ -60,6 +60,7 @@ enum UserRole {
   ADMIN
   MANAGER
   KITCHEN
+  SHIPPER
 }
 
 // ─── Multi-tenant root ────────────────────────────────────────────────────────
@@ -251,6 +252,7 @@ model Order {
   subtotal        Decimal     @db.Decimal(10, 0)
   customerNote    String?     @map("customer_note")
   idempotencyKey  String      @unique @map("idempotency_key")
+  trackingToken   String?     @unique @map("tracking_token")   // Phase 2: bảo vệ tracking endpoint
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
 

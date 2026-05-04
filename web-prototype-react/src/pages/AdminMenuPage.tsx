@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+﻿import { useState, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '../store/useStore';
 import { formatPrice } from '../components/Toast';
@@ -9,6 +9,7 @@ import {
   deleteMenuItem, restoreMenuItem,
   uploadMenuImage,
 } from '../services/internalApi';
+import { OptionGroupsPanel } from '../components/OptionGroupsPanel';
 import '../styles/admin.css';
 
 const BLANK_FORM = {
@@ -55,6 +56,8 @@ export const AdminMenuPage = () => {
   // ── Item modal state ──────────────────────────────────────────────────────
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName_item, setEditingName_item] = useState('');
+  const [modalTab, setModalTab] = useState<'info' | 'options'>('info');
   const [form, setForm] = useState({ ...BLANK_FORM });
 
   // ── Upload state ──────────────────────────────────────────────────────────
@@ -184,11 +187,13 @@ export const AdminMenuPage = () => {
     setForm({ ...BLANK_FORM, categoryId: categories[0]?.id ?? '' });
     setPreviewUrl('');
     setUploadProgress('idle');
+    setModalTab('info');
     setModalOpen(true);
   };
 
   const openEditModal = (item: ApiMenuItem) => {
     setEditingId(item.id);
+    setEditingName_item(item.name);
     setForm({
       name: item.name,
       categoryId: item.categoryId,
@@ -200,6 +205,7 @@ export const AdminMenuPage = () => {
     });
     setPreviewUrl(item.imageUrl ?? '');
     setUploadProgress(item.imageUrl ? 'done' : 'idle');
+    setModalTab('info');
     setModalOpen(true);
   };
 
@@ -394,145 +400,186 @@ export const AdminMenuPage = () => {
         <div className="modal-backdrop" onClick={() => setModalOpen(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <span className="modal-title">{editingId ? '✏️ Chỉnh sửa món' : '+ Thêm món mới'}</span>
+              <span className="modal-title">{editingId ? `✏️ ${editingName_item}` : '+ Thêm món mới'}</span>
               <button className="modal-close" onClick={() => setModalOpen(false)}>✕</button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label className="form-label">Tên món <span style={{ color: 'var(--color-chili)' }}>*</span></label>
-                <input className="form-input" placeholder="VD: Bún bò Huế đặc biệt" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div className="form-group">
-                  <label className="form-label">Danh mục <span style={{ color: 'var(--color-chili)' }}>*</span></label>
-                  <select className="form-input" value={form.categoryId} onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}>
-                    <option value="">-- Chọn danh mục --</option>
-                    {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Trạng thái</label>
-                  <select className="form-input" value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as ItemStatus }))}>
-                    <option value="ACTIVE">Đang bán</option>
-                    <option value="SOLD_OUT">Tạm hết</option>
-                    <option value="HIDDEN">Ẩn</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Giá (VND) <span style={{ color: 'var(--color-chili)' }}>*</span></label>
-                <input className="form-input" type="number" min={0} step={1000} placeholder="VD: 65000" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Mô tả ngắn</label>
-                <textarea className="form-input" rows={2} placeholder="VD: Bún bò Huế đậm đà..." value={form.shortDescription} onChange={(e) => setForm((f) => ({ ...f, shortDescription: e.target.value }))} style={{ resize: 'vertical' }} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Ảnh món ăn</label>
 
-                {/* Drop zone */}
-                <div
-                  onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-                  onDragLeave={() => setIsDragOver(false)}
-                  onDrop={handleDropZone}
-                  onClick={() => uploadProgress !== 'uploading' && fileInputRef.current?.click()}
-                  style={{
-                    border: `2px dashed ${isDragOver ? 'var(--color-chili)' : 'var(--color-steam)'}`,
-                    borderRadius: 'var(--radius-sm)',
-                    padding: '14px 16px',
-                    cursor: uploadProgress === 'uploading' ? 'wait' : 'pointer',
-                    background: isDragOver ? 'rgba(216,58,46,0.04)' : 'var(--color-cotton)',
-                    transition: 'all 0.15s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 14,
-                    minHeight: 82,
-                  }}
-                >
-                  {previewUrl ? (
-                    <img
-                      src={previewUrl}
-                      alt="preview"
-                      style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid var(--color-steam)' }}
-                    />
-                  ) : (
-                    <div style={{ width: 60, height: 60, borderRadius: 8, background: 'var(--color-steam)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>🖼️</div>
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {uploadProgress === 'uploading' ? (
-                      <div style={{ fontSize: 13, color: 'var(--color-turmeric)', fontWeight: 600 }}>⏳ Đang tải ảnh lên...</div>
-                    ) : uploadProgress === 'done' ? (
-                      <div>
-                        <div style={{ fontSize: 13, color: 'var(--color-leaf)', fontWeight: 600 }}>✅ Ảnh đã sẵn sàng</div>
-                        <div style={{ fontSize: 11, color: 'var(--color-soy)', marginTop: 2 }}>Bấm để thay ảnh khác</div>
-                      </div>
-                    ) : uploadProgress === 'error' ? (
-                      <div>
-                        <div style={{ fontSize: 13, color: 'var(--color-chili)', fontWeight: 600 }}>❌ Upload thất bại</div>
-                        <div style={{ fontSize: 11, color: 'var(--color-soy)', marginTop: 2 }}>Thử lại hoặc nhập URL bên dưới</div>
-                      </div>
+            {/* Tab bar — chỉ hiện khi đang sửa món */}
+            {editingId && (
+              <div style={{ display: 'flex', borderBottom: '2px solid var(--color-steam)', padding: '0 20px', background: 'var(--color-cotton)' }}>
+                {(['info', 'options'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setModalTab(tab)}
+                    style={{
+                      padding: '10px 16px',
+                      fontSize: 13,
+                      fontWeight: modalTab === tab ? 700 : 500,
+                      color: modalTab === tab ? 'var(--color-chili)' : 'var(--color-soy)',
+                      background: 'none',
+                      border: 'none',
+                      borderBottom: `2.5px solid ${modalTab === tab ? 'var(--color-chili)' : 'transparent'}`,
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-primary)',
+                      marginBottom: -2,
+                    }}
+                  >
+                    {tab === 'info' ? '📄 Thông tin' : '📋 Phân loại'}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Tab: Thông tin cơ bản */}
+            {(!editingId || modalTab === 'info') && (
+              <div className="modal-body">
+                <div className="form-group">
+                  <label className="form-label">Tên món <span style={{ color: 'var(--color-chili)' }}>*</span></label>
+                  <input className="form-input" placeholder="VD: Bún bò Huế đặc biệt" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="form-group">
+                    <label className="form-label">Danh mục <span style={{ color: 'var(--color-chili)' }}>*</span></label>
+                    <select className="form-input" value={form.categoryId} onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}>
+                      <option value="">-- Chọn danh mục --</option>
+                      {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Trạng thái</label>
+                    <select className="form-input" value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as ItemStatus }))}>
+                      <option value="ACTIVE">Đang bán</option>
+                      <option value="SOLD_OUT">Tạm hết</option>
+                      <option value="HIDDEN">Ẩn</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Giá (VND) <span style={{ color: 'var(--color-chili)' }}>*</span></label>
+                  <input className="form-input" type="number" min={0} step={1000} placeholder="VD: 65000" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Mô tả ngắn</label>
+                  <textarea className="form-input" rows={2} placeholder="VD: Bún bò Huế đậm đà..." value={form.shortDescription} onChange={(e) => setForm((f) => ({ ...f, shortDescription: e.target.value }))} style={{ resize: 'vertical' }} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Ảnh món ăn</label>
+
+                  {/* Drop zone */}
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                    onDragLeave={() => setIsDragOver(false)}
+                    onDrop={handleDropZone}
+                    onClick={() => uploadProgress !== 'uploading' && fileInputRef.current?.click()}
+                    style={{
+                      border: `2px dashed ${isDragOver ? 'var(--color-chili)' : 'var(--color-steam)'}`,
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '14px 16px',
+                      cursor: uploadProgress === 'uploading' ? 'wait' : 'pointer',
+                      background: isDragOver ? 'rgba(216,58,46,0.04)' : 'var(--color-cotton)',
+                      transition: 'all 0.15s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 14,
+                      minHeight: 82,
+                    }}
+                  >
+                    {previewUrl ? (
+                      <img
+                        src={previewUrl}
+                        alt="preview"
+                        style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid var(--color-steam)' }}
+                      />
                     ) : (
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-charcoal)' }}>Kéo &amp; thả ảnh vào đây</div>
-                        <div style={{ fontSize: 11, color: 'var(--color-soy)', marginTop: 3 }}>hoặc bấm để chọn file · JPG, PNG, WEBP · tối đa 5MB</div>
-                      </div>
+                      <div style={{ width: 60, height: 60, borderRadius: 8, background: 'var(--color-steam)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>🖼️</div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {uploadProgress === 'uploading' ? (
+                        <div style={{ fontSize: 13, color: 'var(--color-turmeric)', fontWeight: 600 }}>⏳ Đang tải ảnh lên...</div>
+                      ) : uploadProgress === 'done' ? (
+                        <div>
+                          <div style={{ fontSize: 13, color: 'var(--color-leaf)', fontWeight: 600 }}>✅ Ảnh đã sẵn sàng</div>
+                          <div style={{ fontSize: 11, color: 'var(--color-soy)', marginTop: 2 }}>Bấm để thay ảnh khác</div>
+                        </div>
+                      ) : uploadProgress === 'error' ? (
+                        <div>
+                          <div style={{ fontSize: 13, color: 'var(--color-chili)', fontWeight: 600 }}>❌ Upload thất bại</div>
+                          <div style={{ fontSize: 11, color: 'var(--color-soy)', marginTop: 2 }}>Thử lại hoặc nhập URL bên dưới</div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-charcoal)' }}>Kéo &amp; thả ảnh vào đây</div>
+                          <div style={{ fontSize: 11, color: 'var(--color-soy)', marginTop: 3 }}>hoặc bấm để chọn file · JPG, PNG, WEBP · tối đa 5MB</div>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleFileSelect(f);
+                        e.target.value = '';
+                      }}
+                    />
+                  </div>
+
+                  {/* Fallback: URL thủ công */}
+                  <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: 'var(--color-soy)', whiteSpace: 'nowrap' }}>Hoặc URL:</span>
+                    <input
+                      className="form-input"
+                      style={{ fontSize: 12, padding: '6px 10px', flex: 1 }}
+                      placeholder="https://example.com/image.jpg"
+                      value={form.imageUrl}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setForm((f) => ({ ...f, imageUrl: val }));
+                        setPreviewUrl(val);
+                        setUploadProgress(val ? 'done' : 'idle');
+                      }}
+                    />
+                    {form.imageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => { setForm((f) => ({ ...f, imageUrl: '' })); setPreviewUrl(''); setUploadProgress('idle'); }}
+                        style={{ fontSize: 18, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-soy)', padding: '0 2px', flexShrink: 0 }}
+                        title="Xóa ảnh"
+                      >×</button>
                     )}
                   </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    style={{ display: 'none' }}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) handleFileSelect(f);
-                      e.target.value = '';
-                    }}
-                  />
                 </div>
+                <div className="form-group">
+                  <label className="form-label">Tags</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                    {ALL_TAGS.map((t) => (
+                      <button key={t.value} type="button" onClick={() => toggleTag(t.value)} style={{ padding: '5px 12px', borderRadius: 'var(--radius-pill)', fontSize: 13, cursor: 'pointer', border: `1.5px solid ${form.tags.includes(t.value) ? 'var(--color-chili)' : 'var(--color-steam)'}`, background: form.tags.includes(t.value) ? 'rgba(216,58,46,0.08)' : 'transparent', color: form.tags.includes(t.value) ? 'var(--color-chili)' : 'var(--color-soy)', fontWeight: form.tags.includes(t.value) ? 600 : 400, fontFamily: 'var(--font-primary)' }}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
-                {/* Fallback: URL thủ công */}
-                <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <span style={{ fontSize: 11, color: 'var(--color-soy)', whiteSpace: 'nowrap' }}>Hoặc URL:</span>
-                  <input
-                    className="form-input"
-                    style={{ fontSize: 12, padding: '6px 10px', flex: 1 }}
-                    placeholder="https://example.com/image.jpg"
-                    value={form.imageUrl}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setForm((f) => ({ ...f, imageUrl: val }));
-                      setPreviewUrl(val);
-                      setUploadProgress(val ? 'done' : 'idle');
-                    }}
-                  />
-                  {form.imageUrl && (
-                    <button
-                      type="button"
-                      onClick={() => { setForm((f) => ({ ...f, imageUrl: '' })); setPreviewUrl(''); setUploadProgress('idle'); }}
-                      style={{ fontSize: 18, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-soy)', padding: '0 2px', flexShrink: 0 }}
-                      title="Xóa ảnh"
-                    >×</button>
-                  )}
-                </div>
+            {/* Tab: Phân loại */}
+            {editingId && modalTab === 'options' && (
+              <div className="modal-body">
+                <OptionGroupsPanel menuItemId={editingId} menuItemName={editingName_item} />
               </div>
-              <div className="form-group">
-                <label className="form-label">Tags</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-                  {ALL_TAGS.map((t) => (
-                    <button key={t.value} type="button" onClick={() => toggleTag(t.value)} style={{ padding: '5px 12px', borderRadius: 'var(--radius-pill)', fontSize: 13, cursor: 'pointer', border: `1.5px solid ${form.tags.includes(t.value) ? 'var(--color-chili)' : 'var(--color-steam)'}`, background: form.tags.includes(t.value) ? 'rgba(216,58,46,0.08)' : 'transparent', color: form.tags.includes(t.value) ? 'var(--color-chili)' : 'var(--color-soy)', fontWeight: form.tags.includes(t.value) ? 600 : 400, fontFamily: 'var(--font-primary)' }}>
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
+            )}
+
+            {/* Footer: ẩn khi ở tab phân loại */}
+            {(!editingId || modalTab === 'info') && (
+              <div className="modal-footer">
+                <button className="btn btn-ghost" onClick={() => setModalOpen(false)}>Hủy</button>
+                <button className="btn btn-primary" disabled={isSaving} onClick={handleModalSubmit}>
+                  {isSaving ? 'Đang lưu...' : editingId ? 'Lưu thay đổi' : 'Thêm món'}
+                </button>
               </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setModalOpen(false)}>Hủy</button>
-              <button className="btn btn-primary" disabled={isSaving} onClick={handleModalSubmit}>
-                {isSaving ? 'Đang lưu...' : editingId ? 'Lưu thay đổi' : 'Thêm món'}
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}

@@ -33,7 +33,7 @@ function FeePreview({
   const examples = [0.5, 1, 2, 3, 5, 7, maxKm];
   return (
     <div className="absp__fee-preview">
-      <h4 className="absp__preview-title">📊 Bảng phí ước tính</h4>
+      <h4 className="absp__preview-title">Bảng phí ước tính</h4>
       <div className="absp__preview-table">
         <div className="absp__preview-row absp__preview-row--header">
           <span>Khoảng cách</span>
@@ -131,7 +131,7 @@ export function AdminBranchSettingsPage() {
           <div className="absp__form-col">
             {/* Location */}
             <section className="absp__section">
-              <h2 className="absp__section-title">📍 Tọa độ quán</h2>
+              <h2 className="absp__section-title">Tọa độ quán</h2>
               <p className="absp__section-hint">
                 Dùng để tính khoảng cách đến khách hàng.
                 {' '}<a href="https://www.google.com/maps" target="_blank" rel="noreferrer" className="absp__link">
@@ -171,14 +171,14 @@ export function AdminBranchSettingsPage() {
                   rel="noreferrer"
                   className="absp__verify-link"
                 >
-                  🗺️ Kiểm tra tọa độ trên Google Maps
+                  Kiểm tra tọa độ trên Google Maps →
                 </a>
               )}
             </section>
 
             {/* Delivery fee config */}
             <section className="absp__section">
-              <h2 className="absp__section-title">💵 Cấu hình phí giao hàng</h2>
+              <h2 className="absp__section-title">Cấu hình phí giao hàng</h2>
 
               <div className="absp__field">
                 <label htmlFor="f-base-km">
@@ -253,7 +253,7 @@ export function AdminBranchSettingsPage() {
               id="btn-save-delivery-config"
               type="button"
             >
-              {isSaving ? '⏳ Đang lưu...' : '💾 Lưu cấu hình'}
+              {isSaving ? 'Đang lưu...' : 'Lưu cấu hình'}
             </button>
           </div>
 
@@ -268,7 +268,7 @@ export function AdminBranchSettingsPage() {
 
             {/* Formula explanation */}
             <div className="absp__formula">
-              <h4 className="absp__section-title">📐 Công thức tính phí</h4>
+              <h4 className="absp__section-title">Công thức tính phí</h4>
               <div className="absp__formula-box">
                 <p>Nếu <strong>khoảng cách ≤ {baseKmNum} km</strong>:</p>
                 <code>Phí ship = {fmt(baseFeeNum)}</code>

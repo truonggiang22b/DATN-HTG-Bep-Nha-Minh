@@ -1,341 +1,402 @@
 /**
  * OnlineTrackingPage.tsx — Theo dõi đơn hàng online
  * Phase 2 — Bếp Nhà Mình
- * Responsive: mobile + desktop, Be Vietnam Pro + Sora
- * Route: /online-tracking/:orderId | Polling mỗi 30s
+ * UX: 4-step horizontal stepper, SVG icons chuyên nghiệp, tích xanh khi hoàn thành
  */
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { onlineApi, type OnlineOrderDetail } from '../services/onlineApi';
+import { useRealtimeTracking } from '../hooks/useRealtimeTracking';
 import './OnlineTrackingPage.css';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
-const fmtDate = (iso: string) =>
-  new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso));
 
-// ── SVG icons ──────────────────────────────────────────────────────────────────
 
-const ICONS = {
-  Check: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
-      strokeLinecap="round" strokeLinejoin="round" width={14} height={14}>
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  ),
-  Clipboard: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
-      strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-      <rect x="9" y="3" width="6" height="4" rx="1" />
-    </svg>
-  ),
-  ThumbUp: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
-      strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
-      <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-    </svg>
-  ),
-  Cook: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
-      strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 21H5a2 2 0 0 1-2-2v-5" />
-      <path d="M3 10a7 7 0 1 1 14 0" />
-      <path d="M21 21v-1a4 4 0 0 0-4-4h-1" />
-      <line x1="9" y1="17" x2="9" y2="21" />
-      <line x1="13" y1="17" x2="13" y2="21" />
-    </svg>
-  ),
-  Truck: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
-      strokeLinecap="round" strokeLinejoin="round">
-      <rect x="1" y="3" width="15" height="13" rx="1" />
-      <path d="M16 8h4l3 5v3h-7V8z" />
-      <circle cx="5.5" cy="18.5" r="2.5" />
-      <circle cx="18.5" cy="18.5" r="2.5" />
-    </svg>
-  ),
-  Home: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
-      strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  ),
-  X: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
-      strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  ),
-  Clock: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
-      strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  ),
-  AlertCircle: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
-      strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="8" x2="12" y2="12" />
-      <line x1="12" y1="16" x2="12.01" y2="16" />
-    </svg>
-  ),
-};
-
-// ── Status config ──────────────────────────────────────────────────────────────
-
+// ─── Types ─────────────────────────────────────────────────────────────────────
 type DelivStatus = 'PENDING' | 'ACCEPTED' | 'PREPARING' | 'DELIVERING' | 'DELIVERED' | 'CANCELLED';
 
-const STEPS: { status: DelivStatus; label: string; desc: string; Icon: () => React.ReactElement }[] = [
-  { status: 'PENDING',    label: 'Đã đặt hàng',   desc: 'Đơn hàng đã được ghi nhận',           Icon: ICONS.Clipboard },
-  { status: 'ACCEPTED',   label: 'Đã xác nhận',   desc: 'Bếp đã xác nhận và bắt đầu chuẩn bị', Icon: ICONS.ThumbUp },
-  { status: 'PREPARING',  label: 'Đang nấu',       desc: 'Chúng tôi đang chuẩn bị món của bạn', Icon: ICONS.Cook },
-  { status: 'DELIVERING', label: 'Đang giao',      desc: 'Shipper đang trên đường đến',          Icon: ICONS.Truck },
-  { status: 'DELIVERED',  label: 'Đã giao',        desc: 'Đơn hàng đã giao thành công',          Icon: ICONS.Home },
+// ─── SVG Icons chuyên nghiệp (line-art đồng bộ 24px) ──────────────────────────
+const SvgDoc = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
+       strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="8" y1="13" x2="16" y2="13"/>
+    <line x1="8" y1="17" x2="12" y2="17"/>
+  </svg>
+);
+
+const SvgPot = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
+       strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+    <path d="M15 11h2a2 2 0 0 1 2 2v1H5v-1a2 2 0 0 1 2-2h2"/>
+    <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/>
+    <path d="M9 5c0-1.1.9-2 2-2s2 .9 2 2v3H9V5z"/>
+    <line x1="12" y1="3" x2="12" y2="3.5"/>
+  </svg>
+);
+
+const SvgBike = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
+       strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+    <circle cx="5.5" cy="17.5" r="3.5"/>
+    <circle cx="18.5" cy="17.5" r="3.5"/>
+    <path d="M15 6h2l2 5.5"/>
+    <path d="M5.5 14L9 6h4l2 5.5H5.5z"/>
+    <line x1="15" y1="6" x2="9" y2="6"/>
+  </svg>
+);
+
+const SvgCheck2 = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
+       strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+    <polyline points="22 4 12 14.01 9 11.01"/>
+  </svg>
+);
+
+const SvgCheckmark = ({ size = 14 }: { size?: number }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}
+       strokeLinecap="round" strokeLinejoin="round" width={size} height={size}>
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+);
+
+
+
+const SvgAlert = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
+       strokeLinecap="round" strokeLinejoin="round" width={48} height={48}>
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="8" x2="12" y2="12"/>
+    <line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+);
+
+const SvgX = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+       strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+    <line x1="18" y1="6" x2="6" y2="18"/>
+    <line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+);
+
+// ─── 4 Display Steps ────────────────────────────────────────────────────────────
+const DISPLAY_STEPS: { label: string; Icon: React.FC }[] = [
+  { label: 'Đã đặt',    Icon: SvgDoc   },
+  { label: 'Đang nấu',  Icon: SvgPot   },
+  { label: 'Đang giao', Icon: SvgBike  },
+  { label: 'Hoàn thành',Icon: SvgCheck2},
 ];
 
-const STATUS_ORDER: Record<DelivStatus, number> = {
-  PENDING: 0, ACCEPTED: 1, PREPARING: 2, DELIVERING: 3, DELIVERED: 4, CANCELLED: -1,
+const STATUS_TO_STEP: Record<DelivStatus, number> = {
+  PENDING:    0,
+  ACCEPTED:   1,
+  PREPARING:  1,
+  DELIVERING: 2,
+  DELIVERED:  3,
+  CANCELLED: -1,
 };
 
-const STATUS_META: Record<DelivStatus, { headline: string; sub: string; badge: string; badgeCls: string; iconCls: string }> = {
-  PENDING:    { headline: 'Đơn hàng đã được đặt',      sub: 'Chờ quán xác nhận — thường trong vài phút',       badge: 'Chờ xác nhận',  badgeCls: 'otp__status-badge--pending',    iconCls: '' },
-  ACCEPTED:   { headline: 'Quán đã xác nhận',          sub: 'Bếp sẽ bắt đầu chuẩn bị ngay',                    badge: 'Đã xác nhận',   badgeCls: 'otp__status-badge--preparing',  iconCls: '' },
-  PREPARING:  { headline: 'Đang chuẩn bị món ăn',      sub: 'Các món đang được nấu tươi cho bạn',               badge: 'Đang nấu',      badgeCls: 'otp__status-badge--preparing',  iconCls: '' },
-  DELIVERING: { headline: 'Shipper đang giao hàng',    sub: 'Đơn hàng đang trên đường đến địa chỉ của bạn',     badge: 'Đang giao',     badgeCls: 'otp__status-badge--delivering', iconCls: '' },
-  DELIVERED:  { headline: 'Giao hàng thành công!',     sub: 'Cảm ơn bạn đã đặt hàng — chúc ngon miệng!',       badge: 'Đã giao',       badgeCls: 'otp__status-badge--delivered',  iconCls: 'otp__status-icon--done' },
-  CANCELLED:  { headline: 'Đơn hàng đã bị hủy',        sub: 'Liên hệ quán nếu bạn có thắc mắc',                badge: 'Đã hủy',        badgeCls: 'otp__status-badge--cancelled',  iconCls: 'otp__status-icon--cancelled' },
+// ─── Hero meta theo trạng thái ─────────────────────────────────────────────────
+interface StatusMeta {
+  HeroIcon: React.FC;
+  heroColor: string;
+  headline: string;
+  sub: string;
+  badge: string;
+  badgeColor: string;
+  animClass: string;
+}
+
+const STATUS_META: Record<DelivStatus, StatusMeta> = {
+  PENDING: {
+    HeroIcon: SvgDoc,
+    heroColor: '#E94F37',
+    headline: 'Đơn hàng đã được ghi nhận',
+    sub: 'Chờ quán xác nhận — thường trong vài phút',
+    badge: 'Chờ xác nhận',
+    badgeColor: '#E94F37',
+    animClass: 'otp__hero-icon--pulse',
+  },
+  ACCEPTED: {
+    HeroIcon: SvgPot,
+    heroColor: '#E94F37',
+    headline: 'Quán đã xác nhận đơn của bạn',
+    sub: 'Bếp đang bắt đầu chuẩn bị những món ăn thơm ngon',
+    badge: 'Đang nấu',
+    badgeColor: '#E94F37',
+    animClass: 'otp__hero-icon--breathe',
+  },
+  PREPARING: {
+    HeroIcon: SvgPot,
+    heroColor: '#E94F37',
+    headline: 'Đang nấu những món tươi ngon cho bạn',
+    sub: 'Món ăn đang được chuẩn bị — sắp xong rồi!',
+    badge: 'Đang nấu',
+    badgeColor: '#E94F37',
+    animClass: 'otp__hero-icon--breathe',
+  },
+  DELIVERING: {
+    HeroIcon: SvgBike,
+    heroColor: '#2563EB',
+    headline: 'Shipper đang trên đường đến',
+    sub: 'Đơn hàng đang được giao đến địa chỉ của bạn — chờ chút nhé!',
+    badge: 'Đang giao',
+    badgeColor: '#2563EB',
+    animClass: 'otp__hero-icon--slide',
+  },
+  DELIVERED: {
+    HeroIcon: SvgCheck2,
+    heroColor: '#16A34A',
+    headline: 'Giao hàng thành công!',
+    sub: 'Cảm ơn bạn đã tin dùng Bếp Nhà Mình — chúc ngon miệng!',
+    badge: 'Đã giao',
+    badgeColor: '#16A34A',
+    animClass: 'otp__hero-icon--pop',
+  },
+  CANCELLED: {
+    HeroIcon: SvgX,
+    heroColor: '#888',
+    headline: 'Đơn hàng đã bị hủy',
+    sub: 'Vui lòng liên hệ quán nếu bạn có thắc mắc',
+    badge: 'Đã hủy',
+    badgeColor: '#888',
+    animClass: '',
+  },
 };
 
-const STATUS_ICON: Record<string, () => React.ReactElement> = {
-  PENDING: ICONS.Clipboard, ACCEPTED: ICONS.ThumbUp, PREPARING: ICONS.Cook,
-  DELIVERING: ICONS.Truck, DELIVERED: ICONS.Home, CANCELLED: ICONS.X,
-};
+// ─── Horizontal Stepper ─────────────────────────────────────────────────────────
+function HorizontalStepper({ status }: { status: DelivStatus }) {
+  const currentStep = STATUS_TO_STEP[status];
+  if (currentStep === -1) return null;
 
-// ── Timeline ───────────────────────────────────────────────────────────────────
-
-function DeliveryTimeline({ status }: { status: string }) {
-  const currentIdx = STATUS_ORDER[status as DelivStatus] ?? 0;
-
-  if (status === 'CANCELLED') {
-    return (
-      <div className="otp__cancelled-banner">
-        <div className="otp__cancelled-icon"><ICONS.X /></div>
-        <div className="otp__cancelled-text">
-          <strong>Đơn hàng đã bị hủy</strong>
-          Vui lòng liên hệ quán để biết thêm thông tin.
-        </div>
-      </div>
-    );
-  }
+  const fillPct = currentStep === 0 ? 0
+    : currentStep >= DISPLAY_STEPS.length - 1 ? 100
+    : Math.round((currentStep / (DISPLAY_STEPS.length - 1)) * 100);
 
   return (
-    <div className="otp__timeline">
-      {STEPS.map(({ status: stepStatus, label, desc, Icon }, i) => {
-        const done   = i <= currentIdx;
-        const active = i === currentIdx;
-        const state  = done ? (active ? 'active' : 'done') : 'pending';
-        return (
-          <div key={stepStatus} className={`otp__tl-item otp__tl-item--${state}`}>
-            <div className="otp__tl-dot-col">
-              <div className="otp__tl-dot">
-                {done && !active
-                  ? <ICONS.Check />
-                  : active
-                  ? <Icon />
-                  : <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-soy)' }}>{i + 1}</span>
+    <div className="otp__stepper">
+      {/* Rail */}
+      <div className="otp__stepper-rail">
+        <div className="otp__stepper-fill" style={{ width: `${fillPct}%` }} />
+      </div>
+
+      {/* Steps */}
+      <div className="otp__stepper-row">
+      {DISPLAY_STEPS.map(({ label, Icon }, i) => {
+          const isCompleted = currentStep >= DISPLAY_STEPS.length - 1; // tất cả xong (DELIVERED)
+          const done   = isCompleted || i < currentStep;
+          const active = !isCompleted && i === currentStep;
+          return (
+            <div key={i} className="otp__stepper-item">
+              <div className={[
+                'otp__stepper-dot',
+                done   ? 'otp__stepper-dot--done'   : '',
+                active ? 'otp__stepper-dot--active' : '',
+                !done && !active ? 'otp__stepper-dot--pending' : '',
+              ].filter(Boolean).join(' ')}>
+                {done
+                  ? <SvgCheckmark size={16} />
+                  : <Icon />
                 }
               </div>
+              <span className={[
+                'otp__stepper-label',
+                done   ? 'otp__stepper-label--done'   : '',
+                active ? 'otp__stepper-label--active' : '',
+              ].filter(Boolean).join(' ')}>
+                {label}
+              </span>
             </div>
-            <div className="otp__tl-body">
-              <div className="otp__tl-label">{label}</div>
-              <div className="otp__tl-desc">{desc}</div>
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-// ── Main Page ──────────────────────────────────────────────────────────────────
-
+// --- Main Page ---
 export function OnlineTrackingPage() {
   const { orderId } = useParams<{ orderId: string }>();
+  const queryClient = useQueryClient();
+  // Doc trackingToken tu localStorage (da luu khi dat hang thanh cong)
+  const trackingToken = orderId ? localStorage.getItem(`tracking-token-${orderId}`) ?? '' : '';
+
+  const handleRealtimeEvent = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['online-order', orderId] });
+  }, [orderId, queryClient]);
+
+  const realtime = useRealtimeTracking({
+    orderId,
+    trackingToken,
+    onEvent: handleRealtimeEvent,
+  });
 
   const { data: order, isLoading, isError } = useQuery<OnlineOrderDetail>({
     queryKey: ['online-order', orderId],
-    queryFn: () => onlineApi.getOrder(orderId!),
-    enabled: !!orderId,
-    refetchInterval: 30_000,
+    queryFn: () => onlineApi.getOrder(orderId!, trackingToken),
+    enabled: !!orderId && !!trackingToken,
+    refetchInterval: realtime.isRealtime ? 30_000 : 30_000,
     retry: 2,
   });
 
-  // ── Loading ────────────────────────────────────────────────────────────────
   if (isLoading) return (
     <div className="otp">
       <header className="otp__header">
         <Link to="/order-online" className="otp__header-brand" id="link-home-loading">
-          <img src="/logo.png" alt="" />
-          Bếp Nhà Mình
+          <img src="/logo.png" alt="" /> Bếp Nhà Mình
         </Link>
       </header>
-      <div className="otp__loading">
+      <div className="otp__center-fill">
         <div className="otp__spinner" />
-        <span className="otp__loading-text">Đang tải thông tin đơn hàng...</span>
+        <span className="otp__muted-text">Đang tải thông tin đơn hàng...</span>
       </div>
     </div>
   );
 
-  // ── Error ──────────────────────────────────────────────────────────────────
   if (isError || !order) return (
     <div className="otp">
       <header className="otp__header">
         <Link to="/order-online" className="otp__header-brand" id="link-home-error">
-          <img src="/logo.png" alt="" />
-          Bếp Nhà Mình
+          <img src="/logo.png" alt="" /> Bếp Nhà Mình
         </Link>
       </header>
-      <div className="otp__error">
-        <div className="otp__error-icon"><ICONS.AlertCircle /></div>
-        <div className="otp__error-title">Không tìm thấy đơn hàng</div>
-        <p className="otp__error-desc">
-          Mã đơn <strong>{orderId}</strong> không tồn tại hoặc đã hết hiệu lực.
-        </p>
-        <Link to="/order-online" className="otp__btn-home" id="btn-back-error"
-          style={{ marginTop: 'var(--space-sm)' }}>
+      <div className="otp__center-fill">
+        <div className="otp__error-icon"><SvgAlert /></div>
+        <p className="otp__error-title">Không tìm thấy đơn hàng</p>
+        <p className="otp__muted-text">Mã đơn <strong>{orderId}</strong> không tồn tại.</p>
+        <Link to="/order-online" className="otp__btn-primary" id="btn-back-error">
           Đặt hàng mới
         </Link>
       </div>
     </div>
   );
 
-  // ── Data ───────────────────────────────────────────────────────────────────
   const deliveryStatus = (order.deliveryInfo?.deliveryStatus ?? 'PENDING') as DelivStatus;
   const meta = STATUS_META[deliveryStatus];
-  const StatusIcon = STATUS_ICON[deliveryStatus] ?? ICONS.Clipboard;
+  const { HeroIcon } = meta;
+
 
   return (
     <div className="otp">
 
-      {/* Header */}
+      {/* ── Header ── */}
       <header className="otp__header">
         <Link to="/order-online" className="otp__header-brand" id="link-home">
           <img src="/logo.png" alt="Bếp Nhà Mình" />
           Bếp Nhà Mình
         </Link>
-        <span className="otp__header-order-id">#{order.orderCode}</span>
+        <span className="otp__order-chip">#{order.orderCode}</span>
       </header>
 
-      {/* Content */}
       <div className="otp__content">
 
-        {/* Status hero */}
-        <div className="otp__status-card">
-          <div className={`otp__status-icon ${meta.iconCls}`}>
-            <StatusIcon />
+        {/* ── Hero status ── */}
+        <div className="otp__hero-card">
+          <div
+            className={`otp__hero-icon-wrap ${meta.animClass}`}
+            style={{ '--hero-color': meta.heroColor } as React.CSSProperties}
+          >
+            <HeroIcon />
           </div>
-          <div className={`otp__status-badge ${meta.badgeCls}`}>
-            <span className="otp__status-dot" />
+
+          <span
+            className="otp__status-badge"
+            style={{ '--badge-color': meta.badgeColor } as React.CSSProperties}
+          >
+            <span className="otp__badge-ping" />
             {meta.badge}
+          </span>
+
+          <h1 className="otp__hero-title">{meta.headline}</h1>
+
+
+
+        </div>
+
+        {/* ── Stepper ── */}
+        {deliveryStatus !== 'CANCELLED' && (
+          <div className="otp__stepper-card">
+            <p className="otp__section-label">Tiến trình đơn hàng</p>
+            <p className="otp__section-label">{realtime.statusText}</p>
+            <HorizontalStepper status={deliveryStatus} />
           </div>
-          <h1 className="otp__status-headline">{meta.headline}</h1>
-          <p className="otp__status-sub">{meta.sub}</p>
-          {deliveryStatus !== 'DELIVERED' && deliveryStatus !== 'CANCELLED' && (
-            <div className="otp__eta">
-              <ICONS.Clock />
-              Cập nhật tự động mỗi 30 giây · {fmtDate(order.createdAt)}
-            </div>
-          )}
-        </div>
+        )}
 
-        {/* Timeline */}
-        <div className="otp__timeline-card">
-          <div className="otp__timeline-title">Trạng thái giao hàng</div>
-          <DeliveryTimeline status={deliveryStatus} />
-        </div>
-
-        {/* Delivery info */}
+        {/* ── Thông tin giao hàng ── */}
         {order.deliveryInfo && (
-          <div className="otp__info-card">
-            <div className="otp__info-title">Thông tin giao hàng</div>
-            <div className="otp__info-grid">
-              <div className="otp__info-row">
-                <span className="otp__info-label">Người nhận</span>
-                <span className="otp__info-val">{order.deliveryInfo.customerName}</span>
+          <div className="otp__card">
+            <p className="otp__section-label">Thông tin giao hàng</p>
+            <div className="otp__rows">
+              <div className="otp__row">
+                <span className="otp__row-key">Người nhận</span>
+                <span className="otp__row-val">{order.deliveryInfo.customerName}</span>
               </div>
-              <div className="otp__info-row">
-                <span className="otp__info-label">Điện thoại</span>
-                <span className="otp__info-val">{order.deliveryInfo.phone}</span>
+              <div className="otp__row">
+                <span className="otp__row-key">Điện thoại</span>
+                <span className="otp__row-val">{order.deliveryInfo.phone}</span>
               </div>
-              <div className="otp__info-row">
-                <span className="otp__info-label">Địa chỉ</span>
-                <span className="otp__info-val">
+              <div className="otp__row">
+                <span className="otp__row-key">Địa chỉ</span>
+                <span className="otp__row-val">
                   {order.deliveryInfo.address}
-                  {order.deliveryInfo.ward ? `, ${order.deliveryInfo.ward}` : ''}
-                  {order.deliveryInfo.district ? `, ${order.deliveryInfo.district}` : ''}
+                  {order.deliveryInfo.ward    ? `, ${order.deliveryInfo.ward}`    : ''}
+                  {order.deliveryInfo.district? `, ${order.deliveryInfo.district}`: ''}
                 </span>
               </div>
-              {order.deliveryInfo.distanceKm && (
-                <div className="otp__info-row">
-                  <span className="otp__info-label">Khoảng cách</span>
-                  <span className="otp__info-val">{order.deliveryInfo.distanceKm.toFixed(1)} km</span>
-                </div>
-              )}
-              <div className="otp__info-row">
-                <span className="otp__info-label">Phí giao</span>
-                <span className="otp__info-val otp__info-val--price">{fmt(order.deliveryInfo.shippingFee)}</span>
+              <div className="otp__row">
+                <span className="otp__row-key">Phí giao</span>
+                <span className="otp__row-val">{fmt(order.deliveryInfo.shippingFee)}</span>
               </div>
-              <div className="otp__info-row">
-                <span className="otp__info-label">Thanh toán</span>
-                <span className="otp__info-val">COD — Tiền mặt khi nhận</span>
+              <div className="otp__row">
+                <span className="otp__row-key">Thanh toán</span>
+                <span className="otp__row-val">COD — Tiền mặt khi nhận</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Order items */}
-        <div className="otp__items-card">
-          <div className="otp__items-title">Món đã đặt</div>
+        {/* ── Món đã đặt ── */}
+        <div className="otp__card">
+          <p className="otp__section-label">Món đã đặt</p>
+
           {order.items.map((item) => (
-            <div key={item.id} className="otp__item">
-              <div className="otp__item-qty">{item.quantity}</div>
-              <div className="otp__item-name">{item.name}</div>
-              <div className="otp__item-price">{fmt(item.lineTotal)}</div>
+            <div key={item.id} className="otp__item-row">
+              <span className="otp__item-qty">{item.quantity}</span>
+              <span className="otp__item-name">{item.name}</span>
+              <span className="otp__item-price">{fmt(item.lineTotal)}</span>
             </div>
           ))}
 
-          {/* Bill */}
-          <div style={{ marginTop: 'var(--space-md)', borderTop: '1.5px solid var(--color-steam)', paddingTop: 'var(--space-md)' }}>
-            <div className="otp__info-row" style={{ marginBottom: 4 }}>
-              <span className="otp__info-label">Tạm tính</span>
-              <span className="otp__info-val">{fmt(order.subtotal)}</span>
+          <div className="otp__bill-divider" />
+
+          <div className="otp__rows otp__rows--bill">
+            <div className="otp__row">
+              <span className="otp__row-key">Tạm tính</span>
+              <span className="otp__row-val">{fmt(order.subtotal)}</span>
             </div>
-            <div className="otp__info-row" style={{ marginBottom: 8 }}>
-              <span className="otp__info-label">Phí giao hàng</span>
-              <span className="otp__info-val">{fmt(order.deliveryInfo?.shippingFee ?? 0)}</span>
+            <div className="otp__row">
+              <span className="otp__row-key">Phí giao hàng</span>
+              <span className="otp__row-val">{fmt(order.deliveryInfo?.shippingFee ?? 0)}</span>
             </div>
-            <div className="otp__info-row">
-              <span className="otp__info-label" style={{ fontWeight: 700, color: 'var(--color-charcoal)', fontSize: 15 }}>Tổng cộng</span>
-              <span className="otp__info-val otp__info-val--price" style={{ fontSize: 20 }}>{fmt(order.total)}</span>
+            <div className="otp__row otp__row--grand">
+              <span className="otp__row-key otp__row-key--bold">Tổng cộng</span>
+              <span className="otp__row-val otp__row-val--grand">{fmt(order.total)}</span>
             </div>
           </div>
         </div>
 
-        {/* Footer CTA */}
+        {/* ── Footer CTA ── */}
         <div className="otp__footer-cta">
-          <Link to="/order-online/menu" className="otp__btn-home" id="btn-order-again">
+          <Link to="/order-online/menu" className="otp__btn-primary" id="btn-order-again">
             Đặt thêm món
           </Link>
-          <Link to="/order-online" className="otp__btn-order-again" id="btn-back-home">
+          <Link to="/order-online" className="otp__btn-ghost" id="btn-back-home">
             Về trang chủ
           </Link>
         </div>

@@ -7,9 +7,13 @@ import { success } from '../../utils/apiResponse';
 import { z } from 'zod';
 import { env } from '../../config/env';
 
-// Regular client for user-facing auth (login)
+// Regular client for user-facing auth (login + refresh)
 const supabaseClient = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
+});
+
+const refreshSchema = z.object({
+  refreshToken: z.string().min(1, 'refreshToken là bắt buộc'),
 });
 
 
@@ -69,6 +73,39 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
       await supabaseAdmin.auth.admin.signOut(token as string);
     }
     return success(res, { message: 'Đã đăng xuất thành công' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** POST /api/auth/refresh */
+export async function refreshToken(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { refreshToken: rt } = refreshSchema.parse(req.body);
+
+    const { data, error } = await supabaseClient.auth.refreshSession({
+      refresh_token: rt,
+    });
+
+    if (error || !data.session) {
+      throw AppError.unauthorized('Refresh token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.');
+    }
+
+    const supabaseUserId = data.user?.id ?? data.session.user.id;
+    const user = await prisma.user.findUnique({
+      where: { supabaseAuthUserId: supabaseUserId },
+      select: { id: true, isActive: true },
+    });
+
+    if (!user || !user.isActive) {
+      throw AppError.unauthorized('Tài khoản không tồn tại hoặc đã bị vô hiệu hóa');
+    }
+
+    return success(res, {
+      accessToken: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+      expiresIn: data.session.expires_in,
+    });
   } catch (err) {
     next(err);
   }

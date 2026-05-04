@@ -1,4 +1,4 @@
-/**
+﻿/**
  * OnlineOrderPage.tsx — Trang đặt hàng online 3 bước (Web-first redesign)
  * Layout: 3 cột desktop (category nav | menu | cart sidebar) / 1 cột mobile
  * Route: /order-online/menu
@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getMenu } from '../services/publicApi';
 import { onlineApi, type CreateOnlineOrderPayload } from '../services/onlineApi';
+import { ItemDetailModal, type PublicMenuItem } from '../components/ItemDetailModal';
 import { useOnlineCart } from '../store/useOnlineCart';
 import { useGuestInfo } from '../store/useGuestInfo';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -21,6 +22,10 @@ const BRANCH_ID = 'branch-bep-nha-minh-q1';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+
+// Format số không kèm đơn vị tiền tệ (để render đ riêng)
+const fmtNum = (n: number) =>
+  new Intl.NumberFormat('vi-VN').format(n);
 
 // ── Step Indicator ─────────────────────────────────────────────────────────────
 
@@ -66,14 +71,7 @@ function StepBar({ current }: { current: number }) {
 
 // ── Step 1: Menu ───────────────────────────────────────────────────────────────
 
-type MenuItem = {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl?: string;
-  shortDescription?: string;
-  status: string;
-};
+type MenuItem = PublicMenuItem;
 
 type Category = {
   id: string;
@@ -84,6 +82,7 @@ type Category = {
 function Step1Menu({ onNext }: { onNext: () => void }) {
   const { addItem, items, updateQuantity, getSubtotal, getTotalItems } = useOnlineCart();
   const [activeCatId, setActiveCatId] = useState<string | null>(null);
+  const [detailItem, setDetailItem] = useState<MenuItem | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { data: menu, isLoading } = useQuery({
@@ -112,6 +111,12 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
     items.find((i) => i.menuItemId === menuItemId);
 
   function handleAdd(item: MenuItem) {
+    // Nếu có option group → mở modal chọn trước
+    if (item.optionGroups && item.optionGroups.length > 0) {
+      setDetailItem(item);
+      return;
+    }
+    // Không có option → add thẳng
     addItem({
       menuItemId: item.id,
       name: item.name,
@@ -122,6 +127,29 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
       note: '',
       unitPrice: item.price,
     });
+  }
+
+  function handleModalConfirm(payload: {
+    menuItemId: string;
+    name: string;
+    imageUrl?: string;
+    basePrice: number;
+    unitPrice: number;
+    quantity: number;
+    selectedOptions: { optionGroupId: string; optionId: string; name: string; priceDelta: number }[];
+    note: string;
+  }) {
+    addItem({
+      menuItemId: payload.menuItemId,
+      name: payload.name,
+      imageUrl: payload.imageUrl,
+      basePrice: payload.basePrice,
+      unitPrice: payload.unitPrice,
+      quantity: payload.quantity,
+      selectedOptions: payload.selectedOptions,
+      note: payload.note,
+    });
+    setDetailItem(null);
   }
 
   if (isLoading) {
@@ -190,7 +218,16 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
                   const qty = cartQty(item.id);
                   const ci = cartItem(item.id);
                   return (
-                    <div key={item.id} className="menu-card">
+                    <div
+                      key={item.id}
+                      className={`menu-card${item.status === 'SOLD_OUT' ? ' menu-card--soldout' : ''}`}
+                      onClick={() => handleAdd(item)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAdd(item)}
+                      aria-label={`Xem chi tiết ${item.name}`}
+                    >
+                      {/* Ảnh trên cùng */}
                       <div className="menu-card__img-wrap">
                         <img
                           src={item.imageUrl || '/placeholder-food.jpg'}
@@ -201,41 +238,40 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
                             (e.target as HTMLImageElement).src = '/placeholder-food.jpg';
                           }}
                         />
-                      </div>
-                      <div className="menu-card__body">
-                        <h3 className="menu-card__name">{item.name}</h3>
-                        {item.shortDescription && (
-                          <p className="menu-card__desc">{item.shortDescription}</p>
-                        )}
-                        <div className="menu-card__footer">
-                          <span className="menu-card__price">{fmt(item.price)}</span>
-                          {qty === 0 ? (
+                        {/* Nút + nổi trên góc phải ảnh */}
+                        {qty === 0 ? (
+                          <div className="menu-card__add-fab" aria-hidden>+</div>
+                        ) : (
+                          <div
+                            className="menu-card__stepper-fab"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <button
-                              className="menu-card__add"
-                              onClick={() => handleAdd(item)}
+                              className="fab-btn"
+                              onClick={(e) => { e.stopPropagation(); updateQuantity(ci!.id, qty - 1); }}
                               type="button"
-                              id={`add-${item.id}`}
-                              aria-label={`Thêm ${item.name}`}
-                            >
-                              +
-                            </button>
-                          ) : (
-                            <div className="menu-card__stepper">
-                              <button
-                                className="qty-btn"
-                                onClick={() => updateQuantity(ci!.id, qty - 1)}
-                                type="button"
-                                aria-label="Giảm"
-                              >−</button>
-                              <span className="menu-card__qty">{qty}</span>
-                              <button
-                                className="qty-btn"
-                                onClick={() => updateQuantity(ci!.id, qty + 1)}
-                                type="button"
-                                aria-label="Tăng"
-                              >+</button>
-                            </div>
-                          )}
+                              aria-label="Giảm"
+                            >−</button>
+                            <span className="fab-qty">{qty}</span>
+                            <button
+                              className="fab-btn"
+                              onClick={(e) => { e.stopPropagation(); updateQuantity(ci!.id, qty + 1); }}
+                              type="button"
+                              aria-label="Tăng"
+                            >+</button>
+                          </div>
+                        )}
+                      </div>
+                      {/* Text body bên dưới ảnh */}
+                      <div className="menu-card__body" style={{ textAlign: 'left' }}>
+                        <h3 className="menu-card__name" style={{ textAlign: 'left' }}>{item.name}</h3>
+                        {item.shortDescription && (
+                          <p className="menu-card__desc" style={{ textAlign: 'left' }}>{item.shortDescription}</p>
+                        )}
+                        <div className="menu-card__footer" style={{ textAlign: 'left' }}>
+                          <span className="menu-card__price" style={{ textAlign: 'left' }}>
+                            {fmtNum(item.price)}<span className="menu-card__price-unit">đ</span>
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -331,9 +367,19 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
           </button>
         </div>
       )}
+
+      {/* Item Detail Modal — hiện khi món có option groups */}
+      {detailItem && (
+        <ItemDetailModal
+          item={detailItem}
+          onClose={() => setDetailItem(null)}
+          onConfirm={handleModalConfirm}
+        />
+      )}
     </div>
   );
 }
+
 
 // ── Order Summary (sidebar dùng chung Step 2 & 3) ────────────────────────────
 
@@ -616,7 +662,7 @@ function Step2Delivery({
             onClick={handleNext}
             id="btn-next-to-confirm"
           >
-            Xem lại đơn hàng
+            Xác nhận đặt hàng
           </button>
         </div>
 
@@ -648,7 +694,11 @@ function Step3Confirm({
     onSuccess: (data) => {
       clearCart();
       showToast('Đặt hàng thành công! Đang theo dõi đơn...', 'success');
-      navigate(`/online-tracking/${data.order.id}`);
+      // Luu trackingToken de tracking page co the xac thuc quyen xem don
+      if (data.trackingToken) {
+        localStorage.setItem(`tracking-token-${data.order.id}`, data.trackingToken);
+      }
+      navigate(`/order-online/track/${data.order.id}`);
     },
     onError: (err: unknown) => {
       const msg =

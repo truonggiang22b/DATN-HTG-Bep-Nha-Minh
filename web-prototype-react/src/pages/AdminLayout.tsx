@@ -71,6 +71,18 @@ const IconDelivery = () => (
   </svg>
 );
 
+const IconShipper = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 8v4l2.5 2.5" />
+    <path d="M16.5 7.5 C15 5 12 4 9 5.5 C6 7 5 10 6 13" strokeDasharray="2 1"/>
+    <circle cx="7" cy="18" r="2" />
+    <circle cx="17" cy="18" r="2" />
+    <path d="M9 18h6" />
+  </svg>
+);
+
 const IconSettings = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
     strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -86,7 +98,8 @@ const NAV_ITEMS = [
   { to: '/admin/menu',             label: 'Thực đơn',           Icon: IconMenu,      end: false },
   { to: '/admin/tables',           label: 'Bàn & QR',           Icon: IconTable,     end: false },
   { to: '/admin/staff',            label: 'Nhân viên',          Icon: IconStaff,     end: false },
-  { to: '/admin/delivery',         label: 'Đơn giao hàng',       Icon: IconDelivery,  end: false },
+  { to: '/admin/delivery',         label: 'Giám sát đơn hàng',  Icon: IconDelivery,  end: false },
+  { to: '/shipper',                label: 'Giao diện Shipper',  Icon: IconShipper,   end: false },
   { to: '/admin/branch-settings',  label: 'Phí ship & Vị trí', Icon: IconSettings,  end: false },
   { to: '/kds',                    label: 'Màn hình bếp (KDS)', Icon: IconKDS,       end: false },
 ];

@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-04-26T10:11:00Z",
+  "title": "Design System: Bếp Nhà Mình",
+  "extensions": {
+    "colorMeta": {
+      "chili":      { "role": "primary",   "displayName": "Chili Red",    "canonical": "#D83A2E", "tonalRamp": ["#3B0A07","#6B1511","#9A211A","#C02E22","#D83A2E","#E25F54","#EC8A83","#F3B5B1","#FAE0DE","#FDF3F2"] },
+      "chili-deep": { "role": "primary",   "displayName": "Chili Deep",   "canonical": "#B52E23", "tonalRamp": ["#300A07","#5A1510","#821F18","#A5291F","#B52E23","#C9534A","#D87E77","#E8AAA6","#F5D6D4","#FAEEED"] },
+      "turmeric":   { "role": "secondary", "displayName": "Turmeric",     "canonical": "#F4A51C", "tonalRamp": ["#3D2800","#704900","#A26900","#CC8700","#F4A51C","#F7B94A","#FACC78","#FDE0A8","#FEF2D8","#FFFBF0"] },
+      "leaf":       { "role": "tertiary",  "displayName": "Leaf Green",   "canonical": "#2F7D4E", "tonalRamp": ["#06180E","#0E2F1C","#17492B","#23633B","#2F7D4E","#4A9A68","#6EB488","#98CBAA","#C4E2CC","#EDF4EF"] },
+      "charcoal":   { "role": "neutral",   "displayName": "Charcoal",     "canonical": "#25211B", "tonalRamp": ["#0D0C0A","#1A1714","#25211B","#352F27","#463E34","#6A6158","#918880","#B9B2AB","#DDD9D5","#F5F3F1"] },
+      "soy":        { "role": "neutral",   "displayName": "Soy Brown",    "canonical": "#5A3928", "tonalRamp": ["#1A0D07","#331A0F","#4D2717","#5A3928","#6E4B37","#8F6E5D","#B09488","#D1BBB5","#EDE2DE","#F9F4F2"] },
+      "rice":       { "role": "neutral",   "displayName": "Rice Cream",   "canonical": "#FFF8EA", "tonalRamp": ["#2B2518","#4F4530","#73634A","#988163","#C4A480","#DDBB97","#EDD4B2","#F5E4CB","#FFF0D4","#FFF8EA"] },
+      "paper":      { "role": "neutral",   "displayName": "Paper",        "canonical": "#F7E8C9", "tonalRamp": ["#29200A","#4D3C14","#71581E","#967428","#C09A3E","#D5B865","#E5CE94","#EFE0BA","#F5EDD9","#F7E8C9"] },
+      "steam":      { "role": "neutral",   "displayName": "Steam",        "canonical": "#E8DDCC", "tonalRamp": ["#1F1C16","#36322A","#4D4740","#665F54","#857A6B","#A49890","#C0B8AD","#D5CFC8","#E8DDCC","#F5F2EE"] },
+      "white":      { "role": "neutral",   "displayName": "White",        "canonical": "#FFFFFF", "tonalRamp": ["#26231D","#3D3930","#565045","#706860","#8B837C","#A8A29C","#C2BDBA","#D9D6D3","#EDECEB","#FFFFFF"] }
+    },
+    "typographyMeta": {
+      "display":  { "displayName": "Display",  "purpose": "Landing page hero headline. The line that must make the user hungry. One per page." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles within a page. Maximum one per scroll viewport." },
+      "title":    { "displayName": "Title",    "purpose": "Card headings, modal titles, sticky header product names." },
+      "body":     { "displayName": "Body",     "purpose": "All running prose, descriptions, notes. Cap at 65ch on desktop." },
+      "label":    { "displayName": "Label",    "purpose": "Section header stamps, badge text, meta labels. UPPERCASE only." },
+      "price":    { "displayName": "Price",    "purpose": "ALL monetary values, quantities, and order codes. Sora 700 exclusively." }
+    },
+    "shadows": [
+      { "name": "shadow-card", "value": "0 14px 40px rgba(37, 33, 27, 0.12)", "purpose": "Modal sheets, food detail overlays, floating panels." },
+      { "name": "shadow-soft", "value": "0 8px 24px rgba(90, 57, 40, 0.10)", "purpose": "Menu item cards at rest. Warm mid-shadow." },
+      { "name": "shadow-sm",   "value": "0 2px 8px rgba(37, 33, 27, 0.08)",  "purpose": "Sticky headers, small interactive elements. Barely-there depth." }
+    ],
+    "motion": [
+      { "name": "duration-fast", "value": "120ms", "purpose": "Button hover, badge state, icon swap. Immediate feedback." },
+      { "name": "duration-base", "value": "220ms", "purpose": "Panel slide-in, card expand, overlay fade. Standard transition." },
+      { "name": "duration-slow", "value": "420ms", "purpose": "Page-level transitions, skeleton fade-out. Deliberate." },
+      { "name": "ease-out",   "value": "cubic-bezier(0.0, 0.0, 0.2, 1)", "purpose": "Default easing for all exits and hover states." },
+      { "name": "ease-spring","value": "cubic-bezier(0.34, 1.56, 0.64, 1)", "purpose": "Bounced entrance only — success icon, qty stepper increment pop." }
+    ],
+    "breakpoints": [
+      { "name": "mobile-max", "value": "430px",  "purpose": "Customer app max-width container." },
+      { "name": "tablet",     "value": "768px",  "purpose": "2-column menu grid breakpoint." },
+      { "name": "desktop",    "value": "1024px", "purpose": "Full desktop layout." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single most important action per screen. Đặt ngay, Thêm vào giỏ, Xác nhận.",
+      "html": "<button class=\"ds-btn-primary\">Đặt ngay</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 28px; background: #D83A2E; color: #FFFFFF; font-family: 'Be Vietnam Pro', sans-serif; font-size: 15px; font-weight: 700; line-height: 1; border-radius: 999px; border: none; cursor: pointer; min-height: 48px; white-space: nowrap; transition: background 120ms cubic-bezier(0,0,0.2,1), transform 120ms cubic-bezier(0,0,0.2,1); } .ds-btn-primary:hover { background: #B52E23; } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:disabled { background: #E8DDCC; color: #5A3928; cursor: not-allowed; transform: none; } .ds-btn-primary:focus-visible { outline: 3px solid #D83A2E; outline-offset: 3px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary choice. Go back, View full menu.",
+      "html": "<button class=\"ds-btn-outline\">Xem menu</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 28px; background: transparent; color: #D83A2E; border: 1.5px solid #D83A2E; font-family: 'Be Vietnam Pro', sans-serif; font-size: 15px; font-weight: 700; line-height: 1; border-radius: 999px; cursor: pointer; min-height: 48px; white-space: nowrap; transition: background 120ms cubic-bezier(0,0,0.2,1); } .ds-btn-outline:hover { background: rgba(216,58,46,0.06); } .ds-btn-outline:active { background: rgba(216,58,46,0.12); } .ds-btn-outline:focus-visible { outline: 3px solid #D83A2E; outline-offset: 3px; }"
+    },
+    {
+      "name": "Menu Item Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The signature component. Carries food photo, name, price, and add-to-cart action.",
+      "html": "<div class=\"ds-menu-card\"><div class=\"ds-menu-card__img-wrap\"><img class=\"ds-menu-card__img\" src=\"\" alt=\"Món ăn\" /></div><div class=\"ds-menu-card__body\"><span class=\"ds-badge-bestseller\">BÁN CHẠY</span><h3 class=\"ds-menu-card__name\">Cơm Tấm Sườn</h3><p class=\"ds-menu-card__price\">65.000đ</p></div></div>",
+      "css": ".ds-menu-card { background: #FFFFFF; border-radius: 18px; box-shadow: 0 8px 24px rgba(90,57,40,0.10); overflow: hidden; transition: box-shadow 220ms cubic-bezier(0,0,0.2,1), transform 220ms cubic-bezier(0,0,0.2,1); } .ds-menu-card:hover { box-shadow: 0 14px 40px rgba(37,33,27,0.12); transform: translateY(-2px); } .ds-menu-card__img-wrap { width: 100%; aspect-ratio: 4/3; overflow: hidden; background: linear-gradient(135deg, #F7E8C9 0%, #E8DDCC 100%); } .ds-menu-card__img { width: 100%; height: 100%; object-fit: cover; transition: transform 420ms cubic-bezier(0,0,0.2,1); } .ds-menu-card:hover .ds-menu-card__img { transform: scale(1.04); } .ds-menu-card__body { padding: 16px; } .ds-menu-card__name { font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.125rem; font-weight: 600; color: #25211B; margin: 6px 0 8px; line-height: 1.3; } .ds-menu-card__price { font-family: 'Sora', sans-serif; font-size: 1.125rem; font-weight: 700; color: #25211B; }"
+    },
+    {
+      "name": "Bestseller Badge",
+      "kind": "chip",
+      "refersTo": "badge-bestseller",
+      "description": "Appears on menu items with high order volume.",
+      "html": "<span class=\"ds-badge-bestseller\">BÁN CHẠY</span>",
+      "css": ".ds-badge-bestseller { display: inline-flex; align-items: center; padding: 3px 10px; background: #F4A51C; color: #25211B; font-family: 'Be Vietnam Pro', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 999px; line-height: 1; white-space: nowrap; }"
+    },
+    {
+      "name": "Popular Badge",
+      "kind": "chip",
+      "refersTo": "badge-popular",
+      "description": "Signals trending items. Appears alongside or independently of Bestseller.",
+      "html": "<span class=\"ds-badge-popular\">PHỔ BIẾN</span>",
+      "css": ".ds-badge-popular { display: inline-flex; align-items: center; padding: 3px 10px; background: rgba(216,58,46,0.12); color: #D83A2E; font-family: 'Be Vietnam Pro', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 999px; line-height: 1; white-space: nowrap; }"
+    },
+    {
+      "name": "Qty Stepper",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Quantity control for cart items. Pill-shaped, paper background, chili buttons.",
+      "html": "<div class=\"ds-qty-stepper\"><button class=\"ds-qty-stepper__btn\" aria-label=\"Giảm\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\"><path d=\"M3 8h10\" stroke=\"#D83A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg></button><span class=\"ds-qty-stepper__val\">2</span><button class=\"ds-qty-stepper__btn\" aria-label=\"Tăng\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\"><path d=\"M8 3v10M3 8h10\" stroke=\"#D83A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg></button></div>",
+      "css": ".ds-qty-stepper { display: inline-flex; align-items: center; gap: 8px; background: #F7E8C9; border-radius: 999px; padding: 2px 8px; } .ds-qty-stepper__btn { width: 28px; height: 28px; border-radius: 50%; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 120ms cubic-bezier(0,0,0.2,1); } .ds-qty-stepper__btn:hover { background: #E8DDCC; } .ds-qty-stepper__val { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; min-width: 24px; text-align: center; color: #25211B; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Standard text input. Table number, customer notes, delivery address.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Ghi chú cho bếp...\" />",
+      "css": ".ds-input { width: 100%; padding: 12px 16px; background: #FFFFFF; border: 1.5px solid #E8DDCC; border-radius: 10px; font-family: 'Be Vietnam Pro', sans-serif; font-size: 15px; color: #25211B; outline: none; transition: border-color 120ms cubic-bezier(0,0,0.2,1); box-sizing: border-box; } .ds-input:focus { border-color: #D83A2E; } .ds-input::placeholder { color: #E8DDCC; } .ds-input:disabled { background: #F7E8C9; color: #5A3928; cursor: not-allowed; }"
+    },
+    {
+      "name": "Cart Footer Bar",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Sticky bottom bar showing cart count and checkout CTA. Appears on landing and menu pages.",
+      "html": "<div class=\"ds-cart-bar\"><div class=\"ds-cart-bar__info\"><span class=\"ds-cart-bar__count\">3 món</span><span class=\"ds-cart-bar__total\">195.000đ</span></div><button class=\"ds-cart-bar__cta\">Xem giỏ hàng</button></div>",
+      "css": ".ds-cart-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(255,248,234,0.95); backdrop-filter: blur(12px); border-top: 1px solid #E8DDCC; } .ds-cart-bar__info { display: flex; flex-direction: column; } .ds-cart-bar__count { font-family: 'Be Vietnam Pro', sans-serif; font-size: 13px; color: #5A3928; } .ds-cart-bar__total { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700; color: #25211B; } .ds-cart-bar__cta { display: inline-flex; align-items: center; padding: 12px 22px; background: #D83A2E; color: #FFFFFF; font-family: 'Be Vietnam Pro', sans-serif; font-size: 15px; font-weight: 700; border-radius: 999px; border: none; cursor: pointer; transition: background 120ms cubic-bezier(0,0,0.2,1); } .ds-cart-bar__cta:hover { background: #B52E23; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Warm Counter",
+    "overview": "Bếp Nhà Mình là thiết kế như quầy thu ngân của một quán ăn quen — nơi chủ quán nhớ tên bạn, khói bếp thoảng nhẹ, và mọi thứ đều ở đúng chỗ. Hệ thống visual truyền đạt sự ấm áp qua các màu đất (rice cream, paper, soy brown), di chuyển với sự tự tin của bếp bận rộn, và tạo dựng niềm tin qua phân cấp rõ ràng và hành vi dễ đoán. Không trick user; không lãng phí thời gian.\n\nLanding page là surface quan trọng nhất. Nó phải làm user thèm ăn — theo đúng nghĩa đen — ngay trong lần cuộn đầu tiên. Food photography, accent hổ phách ấm, khoảng trắng rộng rãi, và một CTA duy nhất không thể bỏ lỡ. Mọi màn hình sau đó duy trì cùng một nhiệt độ ấm, không bao giờ có sự chuyển đổi đột ngột sang trắng lạnh hay xanh dương công ty.\n\nĐây là hệ thống brand-register cho customer-facing surface. Mật độ thấp; breathing room rộng rãi. Typography ấm và dễ đọc. Motion phản hồi nhanh — feedback tức thì, choreography hiếm và có chủ đích.",
+    "keyCharacteristics": [
+      "Earthen, warm palette anchored in cream and deep brown, with chili-red as the singular action color",
+      "Mobile-first: all layouts designed at 375px, enhanced above 768px",
+      "Two typefaces only: Be Vietnam Pro (warmth) + Sora (prices, numbers)",
+      "Pill-shaped interactive elements (999px radius) — warmth, not sharpness",
+      "Motion exits fast (120ms ease-out); entrances slightly slower (220ms); no bounce except success states",
+      "Light mode only for customer-facing surface"
+    ],
+    "rules": [
+      { "name": "The One Fire Rule",    "body": "Chili red is the only action color. Do not introduce a second saturated hue for interactive elements on the customer-facing surface.", "section": "colors" },
+      { "name": "The Warm Neutral Rule","body": "Every neutral must lean warm. Never tint toward blue-gray. Rice cream and paper are not interchangeable with #f5f5f5.", "section": "colors" },
+      { "name": "The Two-Font Rule",    "body": "The system uses exactly two typefaces: Be Vietnam Pro and Sora. Adding a third pollutes the warmth signal.", "section": "typography" },
+      { "name": "The Price Registry Rule","body": "Every number representing money or quantity uses Sora 700. Never Be Vietnam Pro for prices.", "section": "typography" },
+      { "name": "The Warm Shadow Rule", "body": "No shadow uses a blue or neutral base. All rgba() values use charcoal (37,33,27) or soy (90,57,40). A blue-tinted shadow breaks the atmosphere.", "section": "elevation" },
+      { "name": "The Flat-at-Rest Rule","body": "Cards and surfaces have no shadow by default. Shadows appear on hover (clickable cards) and on elements that persistently float (sticky header, fixed cart bar).", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Chili red (#D83A2E) exclusively for the primary action per screen",
+      "Do use Sora for all prices, order totals, and quantities",
+      "Do apply pill-shape (999px) to all buttons, chips, qty steppers, and tracking code pills",
+      "Do use warm-tinted shadows (rgba(37,33,27,...)) for all elevation",
+      "Do keep cards on white (#FFFFFF) against rice-cream page (#FFF8EA)",
+      "Do keep the landing page hero focused on a single CTA",
+      "Do support prefers-reduced-motion — disable keyframe animations, reduce transitions to 50ms",
+      "Do ensure all touch targets are minimum 44×44px",
+      "Do maintain WCAG 2.1 AA contrast"
+    ],
+    "donts": [
+      "Don't use purple gradients, neon accents, gradient text (background-clip: text), or decorative glassmorphism",
+      "Don't use the fast-food chain aesthetic — no red-and-yellow, no promo-banner-first layout",
+      "Don't use SaaS dashboard aesthetics on the customer surface",
+      "Don't introduce a third typeface",
+      "Don't nest cards inside cards",
+      "Don't use modal as the first thought for any interaction",
+      "Don't use gray shadows (rgba(0,0,0,...)) — all shadows use warm-charcoal or warm-soy",
+      "Don't use the hero-metric template (big number, small label, supporting stats, gradient accent)",
+      "Don't use identical card grids with icon + heading + text repeated indefinitely",
+      "Don't use #000000 or #FFFFFF as base text colors"
+    ]
+  }
+}

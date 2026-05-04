@@ -17,10 +17,10 @@ export const onlineOrderItemSchema = z.object({
   selectedOptions: z
     .array(
       z.object({
+        // priceDelta KHÔNG nhận từ client — backend tự lookup từ DB
         optionGroupId: z.string().optional(),
         optionId: z.string().min(1),
-        name: z.string().min(1),
-        priceDelta: z.number().default(0),
+        name: z.string().max(200).optional(),
       })
     )
     .default([]),
@@ -59,7 +59,9 @@ export type CreateOnlineOrderInput = z.infer<typeof createOnlineOrderSchema>;
 
 /** PATCH /api/internal/delivery-orders/:id/status */
 export const updateDeliveryStatusSchema = z.object({
-  deliveryStatus: z.enum(['ACCEPTED', 'PREPARING', 'DELIVERING', 'DELIVERED', 'CANCELLED']),
+  // ACCEPTED đã được gộp vào PREPARING từ phiên bản 4-step flow
+  // Admin chỉ gửi: PREPARING | DELIVERING | DELIVERED | CANCELLED
+  deliveryStatus: z.enum(['PREPARING', 'DELIVERING', 'DELIVERED', 'CANCELLED']),
   reason: z.string().max(500).optional(),
 });
 

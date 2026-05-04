@@ -28,8 +28,7 @@ export interface OnlineOrderItem {
   selectedOptions: {
     optionGroupId?: string;
     optionId: string;
-    name: string;
-    priceDelta: number;
+    name?: string; // tên option — priceDelta do backend tự lấy từ DB
   }[];
   note?: string;
 }
@@ -60,6 +59,7 @@ export interface OnlineOrderResponse {
     subtotal: number;
     createdAt: string;
   };
+  trackingToken: string;        // ← mới: lưu vào localStorage để xem tracking
   deliveryInfo: {
     customerName: string;
     phone: string;
@@ -129,9 +129,11 @@ export const onlineApi = {
     return res.data.data;
   },
 
-  /** Tra cứu trạng thái đơn hàng */
-  getOrder: async (orderId: string): Promise<OnlineOrderDetail> => {
-    const res = await apiClient.get(`/public/online-orders/${orderId}`);
+  /** Tra cứu trạng thái đơn hàng — yêu cầu trackingToken được lưu từ localStorage */
+  getOrder: async (orderId: string, trackingToken: string): Promise<OnlineOrderDetail> => {
+    const res = await apiClient.get(`/public/online-orders/${orderId}`, {
+      params: { token: trackingToken },
+    });
     return res.data.data;
   },
 

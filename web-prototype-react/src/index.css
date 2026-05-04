@@ -62,6 +62,19 @@
   box-sizing: border-box;
 }
 
+/* Khi trang có .oop (OnlineOrderPage): hủy text-align:center của #root */
+#root:has(.oop),
+#root .oop,
+#root .oop * {
+  text-align: left;
+}
+
+/* Nhưng giữ center cho những thứ cần centered trong .oop (stepbar, header...) */
+#root .oop__stepbar,
+#root .oop__step-label {
+  text-align: center;
+}
+
 body {
   margin: 0;
 }

@@ -26,9 +26,9 @@ export default defineConfig({
     // Vite dev server — proxy API calls để tránh CORS khi dev
     proxy: {
       '/api': {
-        target: 'https://datn-htg-bep-nha-minh-production.up.railway.app',
+        target: 'http://localhost:3001',
         changeOrigin: true,
-        secure: true,
+        secure: false,   // HTTP localhost không có SSL
       },
     },
   },

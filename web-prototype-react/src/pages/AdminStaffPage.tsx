@@ -3,7 +3,7 @@
  * Quản lý nhân viên: xem danh sách, tạo mới, đổi role, khóa/mở.
  * ADMIN only — Sprint C của plan 16_staff_account_admin_cleanup_plan
  */
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   listStaff,
   createStaff,
@@ -15,20 +15,22 @@ import {
 import { useStore } from '../store/useStore';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type RoleFilter = 'ALL' | 'ADMIN' | 'MANAGER' | 'KITCHEN';
+type RoleFilter = 'ALL' | 'ADMIN' | 'MANAGER' | 'KITCHEN' | 'SHIPPER';
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
-type RoleValue = 'ADMIN' | 'MANAGER' | 'KITCHEN';
+type RoleValue = 'ADMIN' | 'MANAGER' | 'KITCHEN' | 'SHIPPER';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: 'Quản trị',
   MANAGER: 'Quản lý',
   KITCHEN: 'Bếp',
+  SHIPPER: 'Giao hàng',
 };
 
 const ROLE_COLOR: Record<string, string> = {
   ADMIN: '#d83a2e',
   MANAGER: '#e07b39',
   KITCHEN: '#3a8a6e',
+  SHIPPER: '#6366f1',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -45,6 +47,108 @@ const badgeStyle = (role: string): React.CSSProperties => ({
   color: ROLE_COLOR[role] ?? '#888',
   border: `1.5px solid ${ROLE_COLOR[role] ?? '#888'}40`,
 });
+
+// ─── Role Dropdown (custom — native select không hỗ trợ bo tròn) ──────────────
+const ROLE_OPTIONS: { value: RoleValue; label: string; desc: string }[] = [
+  { value: 'KITCHEN',  label: 'Bếp',       desc: 'Nhận và cập nhật tiến độ món' },
+  { value: 'SHIPPER',  label: 'Giao hàng', desc: 'Theo dõi và giao đơn online' },
+  { value: 'MANAGER',  label: 'Quản lý',   desc: 'Xem báo cáo, quản lý vận hành' },
+  { value: 'ADMIN',    label: 'Quản trị',  desc: 'Toàn quyền hệ thống' },
+];
+
+function RoleDropdown({ value, onChange }: { value: RoleValue; onChange: (v: RoleValue) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = ROLE_OPTIONS.find((o) => o.value === value) ?? ROLE_OPTIONS[0];
+
+  // Đóng khi click ra ngoài
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <span style={{ fontSize: 13, fontWeight: 600, color: '#3d3530' }}>
+        Vai trò <span style={{ color: '#d83a2e' }}>*</span>
+      </span>
+      <div ref={ref} style={{ position: 'relative' }}>
+        {/* Trigger */}
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          style={{
+            width: '100%', padding: '10px 14px',
+            borderRadius: 10,
+            border: `1.5px solid ${open ? '#d83a2e' : '#ddd5cc'}`,
+            background: '#faf9f7', color: '#1a1714',
+            fontSize: 14, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            boxSizing: 'border-box', transition: 'border-color 0.15s',
+            fontFamily: 'inherit',
+          }}
+        >
+          <span style={{ fontWeight: 500 }}>{selected.label}</span>
+          <svg
+            width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="#7a6f65" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+
+        {/* Dropdown list */}
+        {open && (
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
+            background: '#ffffff',
+            border: '1.5px solid #ddd5cc',
+            borderRadius: 12,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            zIndex: 10, overflow: 'hidden',
+          }}>
+            {ROLE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                style={{
+                  width: '100%', padding: '10px 14px',
+                  background: opt.value === value ? 'rgba(216,58,46,0.06)' : 'transparent',
+                  border: 'none', cursor: 'pointer',
+                  display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2,
+                  borderBottom: '1px solid #f0ece8',
+                  fontFamily: 'inherit',
+                }}
+                onMouseEnter={(e) => { if (opt.value !== value) e.currentTarget.style.background = '#faf9f7'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = opt.value === value ? 'rgba(216,58,46,0.06)' : 'transparent'; }}
+              >
+                <span style={{
+                  fontSize: 14, fontWeight: 600,
+                  color: opt.value === value ? '#d83a2e' : '#1a1714',
+                }}>
+                  {opt.label}
+                  {opt.value === value && (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d83a2e"
+                      strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                      style={{ marginLeft: 6, verticalAlign: 'middle' }}>
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </span>
+                <span style={{ fontSize: 11, color: '#9a8f85', textAlign: 'left' }}>{opt.desc}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // ─── Create Staff Modal ───────────────────────────────────────────────────────
 interface CreateModalProps {
@@ -82,24 +186,38 @@ function CreateStaffModal({ onClose, onCreated }: CreateModalProps) {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+      position: 'fixed', inset: 0,
+      background: 'rgba(0,0,0,0.55)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 1000, padding: 16,
+      backdropFilter: 'blur(2px)',
     }}>
       <div style={{
-        background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)',
-        padding: 28, width: '100%', maxWidth: 460,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+        background: '#ffffff',
+        borderRadius: 16,
+        padding: '32px 28px',
+        width: '100%', maxWidth: 460,
+        boxShadow: '0 24px 64px rgba(0,0,0,0.35)',
       }}>
-        <h3 style={{ margin: '0 0 20px', fontSize: 17, fontWeight: 700 }}>Thêm nhân viên mới</h3>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Header */}
+        <div style={{ marginBottom: 24 }}>
+          <h3 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: '#1a1714' }}>
+            Thêm nhân viên mới
+          </h3>
+          <p style={{ margin: 0, fontSize: 13, color: '#7a6f65' }}>
+            Điền thông tin để tạo tài khoản đăng nhập cho nhân viên.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {([
-            { label: 'Tên hiển thị *', key: 'displayName', type: 'text', placeholder: 'Nguyễn Văn A' },
-            { label: 'Email *', key: 'email', type: 'email', placeholder: 'nhanvien@example.com' },
-            { label: 'Mật khẩu tạm *', key: 'temporaryPassword', type: 'password', placeholder: 'Tối thiểu 8 ký tự' },
+            { label: 'Tên hiển thị', key: 'displayName', type: 'text', placeholder: 'Nguyễn Văn A' },
+            { label: 'Email', key: 'email', type: 'email', placeholder: 'nhanvien@bepnhaminh.vn' },
           ] as const).map(({ label, key, type, placeholder }) => (
-            <label key={key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-soy)' }}>{label}</span>
+            <label key={key} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#3d3530' }}>
+                {label} <span style={{ color: '#d83a2e' }}>*</span>
+              </span>
               <input
                 type={type}
                 placeholder={placeholder}
@@ -107,48 +225,196 @@ function CreateStaffModal({ onClose, onCreated }: CreateModalProps) {
                 onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                 required
                 style={{
-                  padding: '9px 12px', borderRadius: 'var(--radius-sm)',
-                  border: '1.5px solid var(--color-steam)', fontSize: 14,
-                  outline: 'none', background: 'var(--color-bg)',
-                  color: 'var(--color-ink)',
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  border: '1.5px solid #ddd5cc',
+                  fontSize: 14,
+                  outline: 'none',
+                  background: '#faf9f7',
+                  color: '#1a1714',
+                  transition: 'border-color 0.15s',
+                  width: '100%',
+                  boxSizing: 'border-box',
                 }}
+                onFocus={(e) => e.currentTarget.style.borderColor = '#d83a2e'}
+                onBlur={(e) => e.currentTarget.style.borderColor = '#ddd5cc'}
               />
             </label>
           ))}
 
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-soy)' }}>Vai trò *</span>
-            <select
-              value={form.role}
-              onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as RoleValue }))}
+          {/* Mật khẩu — tách riêng để hiện inline validation */}
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#3d3530' }}>
+              Mật khẩu tạm thời <span style={{ color: '#d83a2e' }}>*</span>
+            </span>
+            <input
+              type="password"
+              placeholder="Tối thiểu 8 ký tự"
+              value={form.temporaryPassword}
+              onChange={(e) => setForm((f) => ({ ...f, temporaryPassword: e.target.value }))}
+              required
+              minLength={8}
               style={{
-                padding: '9px 12px', borderRadius: 'var(--radius-sm)',
-                border: '1.5px solid var(--color-steam)', fontSize: 14,
-                background: 'var(--color-bg)', color: 'var(--color-ink)',
+                padding: '10px 14px',
+                borderRadius: 10,
+                border: `1.5px solid ${form.temporaryPassword.length > 0 && form.temporaryPassword.length < 8 ? '#d83a2e' : '#ddd5cc'}`,
+                fontSize: 14,
+                outline: 'none',
+                background: '#faf9f7',
+                color: '#1a1714',
+                transition: 'border-color 0.15s',
+                width: '100%',
+                boxSizing: 'border-box',
               }}
-            >
-              <option value="KITCHEN">Bếp (Kitchen)</option>
-              <option value="MANAGER">Quản lý (Manager)</option>
-              <option value="ADMIN">Quản trị (Admin)</option>
-            </select>
+              onFocus={(e) => { if (form.temporaryPassword.length >= 8 || form.temporaryPassword.length === 0) e.currentTarget.style.borderColor = '#d83a2e'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = form.temporaryPassword.length > 0 && form.temporaryPassword.length < 8 ? '#d83a2e' : '#ddd5cc'; }}
+            />
+            {form.temporaryPassword.length > 0 && form.temporaryPassword.length < 8 && (
+              <span style={{ fontSize: 11, color: '#d83a2e', marginTop: 2 }}>
+                ⚠ Cần ít nhất 8 ký tự ({form.temporaryPassword.length}/8)
+              </span>
+            )}
           </label>
 
-          <p style={{ fontSize: 12, color: 'var(--color-soy)', margin: 0, padding: '8px 12px', background: 'var(--color-steam-light, rgba(0,0,0,0.04))', borderRadius: 8 }}>
-            Nhân viên sẽ nhận mật khẩu tạm và đăng nhập tại trang /login.
-          </p>
+          <RoleDropdown
+            value={form.role}
+            onChange={(r) => setForm((f) => ({ ...f, role: r }))}
+          />
+
+          <div style={{
+            fontSize: 12, color: '#7a6f65', margin: 0,
+            padding: '10px 14px',
+            background: '#fff8f0',
+            borderRadius: 8,
+            border: '1px solid #fde8c8',
+            lineHeight: 1.6,
+          }}>
+            💡 Nhân viên sẽ dùng email + mật khẩu tạm để đăng nhập tại{' '}
+            <strong style={{ color: '#d83a2e' }}>/login</strong>.
+            Nên đổi mật khẩu sau lần đăng nhập đầu tiên.
+          </div>
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
-            <button type="button" onClick={onClose}
-              style={{ padding: '9px 18px', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--color-steam)', background: 'transparent', cursor: 'pointer', fontSize: 13 }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                padding: '10px 20px', borderRadius: 10,
+                border: '1.5px solid #ddd5cc',
+                background: '#fff', cursor: 'pointer',
+                fontSize: 14, fontWeight: 600, color: '#3d3530',
+              }}
+            >
               Hủy
             </button>
-            <button type="submit" disabled={loading}
-              style={{ padding: '9px 18px', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--color-chili)', color: '#fff', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontSize: 13, opacity: loading ? 0.7 : 1 }}>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                padding: '10px 24px', borderRadius: 10, border: 'none',
+                background: loading ? '#e8a09b' : '#d83a2e',
+                color: '#fff', fontWeight: 700,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontSize: 14,
+                transition: 'background 0.15s',
+              }}
+            >
               {loading ? 'Đang tạo...' : 'Tạo tài khoản'}
             </button>
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+// ─── Inline Role Dropdown (trong bảng nhân viên) ────────────────────────────
+function InlineRoleDropdown({
+  value, onChange, onConfirm, onCancel,
+}: {
+  value: RoleValue;
+  onChange: (v: RoleValue) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(true); // mở ngay khi mount
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onCancel();
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onCancel]);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block', minWidth: 120 }}>
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          padding: '4px 10px', borderRadius: 8,
+          border: '1.5px solid #d83a2e',
+          background: '#fff', color: '#1a1714',
+          fontSize: 12, fontWeight: 600,
+          cursor: 'pointer', display: 'flex',
+          alignItems: 'center', gap: 6,
+          fontFamily: 'inherit',
+        }}
+      >
+        {ROLE_LABEL[value] ?? value}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="#7a6f65" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0,
+          background: '#fff',
+          border: '1.5px solid #e8ddd6',
+          borderRadius: 10,
+          boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+          zIndex: 50, minWidth: 140, overflow: 'hidden',
+        }}>
+          {ROLE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value); onConfirm(); setOpen(false); }}
+              style={{
+                width: '100%', padding: '8px 12px',
+                background: opt.value === value ? 'rgba(216,58,46,0.07)' : 'transparent',
+                border: 'none',
+                borderBottom: '1px solid #f5f0eb',
+                cursor: 'pointer', textAlign: 'left',
+                fontSize: 13, fontWeight: opt.value === value ? 700 : 400,
+                color: opt.value === value ? '#d83a2e' : '#1a1714',
+                fontFamily: 'inherit',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              }}
+              onMouseEnter={(e) => { if (opt.value !== value) e.currentTarget.style.background = '#faf9f7'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = opt.value === value ? 'rgba(216,58,46,0.07)' : 'transparent'; }}
+            >
+              {opt.label}
+              {opt.value === value && (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d83a2e"
+                  strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -247,7 +513,7 @@ export function AdminStaffPage() {
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
         {/* Role filter */}
         <div style={{ display: 'flex', gap: 6 }}>
-          {(['ALL', 'ADMIN', 'MANAGER', 'KITCHEN'] as RoleFilter[]).map((r) => (
+          {(['ALL', 'ADMIN', 'MANAGER', 'KITCHEN', 'SHIPPER'] as RoleFilter[]).map((r) => (
             <button key={r} onClick={() => setRoleFilter(r)}
               style={{
                 padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 600,
@@ -305,17 +571,12 @@ export function AdminStaffPage() {
                     <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--color-soy)' }}>{s.email}</td>
                     <td style={{ padding: '14px 16px' }}>
                       {editingRole?.id === s.id ? (
-                        <select
-                          autoFocus
+                        <InlineRoleDropdown
                           value={editingRole.role}
-                          onChange={(e) => setEditingRole({ id: s.id, role: e.target.value as RoleValue })}
-                          onBlur={() => handleChangeRole(s.id, editingRole.role)}
-                          style={{ padding: '4px 8px', borderRadius: 6, border: '1.5px solid var(--color-chili)', fontSize: 12 }}
-                        >
-                          <option value="KITCHEN">Bếp</option>
-                          <option value="MANAGER">Quản lý</option>
-                          <option value="ADMIN">Quản trị</option>
-                        </select>
+                          onChange={(r) => setEditingRole({ id: s.id, role: r })}
+                          onConfirm={() => handleChangeRole(s.id, editingRole.role)}
+                          onCancel={() => setEditingRole(null)}
+                        />
                       ) : (
                         <span style={badgeStyle(role)} title="Nhấn để đổi" onClick={() => setEditingRole({ id: s.id, role: role as RoleValue })} role="button" tabIndex={0}>
                           {ROLE_LABEL[role] ?? role}

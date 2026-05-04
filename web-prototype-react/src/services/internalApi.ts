@@ -1,4 +1,4 @@
-/**
+﻿/**
  * internalApi.ts
  * Tất cả API calls cần auth (staff-facing: KDS, Admin).
  * Token được inject tự động bởi apiClient interceptor.
@@ -19,6 +19,8 @@ import type {
 
 export interface LoginResponse {
   accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
   user: AuthUser;
 }
 
@@ -28,6 +30,14 @@ export const login = async (
 ): Promise<LoginResponse> => {
   const res = await apiClient.post('/auth/login', { email, password });
   return res.data.data as LoginResponse;
+};
+
+/** Dung refreshToken de lay accessToken moi */
+export const refreshAccessToken = async (
+  refreshToken: string
+): Promise<{ accessToken: string; refreshToken: string }> => {
+  const res = await apiClient.post('/auth/refresh', { refreshToken });
+  return res.data.data;
 };
 
 export const getMe = async (): Promise<AuthUser> => {
@@ -270,7 +280,7 @@ export const listStaff = async (): Promise<ApiStaff[]> => {
 export interface CreateStaffData {
   displayName: string;
   email: string;
-  role: 'ADMIN' | 'MANAGER' | 'KITCHEN';
+  role: 'ADMIN' | 'MANAGER' | 'KITCHEN' | 'SHIPPER';
   defaultBranchId?: string;
   temporaryPassword: string;
 }
@@ -282,7 +292,7 @@ export const createStaff = async (data: CreateStaffData): Promise<ApiStaff> => {
 
 export const updateStaff = async (
   id: string,
-  data: { displayName?: string; role?: 'ADMIN' | 'MANAGER' | 'KITCHEN'; defaultBranchId?: string | null }
+  data: { displayName?: string; role?: 'ADMIN' | 'MANAGER' | 'KITCHEN' | 'SHIPPER'; defaultBranchId?: string | null }
 ): Promise<ApiStaff> => {
   const res = await apiClient.patch(`/internal/users/${id}`, data);
   return res.data.data.user as ApiStaff;
@@ -291,4 +301,73 @@ export const updateStaff = async (
 export const updateStaffStatus = async (id: string, isActive: boolean): Promise<ApiStaff> => {
   const res = await apiClient.patch(`/internal/users/${id}/status`, { isActive });
   return res.data.data.user as ApiStaff;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ADMIN — OPTION GROUPS & OPTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface ApiMenuOption {
+  id: string;
+  optionGroupId: string;
+  name: string;
+  priceDelta: number;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface ApiMenuOptionGroup {
+  id: string;
+  menuItemId: string;
+  name: string;
+  isRequired: boolean;
+  minSelect: number;
+  maxSelect: number;
+  sortOrder: number;
+  options: ApiMenuOption[];
+}
+
+export const getOptionGroups = async (menuItemId: string): Promise<ApiMenuOptionGroup[]> => {
+  const res = await apiClient.get(`/internal/menu-items/${menuItemId}/option-groups`);
+  return res.data.data.groups as ApiMenuOptionGroup[];
+};
+
+export const createOptionGroup = async (
+  menuItemId: string,
+  data: { name: string; isRequired?: boolean; minSelect?: number; maxSelect?: number; sortOrder?: number }
+): Promise<ApiMenuOptionGroup> => {
+  const res = await apiClient.post(`/internal/menu-items/${menuItemId}/option-groups`, data);
+  return res.data.data.group as ApiMenuOptionGroup;
+};
+
+export const updateOptionGroup = async (
+  groupId: string,
+  data: { name?: string; isRequired?: boolean; minSelect?: number; maxSelect?: number }
+): Promise<ApiMenuOptionGroup> => {
+  const res = await apiClient.patch(`/internal/option-groups/${groupId}`, data);
+  return res.data.data.group as ApiMenuOptionGroup;
+};
+
+export const deleteOptionGroup = async (groupId: string): Promise<void> => {
+  await apiClient.delete(`/internal/option-groups/${groupId}`);
+};
+
+export const createOption = async (
+  groupId: string,
+  data: { name: string; priceDelta?: number; isActive?: boolean; sortOrder?: number }
+): Promise<ApiMenuOption> => {
+  const res = await apiClient.post(`/internal/option-groups/${groupId}/options`, data);
+  return res.data.data.option as ApiMenuOption;
+};
+
+export const updateOption = async (
+  optionId: string,
+  data: { name?: string; priceDelta?: number; isActive?: boolean }
+): Promise<ApiMenuOption> => {
+  const res = await apiClient.patch(`/internal/options/${optionId}`, data);
+  return res.data.data.option as ApiMenuOption;
+};
+
+export const deleteOption = async (optionId: string): Promise<void> => {
+  await apiClient.delete(`/internal/options/${optionId}`);
 };
