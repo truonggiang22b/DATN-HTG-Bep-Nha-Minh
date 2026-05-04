@@ -2,7 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import { useStore } from '../store/useStore';
-import { getTables, createTable, deactivateTable, restoreTableApi, resetTableSession } from '../services/internalApi';
+import {
+  getTables,
+  getTableCurrentSession,
+  createTable,
+  deactivateTable,
+  restoreTableApi,
+  resetTableSession,
+} from '../services/internalApi';
+import type { ApiTableCurrentSession, ApiTableSessionOrder, OrderStatus } from '../types';
 import '../styles/admin.css';
 
 // ── SVG Icons ─────────────────────────────────────────────────────────────────
@@ -27,6 +35,26 @@ const IconQr = () => (
     <path d="M14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/>
   </svg>
 );
+const IconReceipt = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z" />
+    <path d="M8 7h8M8 11h8M8 15h5" />
+  </svg>
+);
+
+const formatMoney = (value: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+
+const formatTime = (value: string) =>
+  new Date(value).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  NEW: 'Mới gọi',
+  PREPARING: 'Đang làm',
+  READY: 'Sẵn sàng',
+  SERVED: 'Đã phục vụ',
+  CANCELLED: 'Đã hủy',
+};
 
 // ── QR Modal ──────────────────────────────────────────────────────────────────
 const QRModal = ({ table, onClose }: { table: { displayName: string; qrToken: string }; onClose: () => void }) => {
@@ -108,6 +136,137 @@ const QRModal = ({ table, onClose }: { table: { displayName: string; qrToken: st
   );
 };
 
+const SessionOrderCard = ({ order, index }: { order: ApiTableSessionOrder; index: number }) => (
+  <div className={`session-order-card${order.status === 'CANCELLED' ? ' session-order-card--cancelled' : ''}`}>
+    <div className="session-order-card__header">
+      <div>
+        <div className="session-order-card__title">Lần gọi {index + 1}</div>
+        <div className="session-order-card__meta">
+          {order.orderCode} · {formatTime(order.createdAt)}
+        </div>
+      </div>
+      <div className="session-order-card__status-wrap">
+        <span className={`session-order-status session-order-status--${order.status.toLowerCase()}`}>
+          {ORDER_STATUS_LABELS[order.status]}
+        </span>
+        <strong>{formatMoney(order.subtotal)}</strong>
+      </div>
+    </div>
+
+    <div className="session-order-card__items">
+      {order.items.map((item) => (
+        <div className="session-order-item" key={item.id}>
+          <div className="session-order-item__main">
+            <span className="session-order-item__qty">x{item.quantity}</span>
+            <span>{item.name}</span>
+            <strong>{formatMoney(item.lineTotal)}</strong>
+          </div>
+          {item.selectedOptions?.length > 0 && (
+            <div className="session-order-item__sub">
+              {item.selectedOptions.map((option) => option.name).join(' · ')}
+            </div>
+          )}
+          {item.note && <div className="session-order-item__sub">Ghi chú: {item.note}</div>}
+        </div>
+      ))}
+    </div>
+
+    {order.customerNote && (
+      <div className="session-order-card__note">Ghi chú đơn: {order.customerNote}</div>
+    )}
+  </div>
+);
+
+const SessionModal = ({
+  data,
+  isLoading,
+  isSettling,
+  onSettle,
+  onClose,
+}: {
+  data?: ApiTableCurrentSession;
+  isLoading: boolean;
+  isSettling: boolean;
+  onSettle: (tableId: string) => void;
+  onClose: () => void;
+}) => {
+  const session = data?.session ?? null;
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal session-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <span className="modal-title">Phiên ăn {data?.table ? `— ${data.table.displayName}` : ''}</span>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="modal-body session-modal__body">
+          {isLoading ? (
+            <div className="session-empty">Đang tải phiên ăn...</div>
+          ) : !session ? (
+            <div className="session-empty">
+              <strong>Bàn đang trống</strong>
+              <span>Chưa có phiên ăn đang mở cho bàn này.</span>
+            </div>
+          ) : (
+            <>
+              <div className="session-summary-grid">
+                <div className="session-summary-card">
+                  <span>Tổng thanh toán</span>
+                  <strong>{formatMoney(session.payableTotal)}</strong>
+                </div>
+                <div className="session-summary-card">
+                  <span>Lần gọi món</span>
+                  <strong>{session.orderCount}</strong>
+                </div>
+                <div className="session-summary-card">
+                  <span>Số món</span>
+                  <strong>{session.itemCount}</strong>
+                </div>
+                <div className="session-summary-card">
+                  <span>Đang xử lý</span>
+                  <strong>{session.activeOrderCount}</strong>
+                </div>
+              </div>
+
+              {session.activeOrderCount > 0 && (
+                <div className="session-warning">
+                  Còn {session.activeOrderCount} đơn chưa hoàn tất. Hãy phục vụ hoặc hủy trước khi tất toán/reset phiên.
+                </div>
+              )}
+
+              <div className="session-order-list">
+                {session.orders.length === 0 ? (
+                  <div className="session-empty">Phiên này chưa có đơn gọi món.</div>
+                ) : (
+                  session.orders.map((order, index) => (
+                    <SessionOrderCard key={order.id} order={order} index={index} />
+                  ))
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn btn-ghost" type="button" onClick={onClose}>Đóng</button>
+          {session && data?.table && (
+            <button
+              className="btn btn-primary"
+              type="button"
+              disabled={isSettling || session.activeOrderCount > 0}
+              onClick={() => onSettle(data.table.id)}
+              title={session.activeOrderCount > 0 ? 'Còn đơn chưa hoàn tất' : 'Đóng phiên ăn hiện tại'}
+            >
+              {isSettling ? 'Đang tất toán...' : 'Tất toán phiên'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Component ─────────────────────────────────────────────────────────────────
 export const AdminTablesPage = () => {
   const { showToast } = useStore();
@@ -120,6 +279,7 @@ export const AdminTablesPage = () => {
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ACTIVE');
   const [qrModalTable, setQrModalTable] = useState<{ displayName: string; qrToken: string } | null>(null);
+  const [sessionTableId, setSessionTableId] = useState<string | null>(null);
 
   // ── Query ─────────────────────────────────────────────────────────────────
   const { data: tables = [], isLoading } = useQuery({
@@ -128,18 +288,27 @@ export const AdminTablesPage = () => {
     staleTime: 30_000,
   });
 
+  const { data: sessionDetail, isLoading: sessionLoading } = useQuery({
+    queryKey: ['tableCurrentSession', sessionTableId],
+    queryFn: () => getTableCurrentSession(sessionTableId!),
+    enabled: Boolean(sessionTableId),
+    refetchInterval: sessionTableId ? 5000 : false,
+  });
+
   // ── Mutations ─────────────────────────────────────────────────────────────
   const { mutate: doReset, isPending: resetPending } = useMutation({
     mutationFn: (tableId: string) => resetTableSession(tableId),
     onSuccess: (_result, tableId) => {
       queryClient.invalidateQueries({ queryKey: ['tables'] });
+      queryClient.invalidateQueries({ queryKey: ['tableCurrentSession', tableId] });
       const table = tables.find((t) => t.id === tableId);
       showToast(`Đã reset phiên — ${table?.displayName ?? tableId}`);
       setConfirmReset(null);
+      setSessionTableId(null);
     },
     onError: (err: any) => {
       const code = err.code ?? err.response?.data?.error?.code;
-      if (code === 'ACTIVE_ORDERS_EXIST') {
+      if (code === 'SESSION_HAS_ACTIVE_ORDERS' || code === 'ACTIVE_ORDERS_EXIST') {
         showToast('Không thể reset — bàn còn đơn đang xử lý. Hãy hoàn tất hoặc hủy đơn trước.', 'error');
       } else {
         showToast('Không thể reset phiên', 'error');
@@ -295,6 +464,14 @@ export const AdminTablesPage = () => {
                         </td>
                         <td>
                           <div className="quick-actions">
+                            {/* Current session */}
+                            <button
+                              className={`qa-btn${table.hasActiveSession ? ' qa-btn--session' : ''}`}
+                              title="Xem các lần gọi món trong phiên"
+                              onClick={() => setSessionTableId(table.id)}
+                            >
+                              <IconReceipt /> Phiên ăn
+                            </button>
                             {/* QR Code */}
                             <button
                               className="qa-btn"
@@ -398,6 +575,16 @@ export const AdminTablesPage = () => {
       {/* QR Modal */}
       {qrModalTable && (
         <QRModal table={qrModalTable} onClose={() => setQrModalTable(null)} />
+      )}
+
+      {sessionTableId && (
+        <SessionModal
+          data={sessionDetail}
+          isLoading={sessionLoading}
+          isSettling={resetPending}
+          onSettle={(tableId) => doReset(tableId)}
+          onClose={() => setSessionTableId(null)}
+        />
       )}
 
       <style>{`

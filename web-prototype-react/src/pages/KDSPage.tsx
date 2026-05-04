@@ -86,7 +86,14 @@ export const KDSPage = () => {
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       <header className="kds-header">
-        <div className="kds-header__brand">🍜 {BRAND_NAME} — Bếp</div>
+        <div className="kds-header__brand">
+          <img
+            className="kds-header__logo"
+            src="/Logo_Bep_nha_minh.jpg"
+            alt={BRAND_NAME}
+          />
+          <span>{BRAND_NAME} — Bếp</span>
+        </div>
         <div className="kds-header__meta">
           {isLoading ? 'Đang tải...' : (
             <>

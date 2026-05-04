@@ -5,7 +5,7 @@
 /* ─── Layout ─────────────────────────────────────────────────────────────── */
 .absp__layout {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 24px;
   align-items: start;
 }
@@ -27,11 +27,11 @@
 .absp__section {
   background: var(--color-cream, #fff);
   border: 1px solid var(--color-steam, #e2e8f0);
-  border-radius: var(--radius-md, 12px);
-  padding: 20px;
+  border-radius: var(--radius-sm, 8px);
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .absp__section-title {
@@ -39,24 +39,8 @@
   font-weight: 700;
   color: var(--color-charcoal, #1e293b);
   margin: 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--color-steam, #e2e8f0);
+  padding: 0 0 2px;
 }
-
-.absp__section-hint {
-  font-size: 13px;
-  color: var(--color-soy, #64748b);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.absp__link {
-  color: var(--color-chili, #d83a2e);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.absp__link:hover { text-decoration: underline; }
 
 /* ─── Form fields ─────────────────────────────────────────────────────────── */
 .absp__form-row {
@@ -76,15 +60,6 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--color-charcoal, #1e293b);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.absp__field-hint {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--color-soy, #64748b);
 }
 
 .absp__field input {
@@ -98,6 +73,16 @@
   transition: border-color 0.15s, box-shadow 0.15s;
   outline: none;
   -moz-appearance: textfield;
+}
+
+.absp__inline-control {
+  display: flex;
+  gap: 8px;
+}
+
+.absp__inline-control input {
+  flex: 1;
+  min-width: 0;
 }
 
 .absp__field input::-webkit-outer-spin-button,
@@ -115,6 +100,13 @@
   margin-top: 2px;
 }
 
+.absp__location-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .absp__verify-link {
   display: inline-flex;
   align-items: center;
@@ -123,15 +115,47 @@
   color: var(--color-chili, #d83a2e);
   font-weight: 600;
   text-decoration: none;
-  background: rgba(216,58,46,0.06);
-  border: 1px solid rgba(216,58,46,0.2);
-  padding: 6px 14px;
-  border-radius: 8px;
+  padding: 2px 0;
   transition: all 0.15s;
 }
 
 .absp__verify-link:hover {
+  text-decoration: underline;
+}
+
+.absp__btn-secondary,
+.absp__btn-location {
+  border: 1px solid rgba(216,58,46,0.25);
+  border-radius: var(--radius-sm, 8px);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.absp__btn-secondary {
+  background: rgba(216,58,46,0.08);
+  color: var(--color-chili, #d83a2e);
+  padding: 0 14px;
+}
+
+.absp__btn-location {
+  background: var(--color-paper, #f8fafc);
+  color: var(--color-charcoal, #1e293b);
+  padding: 8px 14px;
+}
+
+.absp__btn-secondary:hover:not(:disabled),
+.absp__btn-location:hover:not(:disabled) {
   background: rgba(216,58,46,0.12);
+  transform: translateY(-1px);
+}
+
+.absp__btn-secondary:disabled,
+.absp__btn-location:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ─── Save button ─────────────────────────────────────────────────────────── */
@@ -162,8 +186,8 @@
 .absp__fee-preview {
   background: var(--color-cream, #fff);
   border: 1px solid var(--color-steam, #e2e8f0);
-  border-radius: var(--radius-md, 12px);
-  padding: 20px;
+  border-radius: var(--radius-sm, 8px);
+  padding: 18px;
 }
 
 .absp__preview-title {
@@ -185,7 +209,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 14px;
+  padding: 8px 12px;
   font-size: 13px;
   border-bottom: 1px solid var(--color-steam, #e2e8f0);
 }
@@ -216,35 +240,46 @@
   font-style: italic;
 }
 
-/* ─── Formula ────────────────────────────────────────────────────────────── */
-.absp__formula {
-  background: var(--color-cream, #fff);
-  border: 1px solid var(--color-steam, #e2e8f0);
-  border-radius: var(--radius-md, 12px);
-  padding: 20px;
+.absp__distance-note {
+  margin-top: 12px;
+  background: rgba(216,58,46,0.05);
+  border: 1px solid rgba(216,58,46,0.14);
+  border-radius: var(--radius-sm, 8px);
+  padding: 12px;
 }
 
-.absp__formula-box {
-  background: var(--color-paper, #f8fafc);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-top: 10px;
-}
-
-.absp__formula-box p {
+.absp__distance-note h5 {
+  margin: 0 0 10px;
   font-size: 12px;
-  color: var(--color-soy, #64748b);
-  margin: 0 0 4px;
-}
-
-.absp__formula-box code {
-  display: block;
-  font-size: 13px;
   font-weight: 700;
   color: var(--color-charcoal, #1e293b);
-  background: rgba(0,0,0,0.04);
+}
+
+.absp__rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.absp__rule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 30px;
+  background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(216,58,46,0.08);
   border-radius: 6px;
-  padding: 6px 10px;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--color-soy, #64748b);
+}
+
+.absp__rule-item strong {
+  color: var(--color-charcoal, #1e293b);
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
 }
 
 /* ─── Branch name ────────────────────────────────────────────────────────── */
@@ -275,3 +310,13 @@
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 560px) {
+  .absp__inline-control {
+    flex-direction: column;
+  }
+
+  .absp__btn-secondary {
+    padding: 9px 14px;
+  }
+}

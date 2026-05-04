@@ -183,5 +183,53 @@ export interface ApiTable {
   qrToken: string;
   status: 'ACTIVE' | 'INACTIVE';
   hasActiveSession: boolean;
+  activeSessionId?: string | null;
   branchId: string;
+}
+
+export interface ApiTableSessionOrderItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  note?: string | null;
+  selectedOptions: {
+    optionGroupId?: string;
+    optionId?: string;
+    name: string;
+    priceDelta: number;
+  }[];
+}
+
+export interface ApiTableSessionOrder {
+  id: string;
+  orderCode: string;
+  status: OrderStatus;
+  subtotal: number;
+  customerNote?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  isPayable: boolean;
+  items: ApiTableSessionOrderItem[];
+}
+
+export interface ApiTableCurrentSession {
+  table: {
+    id: string;
+    displayName: string;
+    tableCode: string;
+  };
+  session: {
+    id: string;
+    status: 'OPEN' | 'CLOSED';
+    openedAt: string;
+    orderCounter: number;
+    orderCount: number;
+    payableOrderCount: number;
+    activeOrderCount: number;
+    itemCount: number;
+    payableTotal: number;
+    orders: ApiTableSessionOrder[];
+  } | null;
 }

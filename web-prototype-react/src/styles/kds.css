@@ -20,9 +20,20 @@
   flex-shrink: 0;
 }
 .kds-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-weight: var(--fw-bold);
   font-size: 18px;
   color: white;
+  white-space: nowrap;
+}
+.kds-header__logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 .kds-header__meta {
   font-size: 13px;

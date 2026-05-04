@@ -10,6 +10,7 @@ import type {
   ApiCategory,
   ApiMenuItem,
   ApiTable,
+  ApiTableCurrentSession,
   OrderStatus,
 } from '../types';
 
@@ -174,6 +175,13 @@ export const updateItemStatus = async (
 export const getTables = async (): Promise<ApiTable[]> => {
   const res = await apiClient.get('/internal/tables');
   return res.data.data.tables as ApiTable[];
+};
+
+export const getTableCurrentSession = async (
+  tableId: string
+): Promise<ApiTableCurrentSession> => {
+  const res = await apiClient.get(`/internal/tables/${tableId}/current-session`);
+  return res.data.data as ApiTableCurrentSession;
 };
 
 export const createTable = async (data: {
