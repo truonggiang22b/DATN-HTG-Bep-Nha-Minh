@@ -1,6 +1,6 @@
-/* ══════════════════════════════════════════════════════════════════════════════
-   OnlineOrderPage.css  — Unified Design System v2
-   ──────────────────────────────────────────────────────────────────────────────
+﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   OnlineOrderPage.css  â€” Unified Design System v2
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Color system:
      Page bg:      #FAF7F2  (near-white warm)
      Surface/card: #FFFFFF  (white)
@@ -8,22 +8,22 @@
      Primary:      #E94F37  (warm red-orange)
      Text main:    #3A2E2A  (warm dark brown)
      Text sub:     #7B6E67  (warm gray-brown)
-     Accent soft:  #F5E3CC  (pale peach — hover/badge)
+     Accent soft:  #F5E3CC  (pale peach â€” hover/badge)
      Highlight bg: #FFF3DF  (warm cream)
 
    Typography hierarchy:
-     Brand/section: Sora bold 18–20px
+     Brand/section: Sora bold 18â€“20px
      Category title: Be Vietnam Pro semibold 16px
      Item name:     Be Vietnam Pro semibold 15px
      Price:         Sora bold 15px primary
-     Body/label:    Be Vietnam Pro 13–14px
+     Body/label:    Be Vietnam Pro 13â€“14px
 
    Spacing system: 4 | 8 | 12 | 16 | 20 | 24 | 32px
    Border radius system: 8px (inputs) | 10px (cards) | 16px (modal) | 50px (pills)
    Shadow system: sm=0 2px 8px rgba(0,0,0,.06) | md=0 4px 16px rgba(0,0,0,.08)
-   ══════════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ── CSS tokens ──────────────────────────────────────────────────────────────── */
+/* â”€â”€ CSS tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .oop {
   --bg-page:        #FAF7F2;
   --bg-surface:     #FFFFFF;
@@ -45,7 +45,7 @@
   --radius-pill:    50px;
 }
 
-/* ── Escape Phase 1 #root constraints ────────────────────────────────────────── */
+/* â”€â”€ Escape Phase 1 #root constraints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 body:has(.oop) #root {
   width: 100% !important;
   max-width: 100% !important;
@@ -53,7 +53,7 @@ body:has(.oop) #root {
   text-align: left !important;
 }
 
-/* ── Global reset inside .oop ── */
+/* â”€â”€ Global reset inside .oop â”€â”€ */
 .oop *, .oop *::before, .oop *::after {
   box-sizing: border-box;
   margin: 0;
@@ -64,9 +64,9 @@ body:has(.oop) #root {
   cursor: pointer;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SHELL
-   ══════════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .oop {
   min-height: 100dvh;
   background: var(--bg-page);
@@ -77,9 +77,9 @@ body:has(.oop) #root {
   text-align: left;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    HEADER
-   ══════════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .oop__header {
   background: var(--bg-surface);
   height: 64px;
@@ -123,15 +123,15 @@ body:has(.oop) #root {
 
 .oop__header-right { width: 80px; }
 
-/* ── Stepbar – layout cân đối 3 bước ────────────────────────────────────── */
+/* â”€â”€ Stepbar â€“ layout cÃ¢n Ä‘á»‘i 3 bÆ°á»›c â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 /*
-  Cấu trúc mới:
-    stepbar = flex row chứa 3 step-item (flex:1 mỗi item)
-    Mỗi step-item = column gồm:
-      • step-row: [half-connector | circle | half-connector]
-      • label bên dưới (text-align: center)
-    Half-connector = flex:1 => đường nối nằm đối xứng quanh circle
-    Step đầu: không có left-connector | Step cuối: không có right-connector
+  Cáº¥u trÃºc má»›i:
+    stepbar = flex row chá»©a 3 step-item (flex:1 má»—i item)
+    Má»—i step-item = column gá»“m:
+      â€¢ step-row: [half-connector | circle | half-connector]
+      â€¢ label bÃªn dÆ°á»›i (text-align: center)
+    Half-connector = flex:1 => Ä‘Æ°á»ng ná»‘i náº±m Ä‘á»‘i xá»©ng quanh circle
+    Step Ä‘áº§u: khÃ´ng cÃ³ left-connector | Step cuá»‘i: khÃ´ng cÃ³ right-connector
 */
 .oop__stepbar {
   display: flex;
@@ -147,14 +147,14 @@ body:has(.oop) #root {
   flex: 1;
 }
 
-/* Hàng ngang: half-connector + circle + half-connector */
+/* HÃ ng ngang: half-connector + circle + half-connector */
 .oop__step-row {
   display: flex;
   align-items: center;
   width: 100%;
 }
 
-/* Mỗi nửa connector chiếm flex:1 hai bên circle => cân đối */
+/* Má»—i ná»­a connector chiáº¿m flex:1 hai bÃªn circle => cÃ¢n Ä‘á»‘i */
 .oop__step-connector {
   flex: 1;
   height: 1.5px;
@@ -163,7 +163,7 @@ body:has(.oop) #root {
 }
 .oop__step-connector--done { background: #4caf7d; }
 
-/* Ô TRỐNG khi không có connector (step đầu/cuối) => giữ flex balance */
+/* Ã” TRá»NG khi khÃ´ng cÃ³ connector (step Ä‘áº§u/cuá»‘i) => giá»¯ flex balance */
 .oop__step-connector-empty {
   flex: 1;
 }
@@ -197,7 +197,7 @@ body:has(.oop) #root {
   color: #fff;
 }
 
-/* Label bên dưới, căn giữa */
+/* Label bÃªn dÆ°á»›i, cÄƒn giá»¯a */
 .oop__step-label {
   font-size: 11px;
   font-weight: var(--fw-medium);
@@ -215,15 +215,15 @@ body:has(.oop) #root {
 
 .oop__step-item--done .oop__step-label { color: var(--text-sub); }
 
-/* Mobile: ẩn label */
+/* Mobile: áº©n label */
 @media (max-width: 600px) {
   .oop__step-label { display: none; }
   .oop__stepbar { max-width: 180px; }
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    BODY WRAPPER (3-col grid desktop)
-   ══════════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .oop__body {
   flex: 1;
   width: 100%;
@@ -243,9 +243,9 @@ body:has(.oop) #root {
   }
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    COL 1: CATEGORY NAV (desktop sidebar)
-   ══════════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .oop__cat-nav {
   display: none;
 }
@@ -325,14 +325,14 @@ body:has(.oop) #root {
   color: var(--primary);
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    COL 2: MENU SECTION
-   ══════════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .oop__menu-section {
   min-width: 0;
 }
 
-/* Mobile: tabs ngang cuộn */
+/* Mobile: tabs ngang cuá»™n */
 .oop__cat-tabs-mobile {
   display: flex;
   gap: 8px;
@@ -393,7 +393,7 @@ body:has(.oop) #root {
   background: linear-gradient(to right, var(--border-color), transparent);
 }
 
-/* Menu list — 2 cột mobile, 3 cột desktop */
+/* Menu list â€” 2 cá»™t mobile, 3 cá»™t desktop */
 .oop__menu-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -440,10 +440,10 @@ body:has(.oop) #root {
   color: var(--text-sub);
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   MENU CARD — Premium vertical card
-   ══════════════════════════════════════════════════════════════════════════════ */
-.menu-card {
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   MENU CARD â€” Premium vertical card
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+.oop__menu-card {
   background: #fff;
   border-radius: 16px;
   border: 1.5px solid #eedfc8;
@@ -458,27 +458,27 @@ body:has(.oop) #root {
   outline: none;
   min-width: 0;
   width: 100%;
-  text-align: left; /* override text-align:center từ index.css */
+  text-align: left; /* override text-align:center tá»« index.css */
 }
 
-.menu-card:hover {
+.oop__menu-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 32px rgba(180,100,60,.14);
   border-color: rgba(233,79,55,.5);
 }
 
-.menu-card:active {
+.oop__menu-card:active {
   transform: translateY(-1px) scale(0.99);
   box-shadow: 0 4px 12px rgba(0,0,0,.08);
 }
 
-.menu-card--soldout {
+.oop__menu-card--soldout {
   opacity: 0.48;
   pointer-events: none;
 }
 
-/* ── Ảnh ── */
-.menu-card__img-wrap {
+/* â”€â”€ áº¢nh â”€â”€ */
+.oop__menu-card__img-wrap {
   position: relative;
   width: 100%;
   aspect-ratio: 3 / 2;
@@ -486,7 +486,7 @@ body:has(.oop) #root {
   overflow: hidden;
 }
 
-.menu-card__img {
+.oop__menu-card__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -494,12 +494,12 @@ body:has(.oop) #root {
   transition: transform 0.35s ease;
 }
 
-.menu-card:hover .menu-card__img {
+.oop__menu-card:hover .oop__menu-card__img {
   transform: scale(1.07);
 }
 
-/* Badge số lượng trong giỏ — nổi góc trái trên */
-.menu-card__qty-badge {
+/* Badge sá»‘ lÆ°á»£ng trong giá» â€” ná»•i gÃ³c trÃ¡i trÃªn */
+.oop__menu-card__qty-badge {
   position: absolute;
   top: 8px;
   left: 8px;
@@ -519,8 +519,8 @@ body:has(.oop) #root {
   letter-spacing: -0.01em;
 }
 
-/* Nút + nổi góc phải dưới ảnh */
-.menu-card__add-fab {
+/* NÃºt + ná»•i gÃ³c pháº£i dÆ°á»›i áº£nh */
+.oop__menu-card__add-fab {
   position: absolute;
   bottom: 10px;
   right: 10px;
@@ -541,13 +541,13 @@ body:has(.oop) #root {
   pointer-events: none;
 }
 
-.menu-card:hover .menu-card__add-fab {
+.oop__menu-card:hover .oop__menu-card__add-fab {
   transform: scale(1.15);
   background: #c93d28;
 }
 
-/* Stepper ngoài ảnh khi đã có trong giỏ */
-.menu-card__stepper-fab {
+/* Stepper ngoÃ i áº£nh khi Ä‘Ã£ cÃ³ trong giá» */
+.oop__menu-card__stepper-fab {
   position: absolute;
   bottom: 10px;
   right: 10px;
@@ -562,7 +562,7 @@ body:has(.oop) #root {
   z-index: 3;
 }
 
-.fab-btn {
+.oop__fab-btn {
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -579,10 +579,10 @@ body:has(.oop) #root {
   flex-shrink: 0;
   transition: background 0.12s, transform 0.1s;
 }
-.fab-btn:hover  { background: #c93d28; }
-.fab-btn:active { transform: scale(0.88); }
+.oop__fab-btn:hover  { background: #c93d28; }
+.oop__fab-btn:active { transform: scale(0.88); }
 
-.fab-qty {
+.oop__fab-qty {
   min-width: 26px;
   text-align: center;
   font-size: 14px;
@@ -591,8 +591,8 @@ body:has(.oop) #root {
   font-family: var(--font-accent);
 }
 
-/* ── Text body dưới ảnh ── */
-.menu-card__body {
+/* â”€â”€ Text body dÆ°á»›i áº£nh â”€â”€ */
+.oop__menu-card__body {
   padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
@@ -603,7 +603,7 @@ body:has(.oop) #root {
   text-align: left !important;
 }
 
-.menu-card__name {
+.oop__menu-card__name {
   font-weight: 700;
   font-size: 14px;
   color: #2c1f18;
@@ -619,7 +619,7 @@ body:has(.oop) #root {
   text-align: left !important;
 }
 
-.menu-card__desc {
+.oop__menu-card__desc {
   font-size: 12px;
   color: var(--text-sub);
   line-height: 1.5;
@@ -631,14 +631,14 @@ body:has(.oop) #root {
   text-align: left !important;
 }
 
-.menu-card__footer {
+.oop__menu-card__footer {
   display: flex;
   align-items: center;
   margin-top: 6px;
   text-align: left !important;
 }
 
-.menu-card__price {
+.oop__menu-card__price {
   font-family: var(--font-accent);
   font-weight: 800;
   font-size: 15px;
@@ -648,8 +648,8 @@ body:has(.oop) #root {
   gap: 2px;
 }
 
-/* Ký tự đ — dùng Be Vietnam Pro (cùng font tên món), nhỏ hơn số */
-.menu-card__price-unit {
+/* KÃ½ tá»± Ä‘ â€” dÃ¹ng Be Vietnam Pro (cÃ¹ng font tÃªn mÃ³n), nhá» hÆ¡n sá»‘ */
+.oop__menu-card__price-unit {
   font-family: var(--font-primary);
   font-weight: 600;
   font-size: 13px;
@@ -659,17 +659,17 @@ body:has(.oop) #root {
 }
 
 /* Hidden legacy */
-.menu-card__add,
-.menu-card__stepper,
+.oop__menu-card__add,
+.oop__menu-card__stepper,
 .qty-btn,
-.menu-card__qty,
-.menu-card__opts-hint {
+.oop__menu-card__qty,
+.oop__menu-card__opts-hint {
   display: none;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    COL 3: CART SIDEBAR (desktop) / Sticky bottom bar (mobile)
-   ══════════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .oop__cart-sidebar {
   display: none;
 }
@@ -689,7 +689,7 @@ body:has(.oop) #root {
   }
 }
 
-/* Header giỏ hàng */
+/* Header giá» hÃ ng */
 .oop__cart-sidebar-head {
   padding: 14px 16px 12px;
   border-bottom: 1px solid var(--border-color);
@@ -715,7 +715,7 @@ body:has(.oop) #root {
   font-weight: var(--fw-semibold);
 }
 
-/* Trống */
+/* Trá»‘ng */
 .oop__cart-empty {
   flex: 1;
   display: flex;
@@ -751,7 +751,7 @@ body:has(.oop) #root {
   line-height: 1.6;
 }
 
-/* Danh sách món trong giỏ */
+/* Danh sÃ¡ch mÃ³n trong giá» */
 .oop__cart-items {
   flex: 1;
   overflow-y: auto;
@@ -803,7 +803,7 @@ body:has(.oop) #root {
   gap: 8px;
 }
 
-/* Stepper trong cart — đồng nhất style */
+/* Stepper trong cart â€” Ä‘á»“ng nháº¥t style */
 .oop__ci-stepper {
   display: flex;
   align-items: center;
@@ -847,7 +847,7 @@ body:has(.oop) #root {
   white-space: nowrap;
 }
 
-/* Footer giỏ hàng */
+/* Footer giá» hÃ ng */
 .oop__cart-footer {
   padding: 12px 16px 16px;
   border-top: 1.5px solid var(--border-color);
@@ -884,7 +884,7 @@ body:has(.oop) #root {
   color: var(--primary);
 }
 
-/* Nút checkout desktop */
+/* NÃºt checkout desktop */
 .oop__btn-checkout {
   width: 100%;
   background: var(--primary);
@@ -907,7 +907,7 @@ body:has(.oop) #root {
   box-shadow: 0 4px 14px rgba(233,79,55,.35);
 }
 
-/* ── Mobile cart bar ─────────────────────────────────────────────────────────  */
+/* â”€â”€ Mobile cart bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  */
 .oop__cart-bar {
   display: flex;
   position: fixed;
@@ -969,19 +969,19 @@ body:has(.oop) #root {
   font-size: 15px;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   STEP 2 & 3 WRAPPER — full-width layout (overrides 3-col grid of oop__body)
-   ══════════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   STEP 2 & 3 WRAPPER â€” full-width layout (overrides 3-col grid of oop__body)
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 /*
-  Vấn đề: oop__body ở desktop là grid 3 cột (196 | 1fr | 284).
-  Step 2/3 chỉ có 1 child (oop__step-wrapper) → nó lọt vào cột 1 (196px).
-  Fix: cho oop__step-wrapper chiếm toàn bộ 3 cột, rồi tự căn giữa nội dung.
+  Váº¥n Ä‘á»: oop__body á»Ÿ desktop lÃ  grid 3 cá»™t (196 | 1fr | 284).
+  Step 2/3 chá»‰ cÃ³ 1 child (oop__step-wrapper) â†’ nÃ³ lá»t vÃ o cá»™t 1 (196px).
+  Fix: cho oop__step-wrapper chiáº¿m toÃ n bá»™ 3 cá»™t, rá»“i tá»± cÄƒn giá»¯a ná»™i dung.
 */
 .oop__step-wrapper {
-  /* Chiếm toàn bộ 3 cột của grid */
+  /* Chiáº¿m toÃ n bá»™ 3 cá»™t cá»§a grid */
   grid-column: 1 / -1;
   width: 100%;
-  /* Căn giữa nội dung form */
+  /* CÄƒn giá»¯a ná»™i dung form */
   max-width: 860px;
   margin: 0 auto;
   display: grid;
@@ -989,16 +989,16 @@ body:has(.oop) #root {
   gap: 16px;
 }
 
-/* Desktop: chia 2 cột — form bên trái, order summary bên phải */
+/* Desktop: chia 2 cá»™t â€” form bÃªn trÃ¡i, order summary bÃªn pháº£i */
 @media (min-width: 860px) {
   .oop__step-wrapper {
     grid-template-columns: 1fr 300px;
     align-items: start;
   }
-  /* Tất cả form-card bên trong nằm ở cột 1, nav-row chiếm cột 1 cũng vậy */
+  /* Táº¥t cáº£ form-card bÃªn trong náº±m á»Ÿ cá»™t 1, nav-row chiáº¿m cá»™t 1 cÅ©ng váº­y */
   .oop__step-wrapper .oop__form-card { grid-column: 1; }
   .oop__step-wrapper .oop__nav-row   { grid-column: 1; }
-  /* Card order summary (nếu có) nằm cột 2, sticky */
+  /* Card order summary (náº¿u cÃ³) náº±m cá»™t 2, sticky */
   .oop__step-wrapper .oop__order-summary {
     grid-column: 2;
     grid-row: 1 / 10; /* sticky across multiple rows */
@@ -1006,7 +1006,7 @@ body:has(.oop) #root {
     top: 80px;
   }
 
-  /* Step 3 (Confirm) — không có order-summary → 1 cột, thu nhỏ và căn giữa */
+  /* Step 3 (Confirm) â€” khÃ´ng cÃ³ order-summary â†’ 1 cá»™t, thu nhá» vÃ  cÄƒn giá»¯a */
   .oop__step-wrapper:not(:has(.oop__order-summary)) {
     grid-template-columns: 1fr;
     max-width: 600px;
@@ -1165,14 +1165,14 @@ body:has(.oop) #root {
   line-height: 1.5;
 }
 
-/* ── Order Summary sidebar ────────────────────────────────────────────────── */
+/* â”€â”€ Order Summary sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .oop__order-summary {
   background: var(--bg-surface);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
-  /* Mobile: hiện sau nav-row */
+  /* Mobile: hiá»‡n sau nav-row */
 }
 
 .oop__os-items {
@@ -1305,9 +1305,9 @@ body:has(.oop) #root {
 }
 .oop__btn-submit:disabled { background: var(--bg-soft); color: var(--text-sub); cursor: not-allowed; }
 
-/* ══════════════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    STEP 3: CONFIRM
-   ══════════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .confirm-info-block {
   display: flex;
   flex-direction: column;
@@ -1389,3 +1389,4 @@ body:has(.oop) #root {
   font-size: 20px;
   color: var(--primary);
 }
+
