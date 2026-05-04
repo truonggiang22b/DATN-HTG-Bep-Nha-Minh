@@ -470,3 +470,134 @@
   margin-bottom: 12px;
   color: #cbd5e1;
 }
+
+/* ─── Time filter bar ─────────────────────────────────────────────────────── */
+.adp__time-filter-bar {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.adp__time-filter-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.adp__time-filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  margin-right: 2px;
+  white-space: nowrap;
+}
+.adp__preset-btn {
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid #e2e8f0;
+  background: transparent;
+  color: #64748b;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.adp__preset-btn:hover {
+  border-color: #94a3b8;
+  color: #334155;
+}
+.adp__preset-btn.active {
+  border-color: var(--color-chili, #d8382e);
+  background: var(--color-chili, #d8382e);
+  color: #fff;
+}
+.adp__date-input {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.adp__date-input:focus {
+  outline: none;
+  border-color: var(--color-chili, #d8382e);
+}
+.adp__time-filter-summary {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.adp__time-filter-summary strong {
+  color: #334155;
+  font-weight: 700;
+}
+
+/* ─── Date grouped list ───────────────────────────────────────────────────── */
+.adp__grouped-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.adp__date-group {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.adp__date-group-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  transition: background 0.15s;
+  gap: 12px;
+  font-family: inherit;
+}
+.adp__date-group-header:hover { background: #f1f5f9; }
+.adp__date-group-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.adp__date-group-title {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: #1e293b;
+  white-space: nowrap;
+}
+.adp__date-group-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.adp__date-group-meta {
+  font-size: 12.5px;
+  color: #64748b;
+  white-space: nowrap;
+}
+.adp__date-group-revenue {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-chili, #d8382e);
+  white-space: nowrap;
+  font-family: var(--font-accent, monospace);
+}
+.adp__orders-grid--ingroup {
+  padding: 14px;
+  background: #fff;
+}
