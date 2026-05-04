@@ -22,13 +22,17 @@ export default defineConfig({
     chunkSizeWarningLimit: 500,
     sourcemap: false,
   },
+  // SPA fallback: serve index.html cho mọi route (fix HTTP 404 trên refresh/direct URL)
+  appType: 'spa',
   server: {
-    // Vite dev server — proxy API calls để tránh CORS khi dev
+    port: 5174,          // Cố định port để không bị đổi mỗi lần restart
+    strictPort: false,   // Dùng port khác nếu 5174 đã bận
+    // Proxy API calls → backend để tránh CORS khi dev
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
-        secure: false,   // HTTP localhost không có SSL
+        secure: false,
       },
     },
   },
