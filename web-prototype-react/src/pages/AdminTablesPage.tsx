@@ -57,6 +57,80 @@ const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 // ── QR Modal ──────────────────────────────────────────────────────────────────
+function wrapCanvasText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number
+) {
+  let line = '';
+  let currentY = y;
+  for (const char of text.split('')) {
+    const testLine = line + char;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      ctx.fillText(line, x, currentY);
+      line = char;
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  if (line) ctx.fillText(line, x, currentY);
+}
+
+function buildSingleImagePdf(jpegDataUrl: string, imageWidth: number, imageHeight: number) {
+  const base64 = jpegDataUrl.split(',')[1] ?? '';
+  const binary = atob(base64);
+  const imageBytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  const pageWidth = 595.28;
+  const pageHeight = 841.89;
+  const content = `q\n${pageWidth} 0 0 ${pageHeight} 0 0 cm\n/Im0 Do\nQ\n`;
+  const objects = [
+    '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n',
+    '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n',
+    `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n`,
+    `4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${imageWidth} /Height ${imageHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imageBytes.length} >>\nstream\n`,
+    `5 0 obj\n<< /Length ${content.length} >>\nstream\n${content}endstream\nendobj\n`,
+  ];
+
+  const chunks: Uint8Array[] = [];
+  const offsets: number[] = [];
+  let cursor = 0;
+  const encoder = new TextEncoder();
+  const pushText = (text: string) => {
+    const bytes = encoder.encode(text);
+    chunks.push(bytes);
+    cursor += bytes.length;
+  };
+  const pushBytes = (bytes: Uint8Array) => {
+    chunks.push(bytes);
+    cursor += bytes.length;
+  };
+
+  pushText('%PDF-1.4\n');
+  offsets.push(cursor); pushText(objects[0]);
+  offsets.push(cursor); pushText(objects[1]);
+  offsets.push(cursor); pushText(objects[2]);
+  offsets.push(cursor); pushText(objects[3]); pushBytes(imageBytes); pushText('\nendstream\nendobj\n');
+  offsets.push(cursor); pushText(objects[4]);
+
+  const xrefOffset = cursor;
+  pushText(`xref\n0 6\n0000000000 65535 f \n${offsets.map((offset) => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}`);
+  pushText(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`);
+
+  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const pdfBytes = new Uint8Array(totalLength);
+  let position = 0;
+  chunks.forEach((chunk) => {
+    pdfBytes.set(chunk, position);
+    position += chunk.length;
+  });
+
+  return new Blob([pdfBytes], { type: 'application/pdf' });
+}
+
 const QRModal = ({ table, onClose }: { table: { displayName: string; qrToken: string }; onClose: () => void }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const url = `${window.location.origin}/qr/${table.qrToken}`;
@@ -95,6 +169,74 @@ const QRModal = ({ table, onClose }: { table: { displayName: string; qrToken: st
     win.print();
   };
 
+  const handleDownloadPng = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const link = document.createElement('a');
+    const safeName = table.displayName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase();
+    link.href = canvas.toDataURL('image/png');
+    link.download = `qr-${safeName || table.qrToken}.png`;
+    link.click();
+  };
+
+  const getSafeFileName = () =>
+    table.displayName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase() || table.qrToken;
+
+  const handleDownloadPdf = () => {
+    const qrCanvas = canvasRef.current;
+    if (!qrCanvas) return;
+
+    const pageWidthPx = 1240;
+    const pageHeightPx = 1754;
+    const poster = document.createElement('canvas');
+    poster.width = pageWidthPx;
+    poster.height = pageHeightPx;
+    const ctx = poster.getContext('2d');
+    if (!ctx) return;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, pageWidthPx, pageHeightPx);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#e8521a';
+    ctx.font = '700 54px Arial, sans-serif';
+    ctx.fillText('Bep Nha Minh', pageWidthPx / 2, 230);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = '800 78px Arial, sans-serif';
+    ctx.fillText(table.displayName, pageWidthPx / 2, 340);
+
+    const qrSize = 620;
+    const qrX = (pageWidthPx - qrSize) / 2;
+    const qrY = 455;
+    ctx.fillStyle = '#f7f2ed';
+    ctx.fillRect(qrX - 34, qrY - 34, qrSize + 68, qrSize + 68);
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+
+    ctx.fillStyle = '#3d3530';
+    ctx.font = '500 38px Arial, sans-serif';
+    ctx.fillText('Quet QR de xem menu va dat mon', pageWidthPx / 2, 1180);
+    ctx.fillStyle = '#7a6f65';
+    ctx.font = '400 26px Arial, sans-serif';
+    wrapCanvasText(ctx, url, pageWidthPx / 2, 1270, 920, 36);
+
+    const jpegDataUrl = poster.toDataURL('image/jpeg', 0.92);
+    const pdfBlob = buildSingleImagePdf(jpegDataUrl, pageWidthPx, pageHeightPx);
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(pdfBlob);
+    link.download = `qr-${getSafeFileName()}.pdf`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(url);
   };
@@ -125,6 +267,14 @@ const QRModal = ({ table, onClose }: { table: { displayName: string; qrToken: st
           <button onClick={handlePrint}
             style={{ padding:'8px 18px', borderRadius:8, border:'none', background:'#e8521a', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>
             🖨️ In QR
+          </button>
+          <button onClick={handleDownloadPng}
+            style={{ padding:'8px 18px', borderRadius:8, border:'1.5px solid #2f7d4e', background:'#f0fbf5', color:'#2f7d4e', fontWeight:600, cursor:'pointer', fontSize:13 }}>
+            Tải PNG
+          </button>
+          <button onClick={handleDownloadPdf}
+            style={{ padding:'8px 18px', borderRadius:8, border:'1.5px solid #5b5bd6', background:'#f4f4ff', color:'#4242a8', fontWeight:600, cursor:'pointer', fontSize:13 }}>
+            Tải PDF
           </button>
           <button onClick={onClose}
             style={{ padding:'8px 18px', borderRadius:8, border:'1.5px solid #ddd', background:'#fff', color:'#666', fontWeight:600, cursor:'pointer', fontSize:13 }}>
@@ -358,6 +508,8 @@ export const AdminTablesPage = () => {
     window.open(`/qr/${qrToken}`, '_blank');
   };
 
+  const visibleTables = tables.filter(t => statusFilter === 'ALL' || t.status === statusFilter);
+
   return (
     <div>
       <div className="admin-topbar">
@@ -398,10 +550,10 @@ export const AdminTablesPage = () => {
               <div className="admin-table-header">
                 <span className="admin-table-title">
                   {statusFilter === 'ACTIVE' ? 'Bàn đang sử dụng' : statusFilter === 'INACTIVE' ? 'Bàn ngừng sử dụng' : 'Tất cả bàn'}
-                  {' '}({tables.filter(t => statusFilter === 'ALL' || t.status === statusFilter).length})
+                  {' '}({visibleTables.length})
                 </span>
               </div>
-              <table className="data-table">
+              <table className="data-table admin-desktop-table">
                 <thead>
                   <tr>
                     <th>Bàn</th><th>Mã bàn</th><th>QR Token</th><th>Phiên hiện tại</th><th>Trạng thái</th><th>Thao tác</th>
@@ -409,11 +561,10 @@ export const AdminTablesPage = () => {
                 </thead>
                 <tbody>
                   {(() => {
-                    const filtered = tables.filter(t => statusFilter === 'ALL' || t.status === statusFilter);
-                    if (filtered.length === 0) return (
+                    if (visibleTables.length === 0) return (
                       <tr><td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--color-soy)' }}>Không có bàn nào</td></tr>
                     );
-                    return filtered.map((table) => (
+                    return visibleTables.map((table) => (
                       <tr key={table.id}>
                         <td>
                           <div style={{ fontWeight: 600 }}>{table.displayName}</div>
@@ -535,6 +686,105 @@ export const AdminTablesPage = () => {
                   })()}
                 </tbody>
               </table>
+              <div className="admin-mobile-card-list admin-table-mobile-list">
+                {visibleTables.length === 0 ? (
+                  <div className="admin-mobile-empty">Không có bàn nào</div>
+                ) : (
+                  visibleTables.map((table) => (
+                    <article className={`admin-mobile-card admin-table-mobile-card${table.hasActiveSession ? ' admin-table-mobile-card--open' : ''}`} key={table.id}>
+                      <div className="admin-mobile-card__header">
+                        <div>
+                          <h3 className="admin-mobile-card__title">{table.displayName}</h3>
+                          <p className="admin-mobile-card__meta">
+                            <code>{table.tableCode}</code>
+                          </p>
+                        </div>
+                        <span className={`admin-mobile-status ${table.status === 'ACTIVE' ? 'admin-mobile-status--active' : 'admin-mobile-status--muted'}`}>
+                          {table.status === 'ACTIVE' ? 'Hoạt động' : 'Ngừng'}
+                        </span>
+                      </div>
+
+                      <div className="admin-mobile-info-grid">
+                        <div>
+                          <span>Phiên hiện tại</span>
+                          <strong className={table.hasActiveSession ? 'admin-mobile-value--open' : ''}>
+                            {table.hasActiveSession ? 'Đang phục vụ' : 'Trống'}
+                          </strong>
+                        </div>
+                        <div>
+                          <span>QR token</span>
+                          <strong>{table.qrToken.slice(0, 18)}{table.qrToken.length > 18 ? '…' : ''}</strong>
+                        </div>
+                      </div>
+
+                      <div className="quick-actions admin-mobile-card__actions">
+                        <button
+                          className={`qa-btn${table.hasActiveSession ? ' qa-btn--session' : ''}`}
+                          onClick={() => setSessionTableId(table.id)}
+                        >
+                          <IconReceipt /> Phiên ăn
+                        </button>
+                        <button
+                          className="qa-btn"
+                          style={{ borderColor: '#6366f1', color: '#6366f1' }}
+                          onClick={() => setQrModalTable({ displayName: table.displayName, qrToken: table.qrToken })}
+                        >
+                          <IconQr /> Xem QR
+                        </button>
+                        <button
+                          className="qa-btn"
+                          onClick={() => handleCopyQR(table.qrToken)}
+                        >
+                          <IconCopy /> {copiedToken === table.qrToken ? 'Đã copy' : 'Copy URL'}
+                        </button>
+                        {confirmReset === table.id ? (
+                          <>
+                            <button className="qa-btn qa-btn--danger" disabled={resetPending} onClick={() => doReset(table.id)}>
+                              {resetPending ? '...' : 'Xác nhận'}
+                            </button>
+                            <button className="qa-btn" onClick={() => setConfirmReset(null)}>Hủy</button>
+                          </>
+                        ) : (
+                          <button
+                            className="qa-btn"
+                            style={{ borderColor: 'var(--color-chili)', color: 'var(--color-chili)' }}
+                            onClick={() => setConfirmReset(table.id)}
+                          >
+                            <IconTrash /> Reset phiên
+                          </button>
+                        )}
+                        {confirmDeactivate === table.id ? (
+                          <>
+                            <div className="admin-mobile-confirm-note">
+                              {table.hasActiveSession ? 'Bàn có phiên đang mở!' : 'Ngừng sử dụng bàn này?'}
+                            </div>
+                            <button className="qa-btn qa-btn--danger" onClick={() => doToggleStatus({ id: table.id, status: 'INACTIVE' })}>
+                              Xác nhận
+                            </button>
+                            <button className="qa-btn" onClick={() => setConfirmDeactivate(null)}>Hủy</button>
+                          </>
+                        ) : (
+                          <button
+                            className="qa-btn"
+                            style={table.status === 'ACTIVE'
+                              ? { borderColor: 'rgba(216,58,46,0.4)', color: 'var(--color-chili)' }
+                              : { borderColor: 'rgba(34,197,94,0.4)', color: '#166534' }}
+                            onClick={() => {
+                              if (table.status === 'ACTIVE') {
+                                setConfirmDeactivate(table.id);
+                              } else {
+                                doToggleStatus({ id: table.id, status: 'ACTIVE' });
+                              }
+                            }}
+                          >
+                            {table.status === 'ACTIVE' ? 'Ngừng sử dụng' : 'Bật lại'}
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
             </div>
           </>
         )}

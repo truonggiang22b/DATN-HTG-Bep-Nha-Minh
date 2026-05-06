@@ -52,6 +52,8 @@
   --space-2xl: 48px;
 
   /* Layout */
+  --bp-mobile: 640px;
+  --bp-tablet: 1024px;
   --mobile-max: 430px;
   --header-height: 60px;
   --tab-height: 52px;

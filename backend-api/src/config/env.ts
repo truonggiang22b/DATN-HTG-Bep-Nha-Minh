@@ -16,6 +16,11 @@ const envSchema = z.object({
   SUPABASE_JWT_SECRET: z.string().min(1),
   // Optional — if set (or NODE_ENV=production), uploads go to Supabase Storage
   SUPABASE_STORAGE_BUCKET: z.string().optional(),
+
+  // Optional email delivery via Resend. If unset, invite endpoints return a
+  // prepared email body so the admin can send it manually.
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().min(3).optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

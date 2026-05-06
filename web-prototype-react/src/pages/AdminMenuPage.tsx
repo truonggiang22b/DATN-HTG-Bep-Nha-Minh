@@ -139,9 +139,15 @@ export const AdminMenuPage = () => {
 
   const { mutate: doRestoreCat } = useMutation({
     mutationFn: (id: string) => restoreCategory(id),
-    onSuccess: () => {
+    onSuccess: (_result, id) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      showToast('Đã khôi phục danh mục');
+      const hiddenChildCount = menuItems.filter((item) => item.categoryId === id && item.status === 'HIDDEN').length;
+      showToast(
+        hiddenChildCount > 0
+          ? `Đã khôi phục danh mục. ${hiddenChildCount} món bên trong vẫn đang ẩn, hãy hiện lại từng món nếu cần.`
+          : 'Đã khôi phục danh mục',
+        'success'
+      );
     },
     onError: () => showToast('Không thể khôi phục danh mục', 'error'),
   });
@@ -332,7 +338,7 @@ export const AdminMenuPage = () => {
               <div className="admin-table-header">
                 <span className="admin-table-title">Danh sách món ({filtered.length})</span>
               </div>
-              <table className="data-table">
+              <table className="data-table admin-desktop-table">
                 <thead>
                   <tr>
                     <th>Ảnh</th><th>Tên món</th><th>Danh mục</th><th>Giá</th><th>Trạng thái</th><th>Thao tác nhanh</th><th>Sửa</th>
@@ -390,6 +396,57 @@ export const AdminMenuPage = () => {
                   )}
                 </tbody>
               </table>
+              <div className="admin-mobile-card-list">
+                {filtered.length === 0 ? (
+                  <div className="admin-mobile-empty">Không có món nào phù hợp bộ lọc</div>
+                ) : (
+                  filtered.map((item) => {
+                    const cat = categories.find((c) => c.id === item.categoryId);
+                    return (
+                      <article className="admin-mobile-card admin-menu-mobile-card" key={item.id}>
+                        <div className="admin-menu-mobile-card__media">
+                          {item.imageUrl ? (
+                            <img src={item.imageUrl} alt={item.name} onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0'; }} />
+                          ) : (
+                            <div className="admin-menu-mobile-card__placeholder">🍽</div>
+                          )}
+                        </div>
+                        <div className="admin-menu-mobile-card__body">
+                          <div className="admin-mobile-card__header">
+                            <div>
+                              <h3 className="admin-mobile-card__title">{item.name}</h3>
+                              <p className="admin-mobile-card__meta">{cat?.name ?? '—'}</p>
+                            </div>
+                            <strong className="admin-mobile-card__price">{formatPrice(item.price)}</strong>
+                          </div>
+                          {item.shortDescription && (
+                            <p className="admin-mobile-card__desc">{item.shortDescription}</p>
+                          )}
+                          <div className="admin-mobile-card__badges">
+                            {statusBadge(item.status)}
+                            {item.tags.map((t) => (
+                              <span key={t} className="admin-mobile-tag">{ALL_TAGS.find((x) => x.value === t)?.label ?? t}</span>
+                            ))}
+                          </div>
+                          <div className="quick-actions admin-mobile-card__actions">
+                            {item.status === 'ACTIVE' && <button className="qa-btn qa-btn--danger" disabled={statusPending} onClick={() => handleStatusChange(item, 'toggle_sold')}>Tạm hết</button>}
+                            {item.status === 'SOLD_OUT' && <button className="qa-btn" style={{ borderColor: 'var(--color-leaf)', color: 'var(--color-leaf)' }} disabled={statusPending} onClick={() => handleStatusChange(item, 'restore')}>Bán lại</button>}
+                            {item.status === 'ACTIVE' && <button className="qa-btn" disabled={statusPending} onClick={() => handleStatusChange(item, 'hide')}>Ẩn</button>}
+                            {(item.status === 'ACTIVE' || item.status === 'SOLD_OUT') && (
+                              <button className="qa-btn qa-btn--danger" disabled={statusPending}
+                                onClick={() => { if (window.confirm(`Ẩn mềm "${item.name}"? Có thể khôi phục sau.`)) handleStatusChange(item, 'soft_delete'); }}>
+                                Xóa
+                              </button>
+                            )}
+                            {item.status === 'HIDDEN' && <button className="qa-btn" style={{ borderColor: 'var(--color-leaf)', color: 'var(--color-leaf)' }} disabled={statusPending} onClick={() => handleStatusChange(item, 'restore_item')}>Hiện lại</button>}
+                            <button className="qa-btn" style={{ borderColor: 'var(--color-turmeric)', color: 'var(--color-turmeric)' }} onClick={() => openEditModal(item)}>Sửa</button>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </>
         )}
@@ -613,12 +670,12 @@ export const AdminMenuPage = () => {
                         <>
                           <span style={{ flex: 1, fontWeight: 500, fontSize: 14 }}>{cat.name}</span>
                           <span style={{ fontSize: 12, color: 'var(--color-soy)' }}>{itemCount} món</span>
-                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: cat.status === 'INACTIVE' ? 'rgba(156,163,175,0.15)' : 'rgba(34,197,94,0.1)', color: cat.status === 'INACTIVE' ? '#6b7280' : '#166534', fontWeight: 600 }}>
-                            {cat.status === 'INACTIVE' ? 'Ẩn' : 'Hiện'}
+                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: cat.status === 'HIDDEN' ? 'rgba(156,163,175,0.15)' : 'rgba(34,197,94,0.1)', color: cat.status === 'HIDDEN' ? '#6b7280' : '#166534', fontWeight: 600 }}>
+                            {cat.status === 'HIDDEN' ? 'Ẩn' : 'Hiện'}
                           </span>
                           <button className="qa-btn" style={{ borderColor: 'var(--color-turmeric)', color: 'var(--color-turmeric)' }}
                             onClick={() => { setEditingCatId(cat.id); setEditingCatName(cat.name); }}>✏️</button>
-                          {cat.status !== 'INACTIVE' ? (
+                          {cat.status !== 'HIDDEN' ? (
                             <button className="qa-btn qa-btn--danger" title="Ẩn danh mục và toàn bộ món"
                               onClick={() => { if (window.confirm(`Ẩn danh mục "${cat.name}" và ${itemCount} món con?`)) doDeleteCat(cat.id); }}>
                               Ẩn

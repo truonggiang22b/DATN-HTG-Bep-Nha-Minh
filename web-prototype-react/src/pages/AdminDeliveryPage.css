@@ -601,3 +601,76 @@
   padding: 14px;
   background: #fff;
 }
+
+@media (max-width: 760px) {
+  .adp__filter-bar,
+  .adp__time-filter-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .adp__filter-bar::-webkit-scrollbar,
+  .adp__time-filter-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .adp__filter-btn,
+  .adp__preset-btn {
+    min-height: 38px;
+    white-space: nowrap;
+  }
+
+  .adp__orders-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .adp__date-group-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .adp__date-group-right {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 430px) {
+  .adp__orders-grid--ingroup {
+    padding: 10px;
+  }
+
+  .adp__card-header,
+  .adp__card-info,
+  .adp__card-summary,
+  .adp__detail,
+  .adp__timeline {
+    padding-left: 16px;
+    padding-right: 12px;
+  }
+
+  .adp__card-header,
+  .adp__card-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .adp__totals {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+
+  .adp__timeline-track {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .adp__tl-rail {
+    min-width: 18px;
+  }
+}

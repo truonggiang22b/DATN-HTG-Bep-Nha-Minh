@@ -9,6 +9,7 @@ import { useCallback, useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import { deliveryApi, type DeliveryOrderSummary } from '../services/deliveryApi';
 import { useRealtimeOrders } from '../hooks/useRealtimeOrders';
 import './ShipperPage.css';
@@ -304,6 +305,7 @@ export function ShipperPage() {
   const [selectedDate, setSelectedDate] = useState<string>(() =>
     new Date().toISOString().slice(0, 10)
   );
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const handleRealtimeEvent = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['shipper', 'delivering'] });
@@ -365,11 +367,17 @@ export function ShipperPage() {
             <span className="sip__header-sub">Bếp Nhà Mình</span>
           </div>
         </div>
+        <button className="sip__logout" onClick={() => setShowChangePassword(true)} aria-label="Doi mat khau">
+          <span>Doi mat khau</span>
+        </button>
         <button className="sip__logout" onClick={handleLogout} aria-label="Đăng xuất">
           <IcoLogout />
           <span>Đăng xuất</span>
         </button>
       </header>
+      {showChangePassword && (
+        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
+      )}
 
       {/* ── Tab bar ────────────────────────────────────────────────────────── */}
       <div className="sip__tabs">

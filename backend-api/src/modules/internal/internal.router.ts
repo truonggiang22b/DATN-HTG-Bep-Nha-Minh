@@ -8,7 +8,7 @@ import { listTables, createTable, updateTable, deactivateTable, restoreTable } f
 import { getCurrentTableSession, resetTableSession } from './sessions.controller';
 import { getMe } from '../auth/auth.controller';
 import { upload, uploadImage } from './upload.controller';
-import { listStaff, createStaff, updateStaff, updateStaffStatus } from './users.controller';
+import { listStaff, createStaff, updateStaff, updateStaffStatus, resetStaffPassword, sendStaffInviteEmail } from './users.controller';
 import {
   listOptionGroups, createOptionGroup, updateOptionGroup, deleteOptionGroup,
   createOption, updateOption, deleteOption,
@@ -91,6 +91,8 @@ internalRouter.get('/users', requireRole('ADMIN'), listStaff);
 internalRouter.post('/users', requireRole('ADMIN'), createStaff);
 internalRouter.patch('/users/:id', requireRole('ADMIN'), updateStaff);
 internalRouter.patch('/users/:id/status', requireRole('ADMIN'), updateStaffStatus);
+internalRouter.patch('/users/:id/reset-password', requireRole('ADMIN'), resetStaffPassword);
+internalRouter.post('/users/:id/invite-email', requireRole('ADMIN'), sendStaffInviteEmail);
 
 // ─── File Upload ────────────────────────────────────────────────────────
 internalRouter.post('/upload', requireRole('ADMIN', 'MANAGER'), upload.single('file'), uploadImage);

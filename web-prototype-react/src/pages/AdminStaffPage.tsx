@@ -9,6 +9,8 @@ import {
   createStaff,
   updateStaff,
   updateStaffStatus,
+  resetStaffPassword,
+  sendStaffInviteEmail,
   type ApiStaff,
   type CreateStaffData,
 } from '../services/internalApi';
@@ -35,6 +37,16 @@ const ROLE_COLOR: Record<string, string> = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getRole = (staff: ApiStaff): string => staff.roles[0] ?? 'KITCHEN';
+
+const copyTextToClipboard = async (text: string) => {
+  if (!navigator.clipboard) return false;
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 const badgeStyle = (role: string): React.CSSProperties => ({
   display: 'inline-block',
@@ -164,6 +176,7 @@ function CreateStaffModal({ onClose, onCreated }: CreateModalProps) {
     role: 'KITCHEN',
     temporaryPassword: '',
   });
+  const [sendInvite, setSendInvite] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -172,7 +185,26 @@ function CreateStaffModal({ onClose, onCreated }: CreateModalProps) {
     try {
       setLoading(true);
       const staff = await createStaff(form);
-      showToast(`Đã tạo tài khoản cho ${staff.displayName}`, 'success');
+      if (sendInvite) {
+        try {
+          const invite = await sendStaffInviteEmail(staff.id, form.temporaryPassword);
+          if (invite.emailSent) {
+            showToast(`Đã tạo tài khoản và gửi email mời cho ${staff.displayName}`, 'success');
+          } else {
+            const copied = await copyTextToClipboard(invite.body);
+            showToast(
+              copied
+                ? 'Đã tạo tài khoản. Chưa cấu hình gửi email, nội dung mời đã được copy.'
+                : 'Đã tạo tài khoản. Chưa cấu hình gửi email, hãy gửi lời mời thủ công.',
+              'info'
+            );
+          }
+        } catch {
+          showToast('Đã tạo tài khoản, nhưng gửi email mời thất bại', 'error');
+        }
+      } else {
+        showToast(`Đã tạo tài khoản cho ${staff.displayName}`, 'success');
+      }
       onCreated(staff);
       onClose();
     } catch (err: unknown) {
@@ -281,6 +313,23 @@ function CreateStaffModal({ onClose, onCreated }: CreateModalProps) {
             onChange={(r) => setForm((f) => ({ ...f, role: r }))}
           />
 
+          <label style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            fontSize: 13,
+            color: '#3d3530',
+            cursor: 'pointer',
+          }}>
+            <input
+              type="checkbox"
+              checked={sendInvite}
+              onChange={(e) => setSendInvite(e.target.checked)}
+              style={{ width: 16, height: 16, accentColor: '#d83a2e' }}
+            />
+            Gửi email mời đăng nhập cho nhân viên
+          </label>
+
           <div style={{
             fontSize: 12, color: '#7a6f65', margin: 0,
             padding: '10px 14px',
@@ -320,6 +369,207 @@ function CreateStaffModal({ onClose, onCreated }: CreateModalProps) {
               }}
             >
               {loading ? 'Đang tạo...' : 'Tạo tài khoản'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function makeTemporaryPassword() {
+  const part = Math.random().toString(36).slice(2, 8);
+  const stamp = Date.now().toString(36).slice(-4);
+  return `Temp@${part}${stamp}`;
+}
+
+function ResetPasswordModal({
+  staff,
+  onClose,
+}: {
+  staff: ApiStaff;
+  onClose: () => void;
+}) {
+  const { showToast } = useStore();
+  const [newPassword, setNewPassword] = useState(makeTemporaryPassword());
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const canSubmit = newPassword.length >= 8 && newPassword === confirmPassword;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+
+    try {
+      setLoading(true);
+      await resetStaffPassword(staff.id, newPassword);
+      showToast(`Đã đặt lại mật khẩu cho ${staff.displayName}`, 'success');
+      onClose();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })
+        ?.response?.data?.error?.message ?? 'Đặt lại mật khẩu thất bại';
+      showToast(msg, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: 'rgba(0,0,0,0.55)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 1000, padding: 16,
+      backdropFilter: 'blur(2px)',
+    }}>
+      <div style={{
+        background: '#ffffff',
+        borderRadius: 16,
+        padding: '30px 28px',
+        width: '100%', maxWidth: 460,
+        boxShadow: '0 24px 64px rgba(0,0,0,0.35)',
+      }}>
+        <div style={{ marginBottom: 22 }}>
+          <h3 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: '#1a1714' }}>
+            Đặt lại mật khẩu
+          </h3>
+          <p style={{ margin: 0, fontSize: 13, color: '#7a6f65', lineHeight: 1.5 }}>
+            Tài khoản: <strong>{staff.displayName}</strong> · {staff.email}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#3d3530' }}>
+              Mật khẩu tạm mới <span style={{ color: '#d83a2e' }}>*</span>
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                minLength={8}
+                required
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  border: `1.5px solid ${newPassword.length > 0 && newPassword.length < 8 ? '#d83a2e' : '#ddd5cc'}`,
+                  fontSize: 14,
+                  outline: 'none',
+                  background: '#faf9f7',
+                  color: '#1a1714',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                style={{
+                  padding: '0 12px',
+                  borderRadius: 10,
+                  border: '1.5px solid #ddd5cc',
+                  background: '#fff',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: '#3d3530',
+                }}
+              >
+                {showPassword ? 'Ẩn' : 'Hiện'}
+              </button>
+            </div>
+            {newPassword.length > 0 && newPassword.length < 8 && (
+              <span style={{ fontSize: 11, color: '#d83a2e' }}>Cần ít nhất 8 ký tự</span>
+            )}
+          </label>
+
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#3d3530' }}>
+              Nhập lại mật khẩu <span style={{ color: '#d83a2e' }}>*</span>
+            </span>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              style={{
+                padding: '10px 14px',
+                borderRadius: 10,
+                border: `1.5px solid ${confirmPassword && confirmPassword !== newPassword ? '#d83a2e' : '#ddd5cc'}`,
+                fontSize: 14,
+                outline: 'none',
+                background: '#faf9f7',
+                color: '#1a1714',
+                width: '100%',
+                boxSizing: 'border-box',
+              }}
+            />
+            {confirmPassword && confirmPassword !== newPassword && (
+              <span style={{ fontSize: 11, color: '#d83a2e' }}>Mật khẩu nhập lại chưa khớp</span>
+            )}
+          </label>
+
+          <button
+            type="button"
+            onClick={() => {
+              const generated = makeTemporaryPassword();
+              setNewPassword(generated);
+              setConfirmPassword('');
+            }}
+            style={{
+              alignSelf: 'flex-start',
+              padding: '7px 12px',
+              borderRadius: 8,
+              border: '1.5px solid #ddd5cc',
+              background: '#fff',
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: 700,
+              color: '#3d3530',
+            }}
+          >
+            Tạo mật khẩu khác
+          </button>
+
+          <div style={{
+            fontSize: 12, color: '#7a6f65',
+            padding: '10px 14px',
+            background: '#fff8f0',
+            borderRadius: 8,
+            border: '1px solid #fde8c8',
+            lineHeight: 1.6,
+          }}>
+            Sau khi đặt lại, nhân viên dùng mật khẩu mới để đăng nhập. Hệ thống chưa gửi email tự động trong bước này.
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                padding: '10px 20px', borderRadius: 10,
+                border: '1.5px solid #ddd5cc',
+                background: '#fff', cursor: 'pointer',
+                fontSize: 14, fontWeight: 600, color: '#3d3530',
+              }}
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !canSubmit}
+              style={{
+                padding: '10px 24px', borderRadius: 10, border: 'none',
+                background: loading || !canSubmit ? '#e8a09b' : '#d83a2e',
+                color: '#fff', fontWeight: 700,
+                cursor: loading || !canSubmit ? 'not-allowed' : 'pointer',
+                fontSize: 14,
+              }}
+            >
+              {loading ? 'Đang đặt lại...' : 'Đặt lại mật khẩu'}
             </button>
           </div>
         </form>
@@ -427,6 +677,7 @@ export function AdminStaffPage() {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('ALL');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ACTIVE');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [resetPasswordTarget, setResetPasswordTarget] = useState<ApiStaff | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState<{ id: string; role: RoleValue } | null>(null);
 
@@ -478,6 +729,30 @@ export function AdminStaffPage() {
     }
   };
 
+  const handleSendInviteEmail = async (s: ApiStaff) => {
+    try {
+      setActionLoading(s.id);
+      const invite = await sendStaffInviteEmail(s.id);
+      if (invite.emailSent) {
+        showToast(`Đã gửi email mời cho ${s.displayName}`, 'success');
+      } else {
+        const copied = await copyTextToClipboard(invite.body);
+        showToast(
+          copied
+            ? 'Chưa cấu hình gửi email, nội dung mời đã được copy.'
+            : 'Chưa cấu hình gửi email, hãy gửi lời mời thủ công.',
+          'info'
+        );
+      }
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })
+        ?.response?.data?.error?.message ?? 'Gửi email mời thất bại';
+      showToast(msg, 'error');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const filtered = staff.filter((s) => {
     const roleOk = roleFilter === 'ALL' || getRole(s) === roleFilter;
     const statusOk = statusFilter === 'ALL'
@@ -487,7 +762,7 @@ export function AdminStaffPage() {
   });
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 960, margin: '0 auto' }}>
+    <div className="admin-staff-page" style={{ padding: '28px 32px', maxWidth: 960, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
@@ -553,7 +828,7 @@ export function AdminStaffPage() {
         </div>
       ) : (
         <div style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-steam)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table className="admin-desktop-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'var(--color-steam-light, rgba(0,0,0,0.04))' }}>
                 {['Nhân viên', 'Email', 'Vai trò', 'Trạng thái', 'Thao tác'].map((h) => (
@@ -607,6 +882,28 @@ export function AdminStaffPage() {
                           Đổi role
                         </button>
                         <button
+                          onClick={() => setResetPasswordTarget(s)}
+                          disabled={isRowLoading}
+                          title="Đặt lại mật khẩu"
+                          style={{
+                            padding: '5px 12px', borderRadius: 6, border: '1.5px solid #f59e0b',
+                            background: 'transparent', fontSize: 12, cursor: 'pointer', color: '#92400e',
+                          }}
+                        >
+                          Reset mật khẩu
+                        </button>
+                        <button
+                          onClick={() => handleSendInviteEmail(s)}
+                          disabled={isRowLoading || !s.isActive}
+                          title="Gửi email mời"
+                          style={{
+                            padding: '5px 12px', borderRadius: 6, border: '1.5px solid #3a8a6e',
+                            background: 'transparent', fontSize: 12, cursor: s.isActive ? 'pointer' : 'not-allowed', color: '#2f7d4e',
+                          }}
+                        >
+                          Gửi mời
+                        </button>
+                        <button
                           onClick={() => handleToggleStatus(s)}
                           disabled={isRowLoading}
                           style={{
@@ -625,6 +922,76 @@ export function AdminStaffPage() {
               })}
             </tbody>
           </table>
+          <div className="admin-mobile-card-list admin-staff-mobile-list">
+            {filtered.map((s) => {
+              const role = getRole(s);
+              const isRowLoading = actionLoading === s.id;
+              return (
+                <article className="admin-mobile-card admin-staff-mobile-card" key={s.id} style={{ opacity: isRowLoading ? 0.5 : 1 }}>
+                  <div className="admin-mobile-card__header">
+                    <div>
+                      <h3 className="admin-mobile-card__title">{s.displayName}</h3>
+                      <p className="admin-mobile-card__meta">{s.email}</p>
+                    </div>
+                    <span style={badgeStyle(role)}>{ROLE_LABEL[role] ?? role}</span>
+                  </div>
+                  <div className="admin-mobile-info-grid">
+                    <div>
+                      <span>Trạng thái</span>
+                      <strong className={s.isActive ? 'admin-mobile-value--open' : ''}>
+                        {s.isActive ? 'Đang hoạt động' : 'Đã khóa'}
+                      </strong>
+                    </div>
+                    <div>
+                      <span>Vai trò</span>
+                      <strong>{ROLE_LABEL[role] ?? role}</strong>
+                    </div>
+                  </div>
+                  {editingRole?.id === s.id && (
+                    <div className="admin-mobile-inline-editor">
+                      <InlineRoleDropdown
+                        value={editingRole.role}
+                        onChange={(r) => setEditingRole({ id: s.id, role: r })}
+                        onConfirm={() => handleChangeRole(s.id, editingRole.role)}
+                        onCancel={() => setEditingRole(null)}
+                      />
+                    </div>
+                  )}
+                  <div className="quick-actions admin-mobile-card__actions">
+                    <button
+                      onClick={() => setEditingRole({ id: s.id, role: role as RoleValue })}
+                      disabled={isRowLoading}
+                      className="qa-btn"
+                    >
+                      Đổi role
+                    </button>
+                    <button
+                      onClick={() => handleSendInviteEmail(s)}
+                      disabled={isRowLoading || !s.isActive}
+                      className="qa-btn"
+                      style={{
+                        borderColor: '#3a8a6e',
+                        color: '#2f7d4e',
+                      }}
+                    >
+                      Gửi mời
+                    </button>
+                    <button
+                      onClick={() => handleToggleStatus(s)}
+                      disabled={isRowLoading}
+                      className="qa-btn"
+                      style={{
+                        borderColor: s.isActive ? 'rgba(216,58,46,0.3)' : 'rgba(34,197,94,0.3)',
+                        color: s.isActive ? 'var(--color-chili)' : '#166534',
+                      }}
+                    >
+                      {s.isActive ? 'Khóa' : 'Mở lại'}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -639,6 +1006,13 @@ export function AdminStaffPage() {
         <CreateStaffModal
           onClose={() => setShowCreateModal(false)}
           onCreated={(s) => setStaff((prev) => [s, ...prev])}
+        />
+      )}
+
+      {resetPasswordTarget && (
+        <ResetPasswordModal
+          staff={resetPasswordTarget}
+          onClose={() => setResetPasswordTarget(null)}
         />
       )}
     </div>

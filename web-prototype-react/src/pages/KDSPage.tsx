@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '../store/useStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { ToastContainer } from '../components/Toast';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import { getActiveOrders, updateOrderStatus, cancelOrder } from '../services/internalApi';
 import { BRAND_NAME, KDS_STATUS_LABELS, KDS_CTA_LABELS, KDS_COLUMNS } from '../constants';
 import type { ApiOrder, OrderStatus } from '../types';
@@ -17,6 +18,7 @@ export const KDSPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [clock, setClock] = useState('');
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   useEffect(() => {
     const update = () => setClock(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
@@ -39,26 +41,72 @@ export const KDSPage = () => {
     staleTime: 0, // Luôn re-fetch
   });
 
-  // ── Mutation: chuyển trạng thái ──────────────────────────────────────────
+  // ── Mutation: chuyển trạng thái (Optimistic Update) ────────────────────
   const { mutate: doUpdateStatus } = useMutation({
     mutationFn: ({ id, toStatus }: { id: string; toStatus: OrderStatus }) =>
       updateOrderStatus(id, toStatus),
-    onSuccess: (updatedOrder) => {
-      queryClient.invalidateQueries({ queryKey: ['activeOrders'] });
-      showToast(`${updatedOrder.orderCode} → ${KDS_STATUS_LABELS[updatedOrder.status]}`);
+
+    // ① Cập nhật UI ngay lập tức — không đợi server
+    onMutate: async ({ id, toStatus }) => {
+      // Hủy các re-fetch đang chạy để tránh ghi đè snapshot
+      await queryClient.cancelQueries({ queryKey: ['activeOrders'] });
+      // Lưu snapshot để rollback nếu lỗi
+      const previous = queryClient.getQueryData<ApiOrder[]>(['activeOrders']);
+      // Cập nhật cache ngay
+      queryClient.setQueryData<ApiOrder[]>(['activeOrders'], (old = []) =>
+        old.map((o) => (o.id === id ? { ...o, status: toStatus } : o))
+      );
+      return { previous };
     },
-    onError: () => showToast('Không thể cập nhật trạng thái', 'error'),
+
+    // ② Nếu server báo lỗi → rollback về trạng thái cũ
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(['activeOrders'], ctx.previous);
+      }
+      showToast('Không thể cập nhật trạng thái', 'error');
+    },
+
+    // ③ Dù thành công hay lỗi → sync lại với server cho chắc
+    onSettled: (_data, _err, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['activeOrders'] });
+      // Toast sau khi server confirm (lấy orderCode từ snapshot cache)
+      if (_data) {
+        showToast(`${_data.orderCode} → ${KDS_STATUS_LABELS[_data.status]}`);
+      }
+    },
   });
 
-  // ── Mutation: hủy đơn ────────────────────────────────────────────────────
+  // ── Mutation: hủy đơn (Optimistic Update) ──────────────────────────────
   const { mutate: doCancel } = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) =>
       cancelOrder(id, reason),
-    onSuccess: (cancelledOrder) => {
-      queryClient.invalidateQueries({ queryKey: ['activeOrders'] });
-      showToast(`${cancelledOrder.orderCode} đã hủy`, 'error');
+
+    // ① Ẩn card ngay — optimistically xóa khỏi danh sách active
+    onMutate: async ({ id }) => {
+      await queryClient.cancelQueries({ queryKey: ['activeOrders'] });
+      const previous = queryClient.getQueryData<ApiOrder[]>(['activeOrders']);
+      queryClient.setQueryData<ApiOrder[]>(['activeOrders'], (old = []) =>
+        old.filter((o) => o.id !== id)
+      );
+      return { previous };
     },
-    onError: () => showToast('Không thể hủy đơn', 'error'),
+
+    // ② Rollback nếu lỗi
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(['activeOrders'], ctx.previous);
+      }
+      showToast('Không thể hủy đơn', 'error');
+    },
+
+    // ③ Sync lại với server
+    onSettled: (_data) => {
+      queryClient.invalidateQueries({ queryKey: ['activeOrders'] });
+      if (_data) {
+        showToast(`${_data.orderCode} đã hủy`, 'error');
+      }
+    },
   });
 
   const handleNext = (order: ApiOrder) => {
@@ -107,6 +155,13 @@ export const KDSPage = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div className="kds-header__clock">{clock}</div>
           <button
+            onClick={() => setShowChangePassword(true)}
+            style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
+            title="Đổi mật khẩu"
+          >
+            Đổi mật khẩu
+          </button>
+          <button
             onClick={handleLogout}
             style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
             title={`Đăng xuất (${user?.email})`}
@@ -115,6 +170,9 @@ export const KDSPage = () => {
           </button>
         </div>
       </header>
+      {showChangePassword && (
+        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
+      )}
 
       <div className="kds-board">
         {KDS_COLUMNS.map((colStatus) => {
