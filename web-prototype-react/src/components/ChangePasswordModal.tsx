@@ -29,12 +29,12 @@ export function ChangePasswordModal({ onClose, onSuccess }: ChangePasswordModalP
       setLoading(true);
       setMessage(null);
       await changeMyPassword({ currentPassword, newPassword });
-      setMessage({ type: 'success', text: 'Da doi mat khau thanh cong.' });
+      setMessage({ type: 'success', text: 'Đổi mật khẩu thành công!' });
       onSuccess?.();
-      window.setTimeout(onClose, 700);
+      window.setTimeout(onClose, 1200);
     } catch (err: unknown) {
       const text = (err as { response?: { data?: { error?: { message?: string } } } })
-        ?.response?.data?.error?.message ?? 'Doi mat khau that bai';
+        ?.response?.data?.error?.message ?? 'Đổi mật khẩu thất bại. Vui lòng thử lại.';
       setMessage({ type: 'error', text });
     } finally {
       setLoading(false);
@@ -45,6 +45,7 @@ export function ChangePasswordModal({ onClose, onSuccess }: ChangePasswordModalP
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby="change-pw-title"
       style={{
         position: 'fixed',
         inset: 0,
@@ -70,18 +71,18 @@ export function ChangePasswordModal({ onClose, onSuccess }: ChangePasswordModalP
         onClick={(event) => event.stopPropagation()}
       >
         <div style={{ marginBottom: 20 }}>
-          <h3 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: '#1a1714' }}>
-            Doi mat khau
+          <h3 id="change-pw-title" style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: '#1a1714' }}>
+            Đổi mật khẩu
           </h3>
           <p style={{ margin: 0, fontSize: 13, color: '#7a6f65', lineHeight: 1.5 }}>
-            Nhap mat khau hien tai va mat khau moi de bao ve tai khoan.
+            Nhập mật khẩu hiện tại và mật khẩu mới để bảo vệ tài khoản.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#3d3530' }}>
-              Mat khau hien tai
+              Mật khẩu hiện tại
             </span>
             <input
               type={showPassword ? 'text' : 'password'}
@@ -95,7 +96,7 @@ export function ChangePasswordModal({ onClose, onSuccess }: ChangePasswordModalP
 
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#3d3530' }}>
-              Mat khau moi
+              Mật khẩu mới
             </span>
             <input
               type={showPassword ? 'text' : 'password'}
@@ -110,13 +111,13 @@ export function ChangePasswordModal({ onClose, onSuccess }: ChangePasswordModalP
               }}
             />
             {newPassword.length > 0 && newPassword.length < 8 && (
-              <span style={{ fontSize: 11, color: '#d83a2e' }}>Can it nhat 8 ky tu</span>
+              <span style={{ fontSize: 11, color: '#d83a2e' }}>Cần ít nhất 8 ký tự</span>
             )}
           </label>
 
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#3d3530' }}>
-              Nhap lai mat khau moi
+              Nhập lại mật khẩu mới
             </span>
             <input
               type={showPassword ? 'text' : 'password'}
@@ -130,7 +131,7 @@ export function ChangePasswordModal({ onClose, onSuccess }: ChangePasswordModalP
               }}
             />
             {confirmPassword && confirmPassword !== newPassword && (
-              <span style={{ fontSize: 11, color: '#d83a2e' }}>Mat khau nhap lai chua khop</span>
+              <span style={{ fontSize: 11, color: '#d83a2e' }}>Mật khẩu nhập lại chưa khớp</span>
             )}
           </label>
 
@@ -141,7 +142,7 @@ export function ChangePasswordModal({ onClose, onSuccess }: ChangePasswordModalP
               onChange={(event) => setShowPassword(event.target.checked)}
               style={{ width: 15, height: 15, accentColor: '#d83a2e' }}
             />
-            Hien mat khau
+            Hiện mật khẩu
           </label>
 
           {message && (
@@ -174,7 +175,7 @@ export function ChangePasswordModal({ onClose, onSuccess }: ChangePasswordModalP
                 cursor: 'pointer',
               }}
             >
-              Huy
+              Hủy
             </button>
             <button
               type="submit"
@@ -189,7 +190,7 @@ export function ChangePasswordModal({ onClose, onSuccess }: ChangePasswordModalP
                 cursor: canSubmit ? 'pointer' : 'not-allowed',
               }}
             >
-              {loading ? 'Dang doi...' : 'Doi mat khau'}
+              {loading ? 'Đang đổi...' : 'Đổi mật khẩu'}
             </button>
           </div>
         </form>

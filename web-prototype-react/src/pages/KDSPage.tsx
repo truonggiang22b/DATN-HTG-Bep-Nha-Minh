@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '../store/useStore';
@@ -19,6 +19,19 @@ export const KDSPage = () => {
   const queryClient = useQueryClient();
   const [clock, setClock] = useState('');
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   useEffect(() => {
     const update = () => setClock(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
@@ -152,22 +165,69 @@ export const KDSPage = () => {
             </>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* Clock + User menu */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div className="kds-header__clock">{clock}</div>
-          <button
-            onClick={() => setShowChangePassword(true)}
-            style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
-            title="Đổi mật khẩu"
-          >
-            Đổi mật khẩu
-          </button>
-          <button
-            onClick={handleLogout}
-            style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
-            title={`Đăng xuất (${user?.email})`}
-          >
-            Đăng xuất
-          </button>
+
+          {/* User menu — 1 nút duy nhất */}
+          <div className="kds-user-menu" ref={userMenuRef}>
+            <button
+              className="kds-user-trigger"
+              onClick={() => setShowUserMenu(v => !v)}
+              aria-label="Menu tài khoản"
+              aria-expanded={showUserMenu}
+            >
+              <div className="kds-user-avatar">
+                {(user?.displayName ?? user?.email ?? 'B').charAt(0).toUpperCase()}
+              </div>
+              <span className="kds-user-trigger-name">{user?.displayName ?? 'Bếp'}</span>
+              <svg
+                className={`kds-user-chevron${showUserMenu ? ' kds-user-chevron--open' : ''}`}
+                width="11" height="11" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            {showUserMenu && (
+              <div className="kds-user-dropdown">
+                {/* Thông tin tài khoản */}
+                <div className="kds-udrop-header">
+                  <div className="kds-udrop-avatar">
+                    {(user?.displayName ?? user?.email ?? 'B').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="kds-udrop-info">
+                    <span className="kds-udrop-name">{user?.displayName ?? 'Bếp'}</span>
+                    <span className="kds-udrop-email">{user?.email}</span>
+                    <span className="kds-udrop-badge">Nhà bếp</span>
+                  </div>
+                </div>
+                <div className="kds-udrop-divider" />
+                <button
+                  className="kds-udrop-item"
+                  onClick={() => { setShowUserMenu(false); setShowChangePassword(true); }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  Đổi mật khẩu
+                </button>
+                <button
+                  className="kds-udrop-item kds-udrop-item--danger"
+                  onClick={() => { setShowUserMenu(false); handleLogout(); }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  Đăng xuất
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
       {showChangePassword && (

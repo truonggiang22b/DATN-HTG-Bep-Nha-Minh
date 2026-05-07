@@ -5,7 +5,7 @@
  * - Icon: SVG line-art thuần, không emoji
  */
 
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
@@ -297,7 +297,7 @@ function CompletedCard({ order }: { order: DeliveryOrderSummary }) {
 type Tab = 'delivering' | 'delivered';
 
 export function ShipperPage() {
-  const { logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -306,6 +306,19 @@ export function ShipperPage() {
     new Date().toISOString().slice(0, 10)
   );
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const handleRealtimeEvent = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['shipper', 'delivering'] });
@@ -360,20 +373,75 @@ export function ShipperPage() {
     <div className="sip">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <header className="sip__header">
+        {/* Brand — bên trái */}
         <div className="sip__header-brand">
           <img src="/logo.png" alt="Bếp Nhà Mình" className="sip__header-logo" />
           <div className="sip__header-info">
-            <span className="sip__header-title">Shipper</span>
-            <span className="sip__header-sub">Bếp Nhà Mình</span>
+            <span className="sip__header-title">Bếp Nhà Mình</span>
+            <span className="sip__header-sub">Hệ thống giao hàng</span>
           </div>
         </div>
-        <button className="sip__logout" onClick={() => setShowChangePassword(true)} aria-label="Doi mat khau">
-          <span>Doi mat khau</span>
-        </button>
-        <button className="sip__logout" onClick={handleLogout} aria-label="Đăng xuất">
-          <IcoLogout />
-          <span>Đăng xuất</span>
-        </button>
+
+        {/* User menu — 1 nút duy nhất, click mở dropdown */}
+        <div className="sip__user-menu" ref={userMenuRef}>
+          {/* Trigger: avatar + tên (compact) */}
+          <button
+            className="sip__user-trigger"
+            onClick={() => setShowUserMenu(v => !v)}
+            aria-label="Menu tài khoản"
+            aria-expanded={showUserMenu}
+          >
+            <div className="sip__user-avatar">
+              {(user?.displayName ?? user?.email ?? 'S').charAt(0).toUpperCase()}
+            </div>
+            <span className="sip__user-trigger-name">{user?.displayName ?? 'Shipper'}</span>
+            <svg
+              className={`sip__user-chevron${showUserMenu ? ' sip__user-chevron--open' : ''}`}
+              width="12" height="12" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+
+          {/* Dropdown panel */}
+          {showUserMenu && (
+            <div className="sip__user-dropdown">
+              {/* Header thông tin tài khoản */}
+              <div className="sip__udrop-header">
+                <div className="sip__udrop-avatar">
+                  {(user?.displayName ?? user?.email ?? 'S').charAt(0).toUpperCase()}
+                </div>
+                <div className="sip__udrop-info">
+                  <span className="sip__udrop-name">{user?.displayName ?? 'Shipper'}</span>
+                  <span className="sip__udrop-email">{user?.email}</span>
+                  <span className="sip__udrop-badge">Giao hàng</span>
+                </div>
+              </div>
+
+              <div className="sip__udrop-divider" />
+
+              {/* Actions */}
+              <button
+                className="sip__udrop-item"
+                onClick={() => { setShowUserMenu(false); setShowChangePassword(true); }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Đổi mật khẩu
+              </button>
+              <button
+                className="sip__udrop-item sip__udrop-item--danger"
+                onClick={() => { setShowUserMenu(false); handleLogout(); }}
+              >
+                <IcoLogout />
+                Đăng xuất
+              </button>
+            </div>
+          )}
+        </div>
       </header>
       {showChangePassword && (
         <ChangePasswordModal onClose={() => setShowChangePassword(false)} />

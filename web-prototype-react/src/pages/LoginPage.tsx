@@ -58,12 +58,25 @@ export const LoginPage = () => {
       await login(email.trim(), password);
       const authUser = useAuthStore.getState().user;
       const roles = authUser?.roles ?? [];
+
+      // Tính route mặc định theo role
       const defaultRedirect = roles.includes('KITCHEN')
         ? '/kds'
         : roles.includes('SHIPPER')
         ? '/shipper'
         : '/admin';
-      const redirectTo = from ?? defaultRedirect;
+
+      // Chỉ dùng `from` nếu route đó khớp với quyền của user hiện tại
+      // Tránh redirect loop khi session cũ của role khác để lại `from` state
+      const fromIsAccessible =
+        from &&
+        (
+          (from.startsWith('/admin') && (roles.includes('ADMIN') || roles.includes('MANAGER'))) ||
+          (from.startsWith('/kds')    && (roles.includes('KITCHEN') || roles.includes('MANAGER') || roles.includes('ADMIN'))) ||
+          (from.startsWith('/shipper') && (roles.includes('SHIPPER') || roles.includes('MANAGER') || roles.includes('ADMIN')))
+        );
+
+      const redirectTo = fromIsAccessible ? from : defaultRedirect;
       navigate(redirectTo, { replace: true });
     } catch (err: unknown) {
       const status = typeof err === 'object' && err !== null

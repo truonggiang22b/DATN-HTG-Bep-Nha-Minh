@@ -41,6 +41,17 @@ const IconReceipt = () => (
     <path d="M8 7h8M8 11h8M8 15h5" />
   </svg>
 );
+const IconPrint = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+  </svg>
+);
+const IconDownload = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+);
+
 
 const formatMoney = (value: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -243,41 +254,45 @@ const QRModal = ({ table, onClose }: { table: { displayName: string; qrToken: st
 
   return (
     <div
-      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}
+      style={{ position:'fixed', inset:0, background:'rgba(37,33,27,0.6)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}
       onClick={onClose}
     >
       <div
-        style={{ background:'#fff', borderRadius:20, padding:'28px 32px', minWidth:300, textAlign:'center', boxShadow:'0 12px 48px rgba(0,0,0,0.18)' }}
+        style={{ background:'#fff', borderRadius:16, padding:'28px 28px 24px', minWidth:300, textAlign:'center', boxShadow:'0 16px 56px rgba(37,33,27,0.22)', maxWidth:360, width:'90vw' }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ fontWeight:700, fontSize:18, marginBottom:4 }}>🍳 Bếp Nhà Mình</div>
-        <div style={{ fontSize:22, fontWeight:800, color:'#e8521a', marginBottom:16 }}>{table.displayName}</div>
+        {/* Header */}
+        <div style={{ fontWeight:700, fontSize:15, color:'var(--color-charcoal)', marginBottom:4, letterSpacing:'-0.01em' }}>Bếp Nhà Mình</div>
+        <div style={{ fontSize:20, fontWeight:800, color:'var(--color-chili)', marginBottom:20 }}>{table.displayName}</div>
 
-        <div style={{ display:'inline-block', padding:12, border:'2px solid #f0ece6', borderRadius:12, marginBottom:16 }}>
+        {/* QR canvas */}
+        <div style={{ display:'inline-block', padding:12, border:'1px solid var(--color-steam)', borderRadius:12, marginBottom:14, background:'#fafafa' }}>
           <canvas ref={canvasRef} />
         </div>
 
-        <div style={{ fontSize:11, color:'#999', wordBreak:'break-all', marginBottom:16, padding:'0 8px' }}>{url}</div>
+        {/* URL */}
+        <div style={{ fontSize:11, color:'var(--color-soy)', wordBreak:'break-all', marginBottom:20, padding:'0 4px', opacity:0.7 }}>{url}</div>
 
-        <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
+        {/* Actions — palette thống nhất */}
+        <div style={{ display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap' }}>
           <button onClick={handleCopy}
-            style={{ padding:'8px 18px', borderRadius:8, border:'1.5px solid #e8521a', background:'#fff5f0', color:'#e8521a', fontWeight:600, cursor:'pointer', fontSize:13 }}>
-            📋 Copy URL
+            style={{ padding:'8px 14px', borderRadius:8, border:'1.5px solid var(--color-steam)', background:'#fff', color:'var(--color-charcoal)', fontWeight:600, cursor:'pointer', fontSize:13, display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' }}>
+            <IconCopy /> Sao chép URL
           </button>
           <button onClick={handlePrint}
-            style={{ padding:'8px 18px', borderRadius:8, border:'none', background:'#e8521a', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>
-            🖨️ In QR
+            style={{ padding:'8px 14px', borderRadius:8, border:'none', background:'var(--color-charcoal)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13, display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' }}>
+            <IconPrint /> In QR
           </button>
           <button onClick={handleDownloadPng}
-            style={{ padding:'8px 18px', borderRadius:8, border:'1.5px solid #2f7d4e', background:'#f0fbf5', color:'#2f7d4e', fontWeight:600, cursor:'pointer', fontSize:13 }}>
-            Tải PNG
+            style={{ padding:'8px 14px', borderRadius:8, border:'1.5px solid var(--color-steam)', background:'#fff', color:'var(--color-charcoal)', fontWeight:600, cursor:'pointer', fontSize:13, display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' }}>
+            <IconDownload /> PNG
           </button>
           <button onClick={handleDownloadPdf}
-            style={{ padding:'8px 18px', borderRadius:8, border:'1.5px solid #5b5bd6', background:'#f4f4ff', color:'#4242a8', fontWeight:600, cursor:'pointer', fontSize:13 }}>
-            Tải PDF
+            style={{ padding:'8px 14px', borderRadius:8, border:'1.5px solid var(--color-steam)', background:'#fff', color:'var(--color-charcoal)', fontWeight:600, cursor:'pointer', fontSize:13, display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' }}>
+            <IconDownload /> PDF
           </button>
           <button onClick={onClose}
-            style={{ padding:'8px 18px', borderRadius:8, border:'1.5px solid #ddd', background:'#fff', color:'#666', fontWeight:600, cursor:'pointer', fontSize:13 }}>
+            style={{ padding:'8px 14px', borderRadius:8, border:'1.5px solid var(--color-steam)', background:'#fff', color:'var(--color-soy)', fontWeight:500, cursor:'pointer', fontSize:13, fontFamily:'inherit' }}>
             Đóng
           </button>
         </div>
@@ -541,9 +556,8 @@ export const AdminTablesPage = () => {
             </div>
 
             {/* Info banner */}
-            <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 13, color: '#374151' }}>
-              <span style={{ marginTop: 1 }}>ℹ️</span>
-              <span>"Ngừng sử dụng" bàn sẽ ẩn bàn khỏi danh sách đang dùng nhưng không xóa lịch sử. QR cũ sẽ không nhận order mới. Bạn có thể bật lại bất cứ lúc nào.</span>
+            <div style={{ background: 'rgba(37,33,27,0.04)', border: '1px solid var(--color-steam)', borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: 'var(--color-soy)' }}>
+              <strong style={{ color: 'var(--color-charcoal)' }}>Lưu ý:</strong> "Ngừng sử dụng" sẽ ẩn bàn khỏi danh sách hoạt động nhưng không xóa lịch sử. QR cũ không nhận order mới. Bạn có thể bật lại bất cứ lúc nào.
             </div>
 
             <div className="admin-table-wrapper">
@@ -626,7 +640,6 @@ export const AdminTablesPage = () => {
                             {/* QR Code */}
                             <button
                               className="qa-btn"
-                              style={{ borderColor: '#6366f1', color: '#6366f1', display: 'flex', alignItems: 'center', gap: 4 }}
                               title="Xem QR Code"
                               onClick={() => setQrModalTable({ displayName: table.displayName, qrToken: table.qrToken })}
                             >
@@ -654,7 +667,7 @@ export const AdminTablesPage = () => {
                              {confirmDeactivate === table.id ? (
                                <span style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                                  <span style={{ fontSize: 12, color: 'var(--color-chili)', display: 'block', width: '100%', marginBottom: 4 }}>
-                                   {table.hasActiveSession ? '⚠️ Bàn có phiên đang mở!' : 'Ngừng sử dụng bàn này?'}
+                                   {table.hasActiveSession ? 'Bàn có phiên đang mở!' : 'Ngừng sử dụng bàn này?'}
                                  </span>
                                  <button className="qa-btn qa-btn--danger"
                                    onClick={() => doToggleStatus({ id: table.id, status: 'INACTIVE' })}>
@@ -726,7 +739,6 @@ export const AdminTablesPage = () => {
                         </button>
                         <button
                           className="qa-btn"
-                          style={{ borderColor: '#6366f1', color: '#6366f1' }}
                           onClick={() => setQrModalTable({ displayName: table.displayName, qrToken: table.qrToken })}
                         >
                           <IconQr /> Xem QR

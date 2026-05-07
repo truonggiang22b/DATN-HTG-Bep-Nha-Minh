@@ -2,13 +2,14 @@
 
 .admin-layout {
   display: flex;
-  min-height: 100dvh;
+  height: 100dvh;       /* Cố định chiều cao = viewport — sidebar không bao giờ bị cuộn */
+  overflow: hidden;     /* Ngăn layout tràn ra ngoài */
   background: var(--color-rice);
-  overflow-x: clip;
 }
 
 .admin-sidebar-desktop {
   flex-shrink: 0;
+  height: 100%;         /* Fill toàn bộ chiều cao layout */
 }
 
 .admin-drawer,
@@ -26,10 +27,8 @@
   display: flex;
   flex-direction: column;
   padding: var(--space-lg) 0;
-  position: sticky;
-  top: 0;
-  height: 100dvh;
-  overflow-y: auto;
+  height: 100%;          /* Full height của container */
+  overflow-y: auto;      /* Sidebar tự scroll nếu nav item quá nhiều */
 }
 .admin-sidebar__brand {
   padding: 0 var(--space-md) var(--space-lg);
@@ -97,6 +96,9 @@
 .admin-main {
   flex: 1;
   min-width: 0;
+  min-height: 0;         /* Quan trọng trong flex để overflow-y hoạt động */
+  height: 100%;
+  overflow-y: auto;      /* Chỉ phần nội dung scroll */
   overflow-x: hidden;
 }
 .admin-topbar {
@@ -110,6 +112,7 @@
   position: sticky;
   top: 0;
   z-index: 40;
+  flex-shrink: 0;  /* Không bị nén trong flex column */
 }
 .admin-topbar__title {
   font-weight: var(--fw-bold);

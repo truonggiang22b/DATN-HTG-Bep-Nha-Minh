@@ -110,8 +110,8 @@ const NAV_ITEMS = [
   { to: '/admin/tables',           label: 'Bàn & QR',           Icon: IconTable,     end: false },
   { to: '/admin/staff',            label: 'Nhân viên',          Icon: IconStaff,     end: false },
   { to: '/admin/delivery',         label: 'Giám sát đơn hàng',  Icon: IconDelivery,  end: false },
-  { to: '/shipper',                label: 'Giao diện Shipper',  Icon: IconShipper,   end: false },
   { to: '/admin/branch-settings',  label: 'Phí ship & Vị trí', Icon: IconSettings,  end: false },
+  { to: '/shipper',                label: 'Giao diện Shipper',  Icon: IconShipper,   end: false },
   { to: '/kds',                    label: 'Màn hình bếp (KDS)', Icon: IconKDS,       end: false },
 ];
 
