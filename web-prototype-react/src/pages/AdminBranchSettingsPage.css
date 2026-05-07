@@ -1,64 +1,68 @@
 /**
- * AdminBranchSettingsPage.css — Styles cho trang cấu hình chi nhánh
+ * AdminBranchSettingsPage.css
+ * Layout: 4 card riêng (Tọa độ / Cấu hình phí / Phí ước tính / Cách tính)
+ * Dùng đúng token: --color-steam = #E8DDCC, --color-paper = #F7E8C9
  */
 
-/* ─── Layout ─────────────────────────────────────────────────────────────── */
+/* ─── Layout 2 cột ────────────────────────────────────────────────────────── */
 .absp__layout {
   display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 20px;
   align-items: start;
 }
 
 @media (max-width: 900px) {
-  .absp__layout {
-    grid-template-columns: 1fr;
-  }
+  .absp__layout { grid-template-columns: 1fr; }
 }
 
 .absp__form-col,
 .absp__preview-col {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
-/* ─── Section ────────────────────────────────────────────────────────────── */
-.absp__section {
-  background: var(--color-cream, #fff);
-  border: 1px solid var(--color-steam, #e2e8f0);
-  border-radius: var(--radius-md, 12px);
-  padding: 20px;
+.absp__preview-col {
+  position: sticky;
+  top: 72px;
+}
+
+/* ─── Card chung ─────────────────────────────────────────────────────────── */
+.absp__section,
+.absp__fee-preview,
+.absp__distance-note {
+  background: var(--color-white);
+  border: 1px solid var(--color-steam);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* ─── Tiêu đề card — KHÔNG in hoa, nền paper ấm nổi bật ─────────────────── */
+.absp__section-title,
+.absp__preview-title,
+.absp__distance-note h5 {
+  font-size: 14px;
+  font-weight: var(--fw-bold);
+  font-family: var(--font-primary);
+  color: var(--color-soy);
+  margin: 0;
+  padding: 12px 18px 11px;
+  border-bottom: 1px solid var(--color-steam);
+  background: var(--color-paper);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* ─── Section body (padding nội dung) ───────────────────────────────────── */
+.absp__section-body {
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.absp__section-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--color-charcoal, #1e293b);
-  margin: 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--color-steam, #e2e8f0);
-}
-
-.absp__section-hint {
-  font-size: 13px;
-  color: var(--color-soy, #64748b);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.absp__link {
-  color: var(--color-chili, #d83a2e);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.absp__link:hover { text-decoration: underline; }
-
-/* ─── Form fields ─────────────────────────────────────────────────────────── */
+/* ─── Form fields ──────────────────────────────────────────────────────── */
 .absp__form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -68,34 +72,29 @@
 .absp__field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   position: relative;
 }
 
+/* Label — đậm vừa, KHÔNG in hoa, dùng đúng font token */
 .absp__field label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-charcoal, #1e293b);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.absp__field-hint {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--color-soy, #64748b);
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+  font-family: var(--font-primary);
+  color: var(--color-soy);
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .absp__field input {
   padding: 9px 12px;
-  border: 1.5px solid var(--color-steam, #e2e8f0);
-  border-radius: var(--radius-sm, 8px);
+  border: 1.5px solid var(--color-steam);
+  border-radius: var(--radius-xs);
   font-size: 14px;
-  font-family: var(--font-primary, inherit);
-  color: var(--color-charcoal, #1e293b);
-  background: var(--color-paper, #f8fafc);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: var(--font-primary);
+  color: var(--color-charcoal);
+  background: var(--color-white);
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
   outline: none;
   -moz-appearance: textfield;
 }
@@ -104,160 +103,168 @@
 .absp__field input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
 .absp__field input:focus {
-  border-color: var(--color-chili, #d83a2e);
-  box-shadow: 0 0 0 3px rgba(216,58,46,0.1);
+  border-color: var(--color-chili);
+  box-shadow: 0 0 0 3px rgba(216, 58, 46, 0.1);
 }
 
 .absp__preview-inline {
   font-size: 12px;
-  color: var(--color-leaf, #16a34a);
-  font-weight: 600;
-  margin-top: 2px;
+  color: var(--color-leaf);
+  font-weight: var(--fw-semibold);
+  font-family: var(--font-accent);
 }
 
-.absp__verify-link {
-  display: inline-flex;
+.absp__inline-control {
+  display: flex;
+  gap: 8px;
+}
+
+.absp__inline-control input { flex: 1; min-width: 0; }
+
+/* ─── Buttons nhỏ ─────────────────────────────────────────────────────── */
+.absp__location-actions {
+  display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.absp__btn-secondary,
+.absp__btn-location {
+  padding: 7px 14px;
+  border-radius: var(--radius-xs);
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+  white-space: nowrap;
+  font-family: var(--font-primary);
+  border: 1.5px solid var(--color-steam);
+  background: var(--color-white);
+  color: var(--color-charcoal);
+}
+
+.absp__btn-secondary:hover:not(:disabled),
+.absp__btn-location:hover:not(:disabled) { background: var(--color-paper); }
+
+.absp__btn-secondary:disabled,
+.absp__btn-location:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.absp__verify-link {
   font-size: 13px;
   color: var(--color-chili, #d83a2e);
   font-weight: 600;
   text-decoration: none;
-  background: rgba(216,58,46,0.06);
-  border: 1px solid rgba(216,58,46,0.2);
-  padding: 6px 14px;
-  border-radius: 8px;
-  transition: all 0.15s;
 }
+.absp__verify-link:hover { text-decoration: underline; }
 
-.absp__verify-link:hover {
-  background: rgba(216,58,46,0.12);
-}
-
-/* ─── Save button ─────────────────────────────────────────────────────────── */
+/* ─── Nút Lưu thay đổi ────────────────────────────────────────────────── */
 .absp__btn-save {
-  background: var(--color-chili, #d83a2e);
-  color: #fff;
+  background: var(--color-chili);
+  color: var(--color-white);
   border: none;
   padding: 12px 24px;
-  border-radius: var(--radius-md, 12px);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
+  font-family: var(--font-primary);
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.15s;
+  transition: opacity var(--duration-fast);
   width: 100%;
+  border-radius: var(--radius-xs);
 }
 
-.absp__btn-save:hover:not(:disabled) {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
+.absp__btn-save:hover:not(:disabled) { opacity: 0.88; }
+.absp__btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.absp__btn-save:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ─── Fee Preview ────────────────────────────────────────────────────────── */
+/* ─── Card Phí ước tính ────────────────────────────────────────────────── */
 .absp__fee-preview {
-  background: var(--color-cream, #fff);
-  border: 1px solid var(--color-steam, #e2e8f0);
-  border-radius: var(--radius-md, 12px);
-  padding: 20px;
-}
-
-.absp__preview-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-charcoal, #1e293b);
-  margin: 0 0 14px;
+  display: flex;
+  flex-direction: column;
 }
 
 .absp__preview-table {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--color-steam, #e2e8f0);
-  border-radius: 8px;
-  overflow: hidden;
 }
 
 .absp__preview-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 14px;
+  padding: 9px 18px;
   font-size: 13px;
-  border-bottom: 1px solid var(--color-steam, #e2e8f0);
+  border-bottom: 1px solid var(--color-steam);
 }
 
 .absp__preview-row:last-child { border-bottom: none; }
 
+/* Header bảng — GIỮ uppercase (header cột dữ liệu) */
 .absp__preview-row--header {
-  background: var(--color-paper, #f8fafc);
+  background: var(--color-paper);
   font-size: 11px;
-  font-weight: 700;
-  color: var(--color-soy, #64748b);
+  font-weight: var(--fw-bold);
+  font-family: var(--font-primary);
+  color: var(--color-soy);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .absp__preview-fee {
-  font-weight: 700;
-  color: var(--color-chili, #d83a2e);
+  font-weight: var(--fw-bold);
+  font-family: var(--font-accent);
+  color: var(--color-chili);
 }
 
-.absp__preview-row--max {
-  background: rgba(239,68,68,0.04);
-}
+.absp__preview-row--max { color: var(--color-soy); }
 
 .absp__preview-out {
   font-size: 12px;
-  color: #ef4444;
+  color: var(--color-soy);
   font-style: italic;
 }
 
-/* ─── Formula ────────────────────────────────────────────────────────────── */
-.absp__formula {
-  background: var(--color-cream, #fff);
-  border: 1px solid var(--color-steam, #e2e8f0);
-  border-radius: var(--radius-md, 12px);
-  padding: 20px;
+/* ─── Card Cách tính phí ship ─────────────────────────────────────────── */
+.absp__distance-note {
+  display: flex;
+  flex-direction: column;
 }
 
-.absp__formula-box {
-  background: var(--color-paper, #f8fafc);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-top: 10px;
+.absp__rule-list {
+  display: flex;
+  flex-direction: column;
 }
 
-.absp__formula-box p {
+.absp__rule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  font-size: 13px;
+  color: var(--color-soy);
+  border-bottom: 1px solid var(--color-steam);
+}
+
+.absp__rule-item:last-child { border-bottom: none; }
+
+.absp__rule-item strong {
+  color: var(--color-charcoal);
+  font-weight: var(--fw-bold);
+  font-family: var(--font-accent);
+  white-space: nowrap;
+}
+
+/* ─── Branch name chip ─────────────────────────────────────────────────── */
+.absp__branch-name {
   font-size: 12px;
   color: var(--color-soy, #64748b);
-  margin: 0 0 4px;
-}
-
-.absp__formula-box code {
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-charcoal, #1e293b);
-  background: rgba(0,0,0,0.04);
-  border-radius: 6px;
-  padding: 6px 10px;
-}
-
-/* ─── Branch name ────────────────────────────────────────────────────────── */
-.absp__branch-name {
-  font-size: 13px;
-  color: var(--color-soy, #64748b);
-  background: var(--color-paper, #f8fafc);
+  background: rgba(37, 33, 27, 0.05);
   border: 1px solid var(--color-steam, #e2e8f0);
   padding: 4px 12px;
   border-radius: 100px;
+  font-weight: 500;
 }
 
-/* ─── Loading ────────────────────────────────────────────────────────────── */
+/* ─── Loading ──────────────────────────────────────────────────────────── */
 .absp__loading {
   text-align: center;
   padding: 60px 20px;
@@ -265,9 +272,9 @@
 }
 
 .absp__spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(216,58,46,0.15);
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid rgba(216, 58, 46, 0.15);
   border-top-color: var(--color-chili, #d83a2e);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -275,3 +282,10 @@
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 560px) {
+  .absp__inline-control { flex-direction: column; }
+  .absp__section-title,
+  .absp__preview-title,
+  .absp__distance-note h5 { font-size: 14px; }
+}

@@ -1,5 +1,7 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ToastContainer } from '../components/Toast';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import { useStore } from '../store/useStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { BRAND_NAME } from '../constants';
@@ -91,6 +93,15 @@ const IconSettings = () => (
   </svg>
 );
 
+const IconMenuDrawer = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="4" y1="6" x2="20" y2="6" />
+    <line x1="4" y1="12" x2="20" y2="12" />
+    <line x1="4" y1="18" x2="20" y2="18" />
+  </svg>
+);
+
 
 // ── Sidebar component ─────────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -99,15 +110,16 @@ const NAV_ITEMS = [
   { to: '/admin/tables',           label: 'Bàn & QR',           Icon: IconTable,     end: false },
   { to: '/admin/staff',            label: 'Nhân viên',          Icon: IconStaff,     end: false },
   { to: '/admin/delivery',         label: 'Giám sát đơn hàng',  Icon: IconDelivery,  end: false },
-  { to: '/shipper',                label: 'Giao diện Shipper',  Icon: IconShipper,   end: false },
   { to: '/admin/branch-settings',  label: 'Phí ship & Vị trí', Icon: IconSettings,  end: false },
+  { to: '/shipper',                label: 'Giao diện Shipper',  Icon: IconShipper,   end: false },
   { to: '/kds',                    label: 'Màn hình bếp (KDS)', Icon: IconKDS,       end: false },
 ];
 
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -133,6 +145,7 @@ const AdminSidebar = () => {
           key={to}
           to={to}
           end={end}
+          onClick={onNavigate}
           className={({ isActive }) => `admin-nav-item ${isActive ? 'admin-nav-item--active' : ''}`}
         >
           <span className="admin-nav-icon"><Icon /></span>
@@ -147,6 +160,18 @@ const AdminSidebar = () => {
         <div style={{ fontSize: 12, color: 'var(--color-soy)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {user?.email}
         </div>
+        <button
+          onClick={() => setShowChangePassword(true)}
+          style={{
+            width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)',
+            background: 'transparent', border: '1px solid var(--color-steam)',
+            color: 'var(--color-soy)', fontSize: 13, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            marginBottom: 8,
+          }}
+        >
+          Đổi mật khẩu
+        </button>
         <button
           onClick={handleLogout}
           style={{
@@ -165,6 +190,9 @@ const AdminSidebar = () => {
           Đăng xuất
         </button>
       </div>
+      {showChangePassword && (
+        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
+      )}
     </nav>
   );
 };
@@ -172,10 +200,42 @@ const AdminSidebar = () => {
 // ── Layout ────────────────────────────────────────────────────────────────────
 export const AdminLayout = () => {
   const { toasts, dismissToast } = useStore();
+  const location = useLocation();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [drawerOpen]);
+
   return (
     <div className="admin-layout">
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-      <AdminSidebar />
+      <button
+        className="admin-mobile-menu-btn"
+        type="button"
+        aria-label="Mở menu quản trị"
+        aria-expanded={drawerOpen}
+        onClick={() => setDrawerOpen(true)}
+      >
+        <IconMenuDrawer />
+      </button>
+      <div
+        className={`admin-drawer-backdrop${drawerOpen ? ' admin-drawer-backdrop--open' : ''}`}
+        onClick={() => setDrawerOpen(false)}
+      />
+      <div className={`admin-drawer${drawerOpen ? ' admin-drawer--open' : ''}`}>
+        <AdminSidebar onNavigate={() => setDrawerOpen(false)} />
+      </div>
+      <div className="admin-sidebar-desktop">
+        <AdminSidebar />
+      </div>
       <div className="admin-main">
         <Outlet />
       </div>

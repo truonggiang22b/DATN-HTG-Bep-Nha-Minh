@@ -322,8 +322,7 @@ export function OnlineTrackingPage() {
         {/* ── Stepper ── */}
         {deliveryStatus !== 'CANCELLED' && (
           <div className="otp__stepper-card">
-            <p className="otp__section-label">Tiến trình đơn hàng</p>
-            <p className="otp__section-label">{realtime.statusText}</p>
+            <p className="otp__section-label">Đơn hàng của bạn đang ở đâu?</p>
             <HorizontalStepper status={deliveryStatus} />
           </div>
         )}

@@ -120,3 +120,38 @@ export async function getMe(req: Request, res: Response, next: NextFunction) {
     next(err);
   }
 }
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Mật khẩu hiện tại là bắt buộc'),
+  newPassword: z.string().min(8, 'Mật khẩu mới phải ít nhất 8 ký tự'),
+});
+
+/** POST /api/auth/change-password — Nhân viên tự đổi mật khẩu */
+export async function changeMyPassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) throw AppError.unauthorized();
+    const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+
+    // 1. Xác nhận mật khẩu cũ đúng bằng cách signIn lại
+    const { error: verifyError } = await supabaseClient.auth.signInWithPassword({
+      email: req.user.email,
+      password: currentPassword,
+    });
+    if (verifyError) {
+      throw AppError.unauthorized('Mật khẩu hiện tại không đúng');
+    }
+
+    // 2. Cập nhật mật khẩu mới qua Admin API
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+      req.user.supabaseUserId,
+      { password: newPassword }
+    );
+    if (updateError) {
+      throw AppError.badRequest('UPDATE_FAILED', updateError.message ?? 'Đổi mật khẩu thất bại');
+    }
+
+    return success(res, { message: 'Đổi mật khẩu thành công' });
+  } catch (err) {
+    next(err);
+  }
+}

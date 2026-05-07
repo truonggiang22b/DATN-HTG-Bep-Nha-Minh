@@ -220,7 +220,7 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
                   return (
                     <div
                       key={item.id}
-                      className={`menu-card${item.status === 'SOLD_OUT' ? ' menu-card--soldout' : ''}`}
+                      className={`oop__menu-card${item.status === 'SOLD_OUT' ? ' oop__menu-card--soldout' : ''}`}
                       onClick={() => handleAdd(item)}
                       role="button"
                       tabIndex={0}
@@ -228,11 +228,11 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
                       aria-label={`Xem chi tiết ${item.name}`}
                     >
                       {/* Ảnh trên cùng */}
-                      <div className="menu-card__img-wrap">
+                      <div className="oop__menu-card__img-wrap">
                         <img
                           src={item.imageUrl || '/placeholder-food.jpg'}
                           alt={item.name}
-                          className="menu-card__img"
+                          className="oop__menu-card__img"
                           loading="lazy"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = '/placeholder-food.jpg';
@@ -240,21 +240,21 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
                         />
                         {/* Nút + nổi trên góc phải ảnh */}
                         {qty === 0 ? (
-                          <div className="menu-card__add-fab" aria-hidden>+</div>
+                          <div className="oop__menu-card__add-fab" aria-hidden>+</div>
                         ) : (
                           <div
-                            className="menu-card__stepper-fab"
+                            className="oop__menu-card__stepper-fab"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <button
-                              className="fab-btn"
+                              className="oop__fab-btn"
                               onClick={(e) => { e.stopPropagation(); updateQuantity(ci!.id, qty - 1); }}
                               type="button"
                               aria-label="Giảm"
                             >−</button>
-                            <span className="fab-qty">{qty}</span>
+                            <span className="oop__fab-qty">{qty}</span>
                             <button
-                              className="fab-btn"
+                              className="oop__fab-btn"
                               onClick={(e) => { e.stopPropagation(); updateQuantity(ci!.id, qty + 1); }}
                               type="button"
                               aria-label="Tăng"
@@ -263,14 +263,14 @@ function Step1Menu({ onNext }: { onNext: () => void }) {
                         )}
                       </div>
                       {/* Text body bên dưới ảnh */}
-                      <div className="menu-card__body" style={{ textAlign: 'left' }}>
-                        <h3 className="menu-card__name" style={{ textAlign: 'left' }}>{item.name}</h3>
+                      <div className="oop__menu-card__body" style={{ textAlign: 'left' }}>
+                        <h3 className="oop__menu-card__name" style={{ textAlign: 'left' }}>{item.name}</h3>
                         {item.shortDescription && (
-                          <p className="menu-card__desc" style={{ textAlign: 'left' }}>{item.shortDescription}</p>
+                          <p className="oop__menu-card__desc" style={{ textAlign: 'left' }}>{item.shortDescription}</p>
                         )}
-                        <div className="menu-card__footer" style={{ textAlign: 'left' }}>
-                          <span className="menu-card__price" style={{ textAlign: 'left' }}>
-                            {fmtNum(item.price)}<span className="menu-card__price-unit">đ</span>
+                        <div className="oop__menu-card__footer" style={{ textAlign: 'left' }}>
+                          <span className="oop__menu-card__price" style={{ textAlign: 'left' }}>
+                            {fmtNum(item.price)}<span className="oop__menu-card__price-unit">đ</span>
                           </span>
                         </div>
                       </div>
@@ -873,3 +873,6 @@ export function OnlineOrderPage() {
     </div>
   );
 }
+
+
+

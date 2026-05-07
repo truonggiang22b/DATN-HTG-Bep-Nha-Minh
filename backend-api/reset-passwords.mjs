@@ -9,9 +9,10 @@ const supabaseAdmin = createClient(
 );
 
 const users = [
-  { email: 'admin@bepnhaminh.vn',  id: 'e07f6f11-516b-490e-8557-b91b257f1c03', password: 'Admin@123456' },
-  { email: 'bep@bepnhaminh.vn',    id: 'ac19d265-ce66-4f77-9af5-22688fce7821', password: 'Kitchen@123456' },
-  { email: 'admin@commientry.vn',  id: 'ef36d2bd-c1f2-40fc-8d3f-35d4d9dbeb70', password: 'Admin@654321' },
+  { email: 'admin@bepnhaminh.vn',    id: 'e07f6f11-516b-490e-8557-b91b257f1c03', password: 'Admin@123456' },
+  { email: 'bep@bepnhaminh.vn',      id: 'ac19d265-ce66-4f77-9af5-22688fce7821', password: 'Kitchen@123456' },
+  { email: 'manhphong@gmail.com',    id: '69368f1f-64c6-4511-b602-842f4a9a5f78', password: 'Shipper@123456' },
+  { email: 'admin@commientry.vn',    id: 'ef36d2bd-c1f2-40fc-8d3f-35d4d9dbeb70', password: 'Admin@654321' },
   { email: 'giaovien@bepnhaminh.vn', id: '64ccee0b-4ce8-4818-8e9a-5f593c29d459', password: 'GiaoVien@123456' },
 ];
 

@@ -6,7 +6,7 @@
  * Admin chỉ xem trạng thái — KDS và Shipper điều phối đơn
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '../store/useStore';
 import {
@@ -24,6 +24,45 @@ const fmtTime = (iso: string) =>
   new Intl.DateTimeFormat('vi-VN', {
     hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit',
   }).format(new Date(iso));
+
+// ─── Date helpers (giống Dashboard) ──────────────────────────────────────────
+type DatePreset = 'today' | 'yesterday' | '7days' | '30days' | 'all' | 'custom';
+
+const startOfDay = (d: Date) => { const r = new Date(d); r.setHours(0,0,0,0); return r; };
+const endOfDay   = (d: Date) => { const r = new Date(d); r.setHours(23,59,59,999); return r; };
+const toInputDate = (d: Date) => d.toISOString().slice(0, 10);
+
+const PRESETS: { key: DatePreset; label: string }[] = [
+  { key: 'today',     label: 'Hôm nay'   },
+  { key: 'yesterday', label: 'Hôm qua'   },
+  { key: '7days',     label: '7 ngày'    },
+  { key: '30days',    label: '30 ngày'   },
+  { key: 'all',       label: 'Tất cả'    },
+  { key: 'custom',    label: 'Tùy chọn' },
+];
+
+const getPresetRange = (preset: DatePreset): [Date, Date] => {
+  const now   = new Date();
+  const today = startOfDay(now);
+  switch (preset) {
+    case 'today':     return [today, endOfDay(now)];
+    case 'yesterday': { const y = new Date(today); y.setDate(y.getDate() - 1); return [y, endOfDay(y)]; }
+    case '7days':     { const f = new Date(today); f.setDate(f.getDate() - 6); return [f, endOfDay(now)]; }
+    case '30days':    { const f = new Date(today); f.setDate(f.getDate() - 29); return [f, endOfDay(now)]; }
+    default:          return [new Date(0), new Date(8640000000000000)];
+  }
+};
+
+const toDateKey = (iso: string) =>
+  new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+const toDateLabel = (dateKey: string) => {
+  const today     = toDateKey(new Date().toISOString());
+  const yesterday = toDateKey(new Date(Date.now() - 86400000).toISOString());
+  if (dateKey === today)     return `Hôm nay — ${dateKey}`;
+  if (dateKey === yesterday) return `Hôm qua — ${dateKey}`;
+  return dateKey;
+};
 
 // ─── Inline SVG Icons ─────────────────────────────────────────────────────────
 const IcoUser = () => (
@@ -59,6 +98,12 @@ const IcoCheck = () => (
     <polyline points="20 6 9 17 4 12"/>
   </svg>
 );
+const IcoChevron = ({ open }: { open: boolean }) => (
+  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
+    style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
 
 // ─── Status Config (display only) ─────────────────────────────────────────────
 const DELIVERY_STATUS_CONFIG: Record<DeliveryStatus, { label: string; color: string; bg: string }> = {
@@ -82,18 +127,14 @@ const TIMELINE_STEPS = [
   { label: 'Hoàn thành',key: 'delivered'  },
 ];
 
-/** Trả về index bước hiện tại (0-based).
- *  -1 = chưa có bước nào (PENDING — chờ bếp nhận)
- *  3  = hoàn thành (DELIVERED)
- */
 function getStepIndex(status: DeliveryStatus): number {
   switch (status) {
-    case 'PENDING':    return -1; // chưa bắt đầu
+    case 'PENDING':    return -1;
     case 'ACCEPTED':
-    case 'PREPARING':  return 1;  // bước 2 active: Đang nấu
-    case 'DELIVERING': return 2;  // bước 3 active: Đang giao
-    case 'DELIVERED':  return 4;  // tất cả xong
-    case 'CANCELLED':  return -2; // special
+    case 'PREPARING':  return 1;
+    case 'DELIVERING': return 2;
+    case 'DELIVERED':  return 4;
+    case 'CANCELLED':  return -2;
     default:           return -1;
   }
 }
@@ -106,9 +147,7 @@ function DeliveryTimeline({ status }: { status: DeliveryStatus }) {
       </div>
     );
   }
-
   const currentStep = getStepIndex(status);
-
   return (
     <div className="adp__timeline">
       <p className="adp__timeline-label">TIẾN TRÌNH ĐƠN HÀNG</p>
@@ -118,7 +157,6 @@ function DeliveryTimeline({ status }: { status: DeliveryStatus }) {
           const active = i === currentStep;
           return (
             <React.Fragment key={step.key}>
-              {/* Connector rail (trước mỗi bước trừ bước đầu) */}
               {i > 0 && (
                 <div className={`adp__tl-rail${done || (active && i > 0) ? ' adp__tl-rail--done' : ''}`} />
               )}
@@ -278,31 +316,122 @@ class CardErrorBoundary extends React.Component<
   }
 }
 
+// ─── Date Group Header ────────────────────────────────────────────────────────
+function DateGroupHeader({
+  dateKey, orders, isCollapsed, onToggle,
+}: {
+  dateKey: string;
+  orders: DeliveryOrderSummary[];
+  isCollapsed: boolean;
+  onToggle: () => void;
+}) {
+  const deliveredCount = orders.filter(
+    (o) => o.deliveryInfo?.deliveryStatus === 'DELIVERED',
+  ).length;
+  const revenue = orders
+    .filter((o) => o.deliveryInfo?.deliveryStatus !== 'CANCELLED')
+    .reduce((s, o) => s + (o.subtotal ?? 0) + (o.deliveryInfo?.shippingFee ?? 0), 0);
+
+  return (
+    <button
+      onClick={onToggle}
+      className="adp__date-group-header"
+      type="button"
+    >
+      <div className="adp__date-group-left">
+        <IcoChevron open={!isCollapsed} />
+        <span className="adp__date-group-title">{toDateLabel(dateKey)}</span>
+      </div>
+      <div className="adp__date-group-right">
+        <span className="adp__date-group-meta">{orders.length} đơn</span>
+        <span className="adp__date-group-meta">{deliveredCount} đã giao</span>
+        <span className="adp__date-group-revenue">{fmt(revenue)}</span>
+      </div>
+    </button>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export function AdminDeliveryPage() {
   const { showToast: _showToast } = useStore();
-  void _showToast; // suppress unused warning
+  void _showToast;
   const queryClient = useQueryClient();
+
+  // ── Filters ──────────────────────────────────────────────────────────────
   const [statusFilter, setStatusFilter] = useState<DeliveryStatus | 'ALL'>('ALL');
+  const [datePreset,   setDatePreset]   = useState<DatePreset>('today');
+  const [customFrom,   setCustomFrom]   = useState(() => toInputDate(new Date()));
+  const [customTo,     setCustomTo]     = useState(() => toInputDate(new Date()));
+  const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
 
-  const params = statusFilter === 'ALL' ? { pageSize: 50 } : { pageSize: 50, deliveryStatus: statusFilter };
-
+  // ── Fetch — tải tất cả để lọc ở client (tương tự Dashboard) ─────────────
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['deliveryOrders', statusFilter],
-    queryFn: () => deliveryApi.listOrders(params),
+    queryKey: ['deliveryOrders', 'all'],
+    queryFn: () => deliveryApi.listOrders({ pageSize: 200 }),
     refetchInterval: 30_000,
   });
 
   const handleRealtimeEvent = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['deliveryOrders', statusFilter] });
-  }, [queryClient, statusFilter]);
+    queryClient.invalidateQueries({ queryKey: ['deliveryOrders', 'all'] });
+  }, [queryClient]);
 
   const realtime = useRealtimeOrders({ onEvent: handleRealtimeEvent });
 
-  const orders = data?.orders ?? [];
+  const allOrders = data?.orders ?? [];
 
+  // ── Date range ────────────────────────────────────────────────────────────
+  const [dateFrom, dateTo] = useMemo<[Date, Date]>(() => {
+    if (datePreset === 'custom') {
+      return [startOfDay(new Date(customFrom)), endOfDay(new Date(customTo))];
+    }
+    return getPresetRange(datePreset);
+  }, [datePreset, customFrom, customTo]);
+
+  const handlePreset = (key: DatePreset) => {
+    setDatePreset(key);
+    setCollapsedDates(new Set());
+  };
+
+  // ── Group by date (sau khi lọc thời gian + trạng thái) ───────────────────
+  const grouped = useMemo(() => {
+    const dfTs = dateFrom.getTime();
+    const dtTs = dateTo.getTime();
+    const filtered = allOrders.filter((o) => {
+      const ts = new Date(o.createdAt).getTime();
+      if (ts < dfTs || ts > dtTs) return false;
+      if (statusFilter !== 'ALL') {
+        const ds = o.deliveryInfo?.deliveryStatus ?? 'PENDING';
+        if (ds !== statusFilter) return false;
+      }
+      return true;
+    });
+
+    const map: Record<string, DeliveryOrderSummary[]> = {};
+    filtered.forEach((order) => {
+      const key = toDateKey(order.createdAt);
+      if (!map[key]) map[key] = [];
+      map[key].push(order);
+    });
+    // Sắp xếp đơn trong ngày: mới nhất lên trên
+    Object.values(map).forEach((g) =>
+      g.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    );
+    // Sắp xếp ngày: mới nhất lên trên
+    return Object.entries(map).sort(
+      (a, b) =>
+        new Date(b[0].split('/').reverse().join('-')).getTime() -
+        new Date(a[0].split('/').reverse().join('-')).getTime(),
+    );
+  }, [allOrders, statusFilter, dateFrom, dateTo]);
+
+  const toggleDate  = (key: string) =>
+    setCollapsedDates((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
+
+  // ── Count badges (theo toàn bộ dữ liệu, không theo date) ─────────────────
   const countByStatus = (status: DeliveryStatus) =>
-    orders.filter((o) => o.deliveryInfo?.deliveryStatus === status).length;
+    allOrders.filter((o) => o.deliveryInfo?.deliveryStatus === status).length;
+
+  const totalFiltered = grouped.reduce((s, [, o]) => s + o.length, 0);
 
   return (
     <div>
@@ -316,11 +445,12 @@ export function AdminDeliveryPage() {
       </div>
 
       <div className="admin-content">
-        {/* Status filter tabs */}
+
+        {/* ── Status filter tabs ── */}
         <div className="adp__filter-bar">
           {ALL_FILTER_STATUSES.map((s) => {
-            const cfg = s === 'ALL' ? null : DELIVERY_STATUS_CONFIG[s];
-            const count = s === 'ALL' ? orders.length : countByStatus(s);
+            const cfg   = s === 'ALL' ? null : DELIVERY_STATUS_CONFIG[s];
+            const count = s === 'ALL' ? allOrders.length : countByStatus(s);
             return (
               <button
                 key={s}
@@ -343,13 +473,52 @@ export function AdminDeliveryPage() {
           })}
         </div>
 
-        {/* Info banner — read-only notice */}
-        <div className="adp__info-banner">
-          <svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          Trang này chỉ hiển thị trạng thái. Bếp cập nhật qua <strong>KDS</strong> · Shipper xác nhận qua <strong>Giao hàng</strong>.
+        {/* ── Time filter bar ── */}
+        <div className="adp__time-filter-bar">
+          {/* Preset buttons */}
+          <div className="adp__time-filter-row">
+            <span className="adp__time-filter-label">Thời gian:</span>
+            {PRESETS.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                className={`adp__preset-btn${datePreset === key ? ' active' : ''}`}
+                onClick={() => handlePreset(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Custom date range */}
+          {datePreset === 'custom' && (
+            <div className="adp__time-filter-row">
+              <span className="adp__time-filter-label">Từ</span>
+              <input
+                type="date"
+                value={customFrom}
+                max={customTo}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                className="adp__date-input"
+              />
+              <span className="adp__time-filter-label">đến</span>
+              <input
+                type="date"
+                value={customTo}
+                min={customFrom}
+                max={toInputDate(new Date())}
+                onChange={(e) => setCustomTo(e.target.value)}
+                className="adp__date-input"
+              />
+            </div>
+          )}
+
+          {/* Summary */}
+          <div className="adp__time-filter-summary">
+            Tìm thấy <strong>{totalFiltered}</strong> đơn trong <strong>{grouped.length}</strong> ngày
+          </div>
         </div>
+
 
         {isLoading && (
           <div className="adp__loading">
@@ -364,20 +533,38 @@ export function AdminDeliveryPage() {
           </div>
         )}
 
-        {!isLoading && !isError && orders.length === 0 && (
+        {/* ── Grouped by date ── */}
+        {!isLoading && !isError && grouped.length === 0 && (
           <div className="adp__empty">
             <div className="adp__empty-icon"><IcoBike /></div>
-            <p>Chưa có đơn giao hàng nào</p>
+            <p>Không có đơn giao hàng nào trong khoảng thời gian này</p>
           </div>
         )}
 
-        {!isLoading && orders.length > 0 && (
-          <div className="adp__orders-grid">
-            {orders.map((order) => (
-              <CardErrorBoundary key={order.id}>
-                <DeliveryOrderCard order={order} />
-              </CardErrorBoundary>
-            ))}
+        {!isLoading && !isError && grouped.length > 0 && (
+          <div className="adp__grouped-list">
+            {grouped.map(([dateKey, dayOrders]) => {
+              const isCollapsed = collapsedDates.has(dateKey);
+              return (
+                <div key={dateKey} className="adp__date-group">
+                  <DateGroupHeader
+                    dateKey={dateKey}
+                    orders={dayOrders}
+                    isCollapsed={isCollapsed}
+                    onToggle={() => toggleDate(dateKey)}
+                  />
+                  {!isCollapsed && (
+                    <div className="adp__orders-grid adp__orders-grid--ingroup">
+                      {dayOrders.map((order) => (
+                        <CardErrorBoundary key={order.id}>
+                          <DeliveryOrderCard order={order} />
+                        </CardErrorBoundary>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

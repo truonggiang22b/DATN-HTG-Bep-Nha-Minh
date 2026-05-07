@@ -20,9 +20,20 @@
   flex-shrink: 0;
 }
 .kds-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-weight: var(--fw-bold);
   font-size: 18px;
   color: white;
+  white-space: nowrap;
+}
+.kds-header__logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 .kds-header__meta {
   font-size: 13px;
@@ -47,6 +58,86 @@
 
 @media (max-width: 1024px) {
   .kds-board { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .kds-header {
+    height: auto;
+    min-height: 56px;
+    padding: 8px 12px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+  }
+
+  .kds-header__brand {
+    width: 100%;
+    font-size: 16px;
+  }
+
+  .kds-header__meta,
+  .kds-header__clock {
+    font-size: 12px;
+  }
+
+  .kds-board {
+    display: flex;
+    flex: 1;
+    gap: 0;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  .kds-column {
+    flex: 0 0 88vw;
+    min-width: 88vw;
+    scroll-snap-align: start;
+  }
+
+  .kds-column__header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: rgba(37,33,27,0.98);
+  }
+
+  .kds-card {
+    border-radius: var(--radius-sm);
+  }
+
+  .kds-card__table {
+    font-size: 34px;
+  }
+
+  .kds-card__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .kds-btn-primary,
+  .kds-btn-cancel {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 430px) {
+  .kds-column {
+    flex-basis: 94vw;
+    min-width: 94vw;
+  }
+
+  .kds-card {
+    padding: 14px;
+  }
+
+  .kds-card__header {
+    gap: 10px;
+    flex-direction: column;
+  }
+
+  .kds-card__meta {
+    text-align: left;
+  }
 }
 
 .kds-column {
@@ -247,3 +338,192 @@
   color: rgba(255,255,255,0.6);
   text-align: center;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   KDS USER MENU — Avatar trigger + dropdown
+══════════════════════════════════════════════════════════════════════════ */
+
+.kds-user-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Trigger button */
+.kds-user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 100px;
+  padding: 4px 10px 4px 4px;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 36px;
+  transition: background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.kds-user-trigger:hover,
+.kds-user-trigger:focus-visible {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.22);
+  outline: none;
+}
+
+/* Avatar circle — màu amber/vàng cho nhà bếp */
+.kds-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #C8813A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Tên hiển thị */
+.kds-user-trigger-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+/* Chevron */
+.kds-user-chevron {
+  color: rgba(255,255,255,0.45);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.kds-user-chevron--open {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown panel ─────────────────────────────────────────────────────── */
+.kds-user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 224px;
+  background: #1e1b16;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+  overflow: hidden;
+  z-index: 500;
+  animation: kds-udrop-in 0.15s ease;
+}
+@keyframes kds-udrop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Header thông tin */
+.kds-udrop-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.04);
+}
+.kds-udrop-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #C8813A 0%, #a0612a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(200,129,58,0.40);
+}
+.kds-udrop-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.kds-udrop-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kds-udrop-email {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kds-udrop-badge {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(200,129,58,0.20);
+  color: #e0a060;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+
+/* Divider */
+.kds-udrop-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+}
+
+/* Menu items */
+.kds-udrop-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.8);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  min-height: 44px;
+}
+.kds-udrop-item:hover {
+  background: rgba(255,255,255,0.06);
+}
+.kds-udrop-item:active {
+  background: rgba(255,255,255,0.10);
+}
+.kds-udrop-item svg {
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.4);
+}
+.kds-udrop-item--danger {
+  color: #f87171;
+}
+.kds-udrop-item--danger svg {
+  color: #f87171;
+}
+.kds-udrop-item--danger:hover {
+  background: rgba(248,113,113,0.08);
+}
+

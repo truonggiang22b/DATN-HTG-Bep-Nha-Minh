@@ -10,6 +10,7 @@ import type {
   ApiCategory,
   ApiMenuItem,
   ApiTable,
+  ApiTableCurrentSession,
   OrderStatus,
 } from '../types';
 
@@ -43,6 +44,14 @@ export const refreshAccessToken = async (
 export const getMe = async (): Promise<AuthUser> => {
   const res = await apiClient.get('/internal/me');
   return res.data.data.user as AuthUser;
+};
+
+export const changeMyPassword = async (data: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<{ message: string }> => {
+  const res = await apiClient.post('/auth/change-password', data);
+  return res.data.data as { message: string };
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -176,6 +185,13 @@ export const getTables = async (): Promise<ApiTable[]> => {
   return res.data.data.tables as ApiTable[];
 };
 
+export const getTableCurrentSession = async (
+  tableId: string
+): Promise<ApiTableCurrentSession> => {
+  const res = await apiClient.get(`/internal/tables/${tableId}/current-session`);
+  return res.data.data as ApiTableCurrentSession;
+};
+
 export const createTable = async (data: {
   tableCode: string;
   displayName: string;
@@ -301,6 +317,31 @@ export const updateStaff = async (
 export const updateStaffStatus = async (id: string, isActive: boolean): Promise<ApiStaff> => {
   const res = await apiClient.patch(`/internal/users/${id}/status`, { isActive });
   return res.data.data.user as ApiStaff;
+};
+
+export const resetStaffPassword = async (
+  id: string,
+  newPassword: string
+): Promise<{ message: string }> => {
+  const res = await apiClient.patch(`/internal/users/${id}/reset-password`, { newPassword });
+  return res.data.data as { message: string };
+};
+
+export interface StaffInviteEmailResult {
+  message: string;
+  emailSent: boolean;
+  provider: 'resend' | 'manual';
+  subject: string;
+  body: string;
+  mailtoUrl: string;
+}
+
+export const sendStaffInviteEmail = async (
+  id: string,
+  temporaryPassword?: string
+): Promise<StaffInviteEmailResult> => {
+  const res = await apiClient.post(`/internal/users/${id}/invite-email`, { temporaryPassword });
+  return res.data.data as StaffInviteEmailResult;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -70,11 +70,209 @@
   background: rgba(255,255,255,0.07);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 100px;
-  padding: 7px 14px;
+  padding: 7px 10px;
   cursor: pointer;
   font-family: inherit;
-  /* touch target */
   min-height: 36px;
+}
+
+/* ── User menu — 1 nút trigger + dropdown ─────────────────────────────────── */
+.sip__user-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Trigger button — avatar + tên + chevron */
+.sip__user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 100px;
+  padding: 5px 10px 5px 5px;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 40px;
+  transition: background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.sip__user-trigger:hover,
+.sip__user-trigger:focus-visible {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.22);
+  outline: none;
+}
+.sip__user-trigger:active {
+  background: rgba(255,255,255,0.18);
+}
+
+/* Avatar circle trong trigger */
+.sip__user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #C8813A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Tên hiện trên mobile nếu đủ chỗ */
+.sip__user-trigger-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+  /* Ẩn trên mobile rất nhỏ */
+  display: none;
+}
+
+/* Chevron icon */
+.sip__user-chevron {
+  color: rgba(255,255,255,0.5);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.sip__user-chevron--open {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown panel ────────────────────────────────────────────────────────── */
+.sip__user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 230px;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e8ddd6;
+  box-shadow: 0 12px 40px rgba(37,33,27,0.18), 0 2px 8px rgba(37,33,27,0.08);
+  overflow: hidden;
+  z-index: 200;
+  /* Animate in */
+  animation: udrop-in 0.15s ease;
+}
+@keyframes udrop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Header thông tin tài khoản */
+.sip__udrop-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f9f5f2 0%, #fff 100%);
+}
+.sip__udrop-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #C8813A 0%, #a0612a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(200,129,58,0.40);
+}
+.sip__udrop-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.sip__udrop-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1714;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sip__udrop-email {
+  font-size: 11.5px;
+  color: #9a8f85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sip__udrop-badge {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(200,129,58,0.12);
+  color: #a0612a;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+
+/* Divider */
+.sip__udrop-divider {
+  height: 1px;
+  background: #f0ece8;
+  margin: 0;
+}
+
+/* Menu items */
+.sip__udrop-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: #25211b;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  min-height: 48px;
+}
+.sip__udrop-item:hover,
+.sip__udrop-item:focus-visible {
+  background: #faf7f4;
+  outline: none;
+}
+.sip__udrop-item:active {
+  background: #f0ece8;
+}
+.sip__udrop-item svg {
+  flex-shrink: 0;
+  color: #7a6f65;
+}
+.sip__udrop-item--danger {
+  color: #d83a2e;
+}
+.sip__udrop-item--danger svg {
+  color: #d83a2e;
+}
+.sip__udrop-item--danger:hover {
+  background: rgba(216,58,46,0.06);
+}
+
+/* ── Responsive: hiện tên trên màn ≥ 360px ───────────────────────────────── */
+@media (min-width: 360px) {
+  .sip__user-trigger-name { display: block; }
 }
 
 /* ── Tab bar ──────────────────────────────────────────────────────────────── */
@@ -524,8 +722,22 @@
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   DESKTOP RESPONSIVE — ≥ 768px
+   RESPONSIVE BREAKPOINTS
 ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── ≥ 480px: Hiện tên shipper ───────────────────────────────────────────── */
+@media (min-width: 480px) {
+  .sip__user-info { display: flex; }
+  .sip__user-email { display: none; } /* Chưa đủ chỗ cho email */
+}
+
+/* ── ≥ 640px: Hiện cả email + divider ────────────────────────────────────── */
+@media (min-width: 640px) {
+  .sip__user-email { display: block; }
+  .sip__user-divider { display: block; }
+}
+
+/* ── ≥ 768px (Tablet / Desktop) — Hiện đầy đủ ───────────────────────────── */
 @media (min-width: 768px) {
 
   /* Header — taller, more breathing room */
@@ -538,11 +750,16 @@
   .sip__header-sub { font-size: 12px; }
   .sip__logout {
     font-size: 13px;
-    padding: 8px 18px;
+    padding: 8px 14px;
     gap: 7px;
     transition: background 0.15s, color 0.15s;
   }
   .sip__logout:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+  /* User block — desktop: hiện text label, tăng padding */
+  .sip__user-block { gap: 12px; padding: 8px 14px; }
+  .sip__user-avatar { width: 36px; height: 36px; font-size: 14px; }
+  .sip__logout-label { display: inline; } /* Hiện text: "Đổi mật khẩu", "Đăng xuất" */
 
   /* Tabs — centered, not full-width stretch */
   .sip__tabs {

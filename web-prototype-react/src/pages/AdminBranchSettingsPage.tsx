@@ -3,7 +3,6 @@
  * Phase 2: Bếp Nhà Mình Online Ordering
  *
  * Route: /admin/branch-settings
- * Admin điều chỉnh tọa độ quán + bảng phí giao hàng
  */
 
 import { useState, useEffect } from 'react';
@@ -17,44 +16,90 @@ const BRANCH_ID = 'branch-bep-nha-minh-q1';
 const fmt = (n: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
-// ─── Fee Preview Calculator ───────────────────────────────────────────────────
+type Coordinates = { lat: number; lng: number };
+
+function parseCoordinateInput(value: string): Coordinates | null {
+  const rawText = value.trim();
+  let text = rawText;
+  try { text = decodeURIComponent(rawText); } catch { text = rawText; }
+  if (!text) return null;
+
+  const patterns = [
+    /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+    /[?&]q=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+    /(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (!match) continue;
+    const lat = Number(match[1]);
+    const lng = Number(match[2]);
+    if (Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180)
+      return { lat, lng };
+  }
+  return null;
+}
+
+function formatCoordinate(value: number) {
+  return value.toFixed(6).replace(/\.?0+$/, '');
+}
+
+// ─── Fee Preview — 2 card độc lập ───────────────────────────────────────────
 
 function FeePreview({
-  baseKm,
-  baseFee,
-  feePerKm,
-  maxKm,
+  baseKm, baseFee, feePerKm, maxKm,
 }: {
-  baseKm: number;
-  baseFee: number;
-  feePerKm: number;
-  maxKm: number;
+  baseKm: number; baseFee: number; feePerKm: number; maxKm: number;
 }) {
   const examples = [0.5, 1, 2, 3, 5, 7, maxKm];
   return (
-    <div className="absp__fee-preview">
-      <h4 className="absp__preview-title">Bảng phí ước tính</h4>
-      <div className="absp__preview-table">
-        <div className="absp__preview-row absp__preview-row--header">
-          <span>Khoảng cách</span>
-          <span>Phí ship</span>
-        </div>
-        {examples.map((km) => {
-          if (km > maxKm) return null;
-          const fee = km <= baseKm ? baseFee : Math.round(baseFee + (km - baseKm) * feePerKm);
-          return (
-            <div key={km} className="absp__preview-row">
-              <span>{km} km</span>
-              <span className="absp__preview-fee">{fmt(fee)}</span>
-            </div>
-          );
-        })}
-        <div className="absp__preview-row absp__preview-row--max">
-          <span>&gt; {maxKm} km</span>
-          <span className="absp__preview-out">Ngoài vùng giao</span>
+    <>
+      {/* Card 1: Phí ước tính */}
+      <div className="absp__fee-preview">
+        <h4 className="absp__preview-title">Phí ước tính</h4>
+        <div className="absp__preview-table">
+          <div className="absp__preview-row absp__preview-row--header">
+            <span>Khoảng cách</span>
+            <span>Phí ship</span>
+          </div>
+          {examples.map((km) => {
+            if (km > maxKm) return null;
+            const fee = km <= baseKm ? baseFee : baseFee + Math.ceil((km - baseKm) * feePerKm);
+            return (
+              <div key={km} className="absp__preview-row">
+                <span>{km} km</span>
+                <span className="absp__preview-fee">{fmt(fee)}</span>
+              </div>
+            );
+          })}
+          <div className="absp__preview-row absp__preview-row--max">
+            <span>&gt; {maxKm} km</span>
+            <span className="absp__preview-out">Ngoài vùng giao</span>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Card 2: Cách tính phí ship */}
+      <div className="absp__distance-note">
+        <h5>Cách tính phí ship</h5>
+        <div className="absp__rule-list">
+          <div className="absp__rule-item">
+            <span>Trong {baseKm} km</span>
+            <strong>{fmt(baseFee)}</strong>
+          </div>
+          <div className="absp__rule-item">
+            <span>Vượt {baseKm} km</span>
+            <strong>+ {fmt(feePerKm)}/km</strong>
+          </div>
+          <div className="absp__rule-item">
+            <span>Quá {maxKm} km</span>
+            <strong>Không nhận giao</strong>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -69,15 +114,15 @@ export function AdminBranchSettingsPage() {
     staleTime: 60_000,
   });
 
-  // Form state
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
+  const [locationInput, setLocationInput] = useState('');
+  const [isLocating, setIsLocating] = useState(false);
   const [baseKm, setBaseKm] = useState('');
   const [baseFee, setBaseFee] = useState('');
   const [feePerKm, setFeePerKm] = useState('');
   const [maxKm, setMaxKm] = useState('');
 
-  // Sync from loaded config
   useEffect(() => {
     if (config) {
       setLat(config.latitude?.toString() ?? '');
@@ -103,16 +148,53 @@ export function AdminBranchSettingsPage() {
     onError: () => showToast('Lỗi khi lưu cấu hình', 'error'),
   });
 
-  const baseKmNum   = parseFloat(baseKm)   || 2;
-  const baseFeeNum  = parseInt(baseFee)    || 15000;
-  const feePerKmNum = parseInt(feePerKm)   || 5000;
-  const maxKmNum    = parseFloat(maxKm)    || 10;
+  const applyLocationInput = () => {
+    const coordinates = parseCoordinateInput(locationInput);
+    if (!coordinates) {
+      showToast('Không tìm thấy tọa độ hợp lệ trong nội dung đã dán', 'error');
+      return;
+    }
+    setLat(formatCoordinate(coordinates.lat));
+    setLng(formatCoordinate(coordinates.lng));
+    showToast('Đã điền tọa độ từ nội dung đã dán', 'success');
+  };
+
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      showToast('Trình duyệt không hỗ trợ lấy vị trí hiện tại', 'error');
+      return;
+    }
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(formatCoordinate(pos.coords.latitude));
+        setLng(formatCoordinate(pos.coords.longitude));
+        setIsLocating(false);
+        showToast('Đã điền tọa độ theo vị trí hiện tại', 'success');
+      },
+      () => {
+        setIsLocating(false);
+        showToast('Không thể lấy vị trí hiện tại', 'error');
+      },
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 }
+    );
+  };
+
+  const baseKmNum   = parseFloat(baseKm)  || 2;
+  const baseFeeNum  = parseInt(baseFee)   || 15000;
+  const feePerKmNum = parseInt(feePerKm)  || 5000;
+  const maxKmNum    = parseFloat(maxKm)   || 10;
 
   if (isLoading) {
     return (
       <div>
-        <div className="admin-topbar"><span className="admin-topbar__title">Cấu hình chi nhánh</span></div>
-        <div className="absp__loading"><div className="absp__spinner" /><p>Đang tải...</p></div>
+        <div className="admin-topbar">
+          <span className="admin-topbar__title">Cấu hình chi nhánh</span>
+        </div>
+        <div className="absp__loading">
+          <div className="absp__spinner" />
+          <p>Đang tải...</p>
+        </div>
       </div>
     );
   }
@@ -127,137 +209,148 @@ export function AdminBranchSettingsPage() {
 
       <div className="admin-content">
         <div className="absp__layout">
-          {/* Left: Form */}
+
+          {/* ── Cột trái: 2 card form ── */}
           <div className="absp__form-col">
-            {/* Location */}
+
+            {/* Card 1: Tọa độ quán */}
             <section className="absp__section">
               <h2 className="absp__section-title">Tọa độ quán</h2>
-              <p className="absp__section-hint">
-                Dùng để tính khoảng cách đến khách hàng.
-                {' '}<a href="https://www.google.com/maps" target="_blank" rel="noreferrer" className="absp__link">
-                  Tra Google Maps →
-                </a>
-              </p>
-
-              <div className="absp__form-row">
+              <div className="absp__section-body">
                 <div className="absp__field">
-                  <label htmlFor="f-lat">Vĩ độ (Latitude)</label>
-                  <input
-                    id="f-lat"
-                    type="number"
-                    step="any"
-                    placeholder="10.7769"
-                    value={lat}
-                    onChange={(e) => setLat(e.target.value)}
-                  />
+                  <label htmlFor="f-location-input">Dán tọa độ hoặc link Google Maps</label>
+                  <div className="absp__inline-control">
+                    <input
+                      id="f-location-input"
+                      type="text"
+                      placeholder="21.0348, 105.82 hoặc link Google Maps"
+                      value={locationInput}
+                      onChange={(e) => setLocationInput(e.target.value)}
+                    />
+                    <button type="button" className="absp__btn-secondary" onClick={applyLocationInput}>
+                      Áp dụng
+                    </button>
+                  </div>
                 </div>
-                <div className="absp__field">
-                  <label htmlFor="f-lng">Kinh độ (Longitude)</label>
-                  <input
-                    id="f-lng"
-                    type="number"
-                    step="any"
-                    placeholder="106.7009"
-                    value={lng}
-                    onChange={(e) => setLng(e.target.value)}
-                  />
+
+                <div className="absp__location-actions">
+                  <button
+                    type="button"
+                    className="absp__btn-location"
+                    onClick={useCurrentLocation}
+                    disabled={isLocating}
+                  >
+                    {isLocating ? 'Đang lấy vị trí...' : 'Dùng vị trí hiện tại'}
+                  </button>
+                  {lat && lng && (
+                    <a
+                      href={`https://www.google.com/maps?q=${lat},${lng}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="absp__verify-link"
+                    >
+                      Kiểm tra trên Maps
+                    </a>
+                  )}
+                </div>
+
+                <div className="absp__form-row">
+                  <div className="absp__field">
+                    <label htmlFor="f-lat">Vĩ độ (Latitude)</label>
+                    <input
+                      id="f-lat"
+                      type="number"
+                      step="any"
+                      placeholder="10.7769"
+                      value={lat}
+                      onChange={(e) => setLat(e.target.value)}
+                    />
+                  </div>
+                  <div className="absp__field">
+                    <label htmlFor="f-lng">Kinh độ (Longitude)</label>
+                    <input
+                      id="f-lng"
+                      type="number"
+                      step="any"
+                      placeholder="106.7009"
+                      value={lng}
+                      onChange={(e) => setLng(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
-
-              {lat && lng && (
-                <a
-                  href={`https://www.google.com/maps?q=${lat},${lng}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="absp__verify-link"
-                >
-                  Kiểm tra tọa độ trên Google Maps →
-                </a>
-              )}
             </section>
 
-            {/* Delivery fee config */}
+            {/* Card 2: Cấu hình phí giao hàng */}
             <section className="absp__section">
               <h2 className="absp__section-title">Cấu hình phí giao hàng</h2>
+              <div className="absp__section-body">
+                <div className="absp__field">
+                  <label htmlFor="f-base-km">Bán kính phí cố định (km)</label>
+                  <input
+                    id="f-base-km"
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    max="20"
+                    value={baseKm}
+                    onChange={(e) => setBaseKm(e.target.value)}
+                  />
+                </div>
 
-              <div className="absp__field">
-                <label htmlFor="f-base-km">
-                  Bán kính miễn phí giao (km)
-                  <span className="absp__field-hint">Giao hàng trong bán kính này tính phí cố định</span>
-                </label>
-                <input
-                  id="f-base-km"
-                  type="number"
-                  step="0.5"
-                  min="0"
-                  max="20"
-                  value={baseKm}
-                  onChange={(e) => setBaseKm(e.target.value)}
-                />
-              </div>
+                <div className="absp__field">
+                  <label htmlFor="f-base-fee">Phí cố định (VNĐ)</label>
+                  <input
+                    id="f-base-fee"
+                    type="number"
+                    step="1000"
+                    min="0"
+                    value={baseFee}
+                    onChange={(e) => setBaseFee(e.target.value)}
+                  />
+                  {baseFeeNum > 0 && <span className="absp__preview-inline">{fmt(baseFeeNum)}</span>}
+                </div>
 
-              <div className="absp__field">
-                <label htmlFor="f-base-fee">
-                  Phí cố định trong bán kính (VNĐ)
-                  <span className="absp__field-hint">Phí ship tối thiểu</span>
-                </label>
-                <input
-                  id="f-base-fee"
-                  type="number"
-                  step="1000"
-                  min="0"
-                  value={baseFee}
-                  onChange={(e) => setBaseFee(e.target.value)}
-                />
-                {baseFeeNum > 0 && <span className="absp__preview-inline">{fmt(baseFeeNum)}</span>}
-              </div>
+                <div className="absp__field">
+                  <label htmlFor="f-fee-per-km">Phí vượt mỗi km (VNĐ/km)</label>
+                  <input
+                    id="f-fee-per-km"
+                    type="number"
+                    step="500"
+                    min="0"
+                    value={feePerKm}
+                    onChange={(e) => setFeePerKm(e.target.value)}
+                  />
+                  {feePerKmNum > 0 && <span className="absp__preview-inline">{fmt(feePerKmNum)}/km</span>}
+                </div>
 
-              <div className="absp__field">
-                <label htmlFor="f-fee-per-km">
-                  Phí mỗi km vượt (VNĐ/km)
-                  <span className="absp__field-hint">Tính thêm mỗi km ngoài bán kính</span>
-                </label>
-                <input
-                  id="f-fee-per-km"
-                  type="number"
-                  step="500"
-                  min="0"
-                  value={feePerKm}
-                  onChange={(e) => setFeePerKm(e.target.value)}
-                />
-                {feePerKmNum > 0 && <span className="absp__preview-inline">{fmt(feePerKmNum)}/km</span>}
-              </div>
+                <div className="absp__field">
+                  <label htmlFor="f-max-km">Bán kính giao tối đa (km)</label>
+                  <input
+                    id="f-max-km"
+                    type="number"
+                    step="0.5"
+                    min="1"
+                    max="50"
+                    value={maxKm}
+                    onChange={(e) => setMaxKm(e.target.value)}
+                  />
+                </div>
 
-              <div className="absp__field">
-                <label htmlFor="f-max-km">
-                  Bán kính giao tối đa (km)
-                  <span className="absp__field-hint">Đơn ngoài bán kính này sẽ bị từ chối</span>
-                </label>
-                <input
-                  id="f-max-km"
-                  type="number"
-                  step="0.5"
-                  min="1"
-                  max="50"
-                  value={maxKm}
-                  onChange={(e) => setMaxKm(e.target.value)}
-                />
+                <button
+                  className="absp__btn-save"
+                  onClick={() => saveConfig()}
+                  disabled={isSaving}
+                  id="btn-save-delivery-config"
+                  type="button"
+                >
+                  {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
+                </button>
               </div>
             </section>
-
-            {/* Save button */}
-            <button
-              className="absp__btn-save"
-              onClick={() => saveConfig()}
-              disabled={isSaving}
-              id="btn-save-delivery-config"
-              type="button"
-            >
-              {isSaving ? 'Đang lưu...' : 'Lưu cấu hình'}
-            </button>
           </div>
 
-          {/* Right: Preview */}
+          {/* ── Cột phải: 2 card preview ── */}
           <div className="absp__preview-col">
             <FeePreview
               baseKm={baseKmNum}
@@ -265,18 +358,8 @@ export function AdminBranchSettingsPage() {
               feePerKm={feePerKmNum}
               maxKm={maxKmNum}
             />
-
-            {/* Formula explanation */}
-            <div className="absp__formula">
-              <h4 className="absp__section-title">Công thức tính phí</h4>
-              <div className="absp__formula-box">
-                <p>Nếu <strong>khoảng cách ≤ {baseKmNum} km</strong>:</p>
-                <code>Phí ship = {fmt(baseFeeNum)}</code>
-                <p style={{ marginTop: 12 }}>Nếu <strong>khoảng cách &gt; {baseKmNum} km</strong>:</p>
-                <code>Phí ship = {fmt(baseFeeNum)} + (km - {baseKmNum}) × {fmt(feePerKmNum)}</code>
-              </div>
-            </div>
           </div>
+
         </div>
       </div>
     </div>

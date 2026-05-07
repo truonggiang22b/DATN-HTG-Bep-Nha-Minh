@@ -5,10 +5,10 @@ import { getActiveOrders, updateOrderStatus, getOrderHistory } from './orders.co
 import { listCategories, createCategory, updateCategory, deleteCategory, restoreCategory } from './categories.controller';
 import { listMenuItems, createMenuItem, updateMenuItem, updateMenuItemStatus, deleteMenuItem, restoreMenuItem } from './menuItems.controller';
 import { listTables, createTable, updateTable, deactivateTable, restoreTable } from './tables.controller';
-import { resetTableSession } from './sessions.controller';
+import { getCurrentTableSession, resetTableSession } from './sessions.controller';
 import { getMe } from '../auth/auth.controller';
 import { upload, uploadImage } from './upload.controller';
-import { listStaff, createStaff, updateStaff, updateStaffStatus } from './users.controller';
+import { listStaff, createStaff, updateStaff, updateStaffStatus, resetStaffPassword, sendStaffInviteEmail } from './users.controller';
 import {
   listOptionGroups, createOptionGroup, updateOptionGroup, deleteOptionGroup,
   createOption, updateOption, deleteOption,
@@ -45,6 +45,12 @@ internalRouter.get(
 );
 
 // ─── Table Session Reset (MANAGER, ADMIN) ─────────────────────────────────────
+internalRouter.get(
+  '/tables/:id/current-session',
+  requireRole('MANAGER', 'ADMIN'),
+  getCurrentTableSession
+);
+
 internalRouter.post(
   '/tables/:id/reset-session',
   requireRole('MANAGER', 'ADMIN'),
@@ -85,6 +91,8 @@ internalRouter.get('/users', requireRole('ADMIN'), listStaff);
 internalRouter.post('/users', requireRole('ADMIN'), createStaff);
 internalRouter.patch('/users/:id', requireRole('ADMIN'), updateStaff);
 internalRouter.patch('/users/:id/status', requireRole('ADMIN'), updateStaffStatus);
+internalRouter.patch('/users/:id/reset-password', requireRole('ADMIN'), resetStaffPassword);
+internalRouter.post('/users/:id/invite-email', requireRole('ADMIN'), sendStaffInviteEmail);
 
 // ─── File Upload ────────────────────────────────────────────────────────
 internalRouter.post('/upload', requireRole('ADMIN', 'MANAGER'), upload.single('file'), uploadImage);
