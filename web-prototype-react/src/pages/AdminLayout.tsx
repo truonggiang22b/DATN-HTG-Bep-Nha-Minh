@@ -1,5 +1,7 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ToastContainer } from '../components/Toast';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import { useStore } from '../store/useStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { BRAND_NAME } from '../constants';
@@ -61,20 +63,63 @@ const IconStaff = () => (
   </svg>
 );
 
+const IconDelivery = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="1" y="3" width="15" height="13" rx="1" />
+    <path d="M16 8h4l3 5v3h-7V8z" />
+    <circle cx="5.5" cy="18.5" r="2.5" />
+    <circle cx="18.5" cy="18.5" r="2.5" />
+  </svg>
+);
+
+const IconShipper = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 8v4l2.5 2.5" />
+    <path d="M16.5 7.5 C15 5 12 4 9 5.5 C6 7 5 10 6 13" strokeDasharray="2 1"/>
+    <circle cx="7" cy="18" r="2" />
+    <circle cx="17" cy="18" r="2" />
+    <path d="M9 18h6" />
+  </svg>
+);
+
+const IconSettings = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+);
+
+const IconMenuDrawer = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="4" y1="6" x2="20" y2="6" />
+    <line x1="4" y1="12" x2="20" y2="12" />
+    <line x1="4" y1="18" x2="20" y2="18" />
+  </svg>
+);
+
 
 // ── Sidebar component ─────────────────────────────────────────────────────────
 const NAV_ITEMS = [
-  { to: '/admin',        label: 'Tổng quan',          Icon: IconDashboard, end: true  },
-  { to: '/admin/menu',   label: 'Thực đơn',           Icon: IconMenu,      end: false },
-  { to: '/admin/tables', label: 'Bàn & QR',           Icon: IconTable,     end: false },
-  { to: '/admin/staff',  label: 'Nhân viên',          Icon: IconStaff,     end: false },
-  { to: '/kds',          label: 'Màn hình bếp (KDS)', Icon: IconKDS,       end: false },
+  { to: '/admin',                  label: 'Tổng quan',          Icon: IconDashboard, end: true  },
+  { to: '/admin/menu',             label: 'Thực đơn',           Icon: IconMenu,      end: false },
+  { to: '/admin/tables',           label: 'Bàn & QR',           Icon: IconTable,     end: false },
+  { to: '/admin/staff',            label: 'Nhân viên',          Icon: IconStaff,     end: false },
+  { to: '/admin/delivery',         label: 'Giám sát đơn hàng',  Icon: IconDelivery,  end: false },
+  { to: '/admin/branch-settings',  label: 'Phí ship & Vị trí', Icon: IconSettings,  end: false },
+  { to: '/shipper',                label: 'Giao diện Shipper',  Icon: IconShipper,   end: false },
+  { to: '/kds',                    label: 'Màn hình bếp (KDS)', Icon: IconKDS,       end: false },
 ];
 
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -100,6 +145,7 @@ const AdminSidebar = () => {
           key={to}
           to={to}
           end={end}
+          onClick={onNavigate}
           className={({ isActive }) => `admin-nav-item ${isActive ? 'admin-nav-item--active' : ''}`}
         >
           <span className="admin-nav-icon"><Icon /></span>
@@ -114,6 +160,18 @@ const AdminSidebar = () => {
         <div style={{ fontSize: 12, color: 'var(--color-soy)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {user?.email}
         </div>
+        <button
+          onClick={() => setShowChangePassword(true)}
+          style={{
+            width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)',
+            background: 'transparent', border: '1px solid var(--color-steam)',
+            color: 'var(--color-soy)', fontSize: 13, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            marginBottom: 8,
+          }}
+        >
+          Đổi mật khẩu
+        </button>
         <button
           onClick={handleLogout}
           style={{
@@ -132,6 +190,9 @@ const AdminSidebar = () => {
           Đăng xuất
         </button>
       </div>
+      {showChangePassword && (
+        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
+      )}
     </nav>
   );
 };
@@ -139,10 +200,42 @@ const AdminSidebar = () => {
 // ── Layout ────────────────────────────────────────────────────────────────────
 export const AdminLayout = () => {
   const { toasts, dismissToast } = useStore();
+  const location = useLocation();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [drawerOpen]);
+
   return (
     <div className="admin-layout">
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-      <AdminSidebar />
+      <button
+        className="admin-mobile-menu-btn"
+        type="button"
+        aria-label="Mở menu quản trị"
+        aria-expanded={drawerOpen}
+        onClick={() => setDrawerOpen(true)}
+      >
+        <IconMenuDrawer />
+      </button>
+      <div
+        className={`admin-drawer-backdrop${drawerOpen ? ' admin-drawer-backdrop--open' : ''}`}
+        onClick={() => setDrawerOpen(false)}
+      />
+      <div className={`admin-drawer${drawerOpen ? ' admin-drawer--open' : ''}`}>
+        <AdminSidebar onNavigate={() => setDrawerOpen(false)} />
+      </div>
+      <div className="admin-sidebar-desktop">
+        <AdminSidebar />
+      </div>
       <div className="admin-main">
         <Outlet />
       </div>

@@ -21,6 +21,11 @@ coverage/
 # ── Test artifacts ────────────────────────────────────────────
 playwright-report/
 test-results/
+web-prototype-react/output/
+
+# ── Review packages (generated ZIPs, not source code) ─────────
+*-review-package-*.zip
+*.review.zip
 
 # ── OS / Editor ───────────────────────────────────────────────
 .DS_Store

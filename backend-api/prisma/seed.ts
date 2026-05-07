@@ -423,6 +423,24 @@ async function main() {
 
   console.log('  ✓ 3 auth users created');
 
+  // ── Phase 2: Seed delivery config for branch 1 ───────────────────────────
+  console.log('\nSetting up Phase 2 delivery config for branch 1...');
+  await prisma.branch.update({
+    where: { id: 'branch-bep-nha-minh-q1' },
+    data: {
+      // Tọa độ quán — 123 Nguyễn Huệ, Quận 1, TP.HCM (xấp xỉ)
+      // TODO: Cập nhật tọa độ thật từ Google Maps khi deploy production
+      latitude: 10.774, // 10°46'26.4"N
+      longitude: 106.701, // 106°42'03.6"E
+      // Bảng phí ship mặc định
+      deliveryBaseKm: 2,      // 0-2km = base fee
+      deliveryBaseFee: 15000, // 15.000 đ
+      deliveryFeePerKm: 5000, // +5.000đ / km sau 2km
+      deliveryMaxKm: 10,      // Không giao quá 10km
+    },
+  });
+  console.log('  ✓ Branch 1 delivery config set');
+
   console.log('\n✅ Seed completed!\n');
   console.log('Test accounts:');
   console.log('  Admin (Store 1): admin@bepnhaminh.vn / Admin@123456');
@@ -430,6 +448,10 @@ async function main() {
   console.log('  Admin (Store 2): admin@commientry.vn / Admin@654321');
   console.log('\nTest QR tokens (Store 1 — Bếp Nhà Mình):');
   tables1.forEach((t) => console.log(`  ${t.displayName}: ${t.qrToken}`));
+  console.log('\nPhase 2 — Online ordering:');
+  console.log('  Branch 1 delivery radius: 10km from Quận 1');
+  console.log('  Shipping fee: 15.000đ base (0-2km) + 5.000đ/km after');
+
 }
 
 main()

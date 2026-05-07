@@ -271,6 +271,16 @@ CANCELLED: #ef4444  (Red)
 □ Web Push Notification: Alert bếp/server khi có đơn mới
 □ Báo cáo doanh thu: Biểu đồ ngày/tuần/tháng, top món bán chạy
 □ Lịch sử khách: Optional login để xem lại đơn cũ (loyalty prep)
+□ Admin: Thêm section quản lý Option Groups trong AdminMenuPage
+    (thêm/sửa/xoá lựa chọn món — size, topping, mức đường...)
+□ Online Order - Nâng cấp tính khoảng cách giao hàng:
+    Hiện tại: Haversine (đường chim bay, thuần toán học, miễn phí)
+    Phương án A: Google Maps Distance Matrix API
+               → Khoảng cách đường thực tế, chính xác hơn ~20–30%
+               → Miễn phí đến ~1.000 request/tháng, có phí sau
+    Phương án B: OSRM (Open Source Routing Machine)
+               → Mã nguồn mở, miễn phí hoàn toàn, tự host
+               → Cần tải map data & dựng server riêng
 ```
 
 ---
@@ -414,6 +424,8 @@ Các điểm sau **được bỏ qua có chủ ý** trong prototype, cần imple
 | Upload ảnh thực | Cần storage service | Phase 1 |
 | Thanh toán | Tích hợp phức tạp, pháp lý | Phase 2 |
 | In hoá đơn | HW dependency | Phase 2 |
+| Admin: Quản lý Option Groups | Cần thêm UI section trong AdminMenuPage | Phase 2 |
+| Khoảng cách ship thực tế | Dùng Haversine (đường chim bay); nâng lên Google Maps API hoặc OSRM để có đường đi thực tế chính xác hơn | Phase 2 |
 | Multi-cơ sở | Cần thiết kế DB phức tạp hơn | Phase 3 |
 | AI gợi ý | Cần dữ liệu order history | Phase 3 |
 

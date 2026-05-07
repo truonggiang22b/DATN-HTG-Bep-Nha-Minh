@@ -420,6 +420,21 @@ describe('Admin Cleanup & Staff Management', () => {
 
     const userId = createRes.body.data.user.id as string;
 
+    const newPassword = `ResetPass!${suffix}`;
+    const resetPasswordRes = await request(app)
+      .patch(`/api/internal/users/${userId}/reset-password`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ newPassword });
+
+    expect(resetPasswordRes.status).toBe(200);
+    expect(resetPasswordRes.body.data.message).toContain('Đã đặt lại mật khẩu');
+
+    const loginWithResetPasswordRes = await request(app)
+      .post('/api/auth/login')
+      .send({ email, password: newPassword });
+
+    expect(loginWithResetPasswordRes.status).toBe(200);
+
     const updateRes = await request(app)
       .patch(`/api/internal/users/${userId}`)
       .set('Authorization', `Bearer ${adminToken}`)
@@ -442,7 +457,7 @@ describe('Admin Cleanup & Staff Management', () => {
 
     const blockedLoginRes = await request(app)
       .post('/api/auth/login')
-      .send({ email, password });
+      .send({ email, password: newPassword });
 
     expect(blockedLoginRes.status).toBe(401);
   });

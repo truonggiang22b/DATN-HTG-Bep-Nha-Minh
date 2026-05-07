@@ -5,6 +5,8 @@ import { success } from '../../utils/apiResponse';
 import { createOrderSchema } from './order.validator';
 import { generateOrderCode } from '../../utils/orderCode';
 import { CUSTOMER_STATUS_LABELS } from '../../utils/statusTransitions';
+import { publishOrderEvent } from '../realtime/realtime.bus';
+import { subscribePublicOrderEvents } from '../realtime/realtime.bus';
 
 /** POST /api/public/orders */
 export async function createOrder(req: Request, res: Response, next: NextFunction) {
@@ -73,9 +75,38 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
       throw AppError.conflict('ITEM_SOLD_OUT', `Các món đã hết: ${soldOutNames.join(', ')}`, { soldOutItems: soldOutNames });
     }
 
-    // 4. Validate required options
+    // 4a. Build optionPriceMap từ DB data (đã được include) — không tin priceDelta từ client
+    type DbOption = { id: string; priceDelta: number; groupId: string; menuItemId: string };
+    const optionPriceMap = new Map<string, DbOption>();
+    for (const mi of menuItems) {
+      for (const og of (mi as any).optionGroups ?? []) {
+        for (const opt of og.options ?? []) {
+          optionPriceMap.set(opt.id, {
+            id: opt.id,
+            priceDelta: Number(opt.priceDelta),
+            groupId: og.id,
+            menuItemId: mi.id,
+          });
+        }
+      }
+    }
+
+    // 4b. Validate required options + validate optionId thuộc về menuItem
     for (const reqItem of input.items) {
       const mi = menuItemMap.get(reqItem.menuItemId)!;
+
+      // Validate từng optionId: phải tồn tại trong DB và thuộc về món này
+      for (const opt of reqItem.selectedOptions) {
+        const dbOpt = optionPriceMap.get(opt.optionId);
+        if (!dbOpt) {
+          throw AppError.badRequest('INVALID_OPTION', `Option không tồn tại: ${opt.optionId}`);
+        }
+        if (dbOpt.menuItemId !== mi.id) {
+          throw AppError.badRequest('INVALID_OPTION', `Option không thuộc món "${mi.name}"`);
+        }
+      }
+
+      // Validate required option groups
       for (const og of mi.optionGroups) {
         if (!og.isRequired) continue;
         const selectedForGroup = reqItem.selectedOptions.filter(
@@ -90,25 +121,33 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
       }
     }
 
-    // 5. Build order items with snapshots + calculate subtotal
+    // 5. Build order items — dùng giá DB, không dùng priceDelta từ client
     let subtotal = 0;
     const orderItemsData = input.items.map((reqItem) => {
       const mi = menuItemMap.get(reqItem.menuItemId)!;
       const basePrice = Number(mi.price);
-      const optionsDelta = reqItem.selectedOptions.reduce(
-        (sum, o) => sum + (o.priceDelta ?? 0),
-        0
-      );
+      const optionsDelta = reqItem.selectedOptions.reduce((sum, o) => {
+        const dbOpt = optionPriceMap.get(o.optionId)!;
+        return sum + dbOpt.priceDelta; // giá từ DB, an toàn
+      }, 0);
       const unitPrice = basePrice + optionsDelta;
       const lineTotal = unitPrice * reqItem.quantity;
       subtotal += lineTotal;
+
+      // Lưu snapshot với giá DB (override bất kỳ priceDelta nào từ client)
+      const sanitizedOptions = reqItem.selectedOptions.map((o) => ({
+        optionGroupId: o.optionGroupId,
+        optionId: o.optionId,
+        name: o.name,
+        priceDelta: optionPriceMap.get(o.optionId)!.priceDelta, // giá DB
+      }));
 
       return {
         menuItemId: mi.id,
         nameSnapshot: mi.name,
         priceSnapshot: unitPrice,
         quantity: reqItem.quantity,
-        selectedOptionsSnapshotJson: reqItem.selectedOptions,
+        selectedOptionsSnapshotJson: sanitizedOptions,
         note: reqItem.note ?? '',
         lineTotal,
       };
@@ -159,6 +198,17 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
       return newOrder;
     });
 
+    publishOrderEvent({
+      type: 'order.created',
+      orderId: order.id,
+      orderCode: order.orderCode,
+      storeId: order.storeId,
+      branchId: order.branchId,
+      orderType: order.orderType,
+      status: order.status,
+      updatedAt: order.updatedAt.toISOString(),
+    });
+
     return success(
       res,
       {
@@ -173,6 +223,19 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
       },
       201
     );
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** GET /api/public/orders/:orderId/events?qrToken=... */
+export async function streamOrderEvents(req: Request, res: Response, next: NextFunction) {
+  try {
+    const orderId = String(req.params.orderId);
+    const { qrToken } = req.query as { qrToken?: string };
+
+    await validateDineInTrackingAccess(orderId, qrToken);
+    subscribePublicOrderEvents(req, res, orderId);
   } catch (err) {
     next(err);
   }
@@ -194,9 +257,15 @@ export async function trackOrder(req: Request, res: Response, next: NextFunction
     });
 
     if (!order) throw AppError.notFound('Đơn hàng');
+    if (order.orderType !== 'DINE_IN' || !order.table || !order.tableSession) {
+      throw AppError.badRequest('WRONG_TYPE', 'Use /api/public/online-orders/:orderId for online orders');
+    }
 
-    // Security: verify qrToken belongs to same table
-    if (qrToken && order.table.qrToken !== qrToken) {
+    // Security: qrToken BẮTBUỘC — phải khớp với bàn của đơn hàng
+    if (!qrToken) {
+      throw AppError.forbidden('Cần qrToken để xem đơn hàng');
+    }
+    if (order.table.qrToken !== qrToken) {
       throw AppError.forbidden('QR token không khớp với đơn hàng');
     }
 
@@ -225,5 +294,24 @@ export async function trackOrder(req: Request, res: Response, next: NextFunction
     });
   } catch (err) {
     next(err);
+  }
+}
+
+async function validateDineInTrackingAccess(orderId: string, qrToken?: string) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { table: true, tableSession: true },
+  });
+
+  if (!order) throw AppError.notFound('Đơn hàng');
+  if (order.orderType !== 'DINE_IN' || !order.table || !order.tableSession) {
+    throw AppError.badRequest('WRONG_TYPE', 'Use /api/public/online-orders/:orderId for online orders');
+  }
+
+  if (!qrToken) {
+    throw AppError.forbidden('Cần qrToken để xem đơn hàng');
+  }
+  if (order.table.qrToken !== qrToken) {
+    throw AppError.forbidden('QR token không khớp với đơn hàng');
   }
 }

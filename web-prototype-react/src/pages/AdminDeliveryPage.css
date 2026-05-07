@@ -1,0 +1,676 @@
+/**
+ * AdminDeliveryPage.css — Giám sát đơn giao hàng
+ * Phase 2: Bếp Nhà Mình
+ * Redesign: clean, đồng bộ, professional
+ */
+
+/* ─── Live badge ─────────────────────────────────────────────────────────── */
+.adp__live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #16a34a;
+  background: rgba(22,163,74,0.08);
+  border: 1px solid rgba(22,163,74,0.2);
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-weight: 500;
+}
+.adp__pulse {
+  width: 7px; height: 7px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: adp-pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes adp-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.65); }
+}
+
+/* ─── Filter bar ──────────────────────────────────────────────────────────── */
+.adp__filter-bar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.adp__filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1.5px solid #e2e8f0;
+  color: #64748b;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.adp__filter-btn:hover { border-color: #94a3b8; color: #334155; }
+.adp__filter-btn.active {
+  background: #fff7f6;
+  border-color: var(--color-chili, #d8382e);
+  color: var(--color-chili, #d8382e);
+  font-weight: 600;
+}
+.adp__filter-count {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 100px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 16px;
+  transition: background 0.15s, color 0.15s;
+}
+.adp__filter-btn.active .adp__filter-count {
+  background: var(--color-chili, #d8382e);
+  color: #fff;
+}
+
+/* ─── Info banner ─────────────────────────────────────────────────────────── */
+.adp__info-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: 12.5px;
+  color: #0369a1;
+  margin-bottom: 18px;
+  line-height: 1.4;
+}
+.adp__info-banner strong { font-weight: 600; color: #0c4a6e; }
+
+/* ─── Orders grid ─────────────────────────────────────────────────────────── */
+.adp__orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+  align-items: start; /* card không kéo dài chiều cao */
+}
+
+/* ─── Order Card base ─────────────────────────────────────────────────────── */
+.adp__card {
+  background: #ffffff;
+  border: 1px solid #e8edf2;
+  border-radius: 12px;
+  overflow: hidden;           /* clip left stripe */
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s, transform 0.15s;
+  position: relative;
+}
+.adp__card::before {          /* left accent stripe */
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: 0;
+}
+.adp__card:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.09);
+}
+
+/* Status-specific stripe + card tint */
+.adp__card--pending::before    { background: #f59e0b; }
+.adp__card--accepted::before   { background: #8b5cf6; }
+.adp__card--preparing::before  { background: #8b5cf6; }
+.adp__card--delivering::before { background: #0ea5e9; }
+.adp__card--delivered::before  { background: #22c55e; }
+.adp__card--cancelled::before  { background: #ef4444; }
+.adp__card--cancelled { opacity: 0.72; }
+
+/* Inner padding wrapper (offset the 4px stripe + breathing room) */
+.adp__card-header,
+.adp__card-info,
+.adp__card-summary,
+.adp__detail {
+  padding-left: 20px;
+  padding-right: 16px;
+}
+/* Timeline gets same padding but explicit */
+.adp__timeline {
+  padding-left: 20px;
+  padding-right: 16px;
+}
+
+/* ─── Card header ─────────────────────────────────────────────────────────── */
+.adp__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+  gap: 8px;
+}
+.adp__card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.adp__order-code {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  font-family: var(--font-accent, 'JetBrains Mono', monospace);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.adp__time {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+.adp__time--updated {
+  font-size: 10.5px;
+  color: #b0bec5;
+  font-style: italic;
+}
+.adp__card-right {
+  flex-shrink: 0;
+}
+.adp__status-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 100px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Customer info ───────────────────────────────────────────────────────── */
+.adp__card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 10px;
+  padding-bottom: 6px;
+}
+.adp__info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.4;
+}
+.adp__info-row strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+.adp__info-icon {
+  flex-shrink: 0;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+.adp__phone {
+  color: var(--color-chili, #d8382e);
+  font-weight: 600;
+  font-size: 12.5px;
+  text-decoration: none;
+  margin-left: 4px;
+}
+.adp__phone:hover { text-decoration: underline; }
+.adp__address { color: #475569; font-size: 12.5px; }
+.adp__info-row--note {
+  background: #fffbf0;
+  border-left: 2px solid #fbbf24;
+  border-radius: 0 4px 4px 0;
+  padding: 4px 8px;
+  margin-left: -8px;
+  font-style: italic;
+  color: #78350f;
+  font-size: 12px;
+}
+.adp__info-row--note .adp__info-icon { color: #f59e0b; }
+
+/* ─── 4-Step Timeline ─────────────────────────────────────────────────────── */
+.adp__timeline {
+  padding-top: 12px;
+  padding-bottom: 14px;
+}
+.adp__timeline--cancelled {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.adp__timeline-cancelled-txt {
+  font-size: 12.5px;
+  color: #ef4444;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.adp__timeline-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #b0bec5;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+
+/* Track: flex row với dots và rails */
+.adp__timeline-track {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+/* Step container */
+.adp__tl-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+/* Rail nối giữa 2 dots */
+.adp__tl-rail {
+  flex: 1;
+  height: 2px;
+  background: #e2e8f0;
+  margin-top: 13px;   /* căn giữa dot 26px ÷ 2 = 13 */
+  border-radius: 2px;
+  transition: background 0.3s;
+  min-width: 12px;
+}
+.adp__tl-rail--done { background: #22c55e; }
+
+/* Dot */
+.adp__tl-dot {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.adp__tl-dot--done {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+.adp__tl-dot--done svg { stroke: white; }
+
+.adp__tl-dot--active {
+  background: white;
+  border-color: var(--color-chili, #d8382e);
+  border-width: 2px;
+  box-shadow: 0 0 0 3px rgba(216,56,46,0.12);
+}
+.adp__tl-dot--active::after {
+  content: '';
+  width: 8px; height: 8px;
+  background: var(--color-chili, #d8382e);
+  border-radius: 50%;
+}
+.adp__tl-dot--pending {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+/* Label dưới dot */
+.adp__tl-text {
+  font-size: 10px;
+  color: #b0bec5;
+  text-align: center;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.adp__tl-text--done   { color: #22c55e; font-weight: 600; }
+.adp__tl-text--active { color: var(--color-chili, #d8382e); font-weight: 700; }
+
+/* ─── Card summary footer ─────────────────────────────────────────────────── */
+.adp__card-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  padding-bottom: 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 12px;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+.adp__item-count {
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+  font-size: 11.5px;
+  padding: 2px 9px;
+  border-radius: 100px;
+}
+.adp__distance {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #94a3b8;
+  font-size: 11.5px;
+}
+.adp__toggle-detail {
+  color: var(--color-chili, #d8382e);
+  font-size: 11.5px;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.adp__toggle-detail:hover { opacity: 0.7; }
+.adp__totals {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.adp__ship-fee {
+  font-size: 11.5px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+.adp__total {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-chili, #d8382e);
+  white-space: nowrap;
+  font-family: var(--font-accent, monospace);
+}
+
+/* ─── Expanded detail ─────────────────────────────────────────────────────── */
+.adp__detail {
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  padding-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.adp__detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #64748b;
+}
+.adp__detail-row strong { color: #334155; }
+.adp__detail-row--total {
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 6px;
+  margin-top: 2px;
+  font-weight: 600;
+  color: #334155;
+}
+.adp__detail-total {
+  color: var(--color-chili, #d8382e) !important;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* ─── Loading / Error / Empty ─────────────────────────────────────────────── */
+.adp__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+.adp__spinner {
+  width: 28px; height: 28px;
+  border: 2.5px solid #e2e8f0;
+  border-top-color: var(--color-chili, #d8382e);
+  border-radius: 50%;
+  animation: adp-spin 0.7s linear infinite;
+}
+@keyframes adp-spin { to { transform: rotate(360deg); } }
+
+.adp__error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.18);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #ef4444;
+  font-size: 13.5px;
+  margin-bottom: 12px;
+}
+.adp__empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+.adp__empty-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+  color: #cbd5e1;
+}
+
+/* ─── Time filter bar ─────────────────────────────────────────────────────── */
+.adp__time-filter-bar {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.adp__time-filter-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.adp__time-filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  margin-right: 2px;
+  white-space: nowrap;
+}
+.adp__preset-btn {
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid #e2e8f0;
+  background: transparent;
+  color: #64748b;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.adp__preset-btn:hover {
+  border-color: #94a3b8;
+  color: #334155;
+}
+.adp__preset-btn.active {
+  border-color: var(--color-chili, #d8382e);
+  background: var(--color-chili, #d8382e);
+  color: #fff;
+}
+.adp__date-input {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.adp__date-input:focus {
+  outline: none;
+  border-color: var(--color-chili, #d8382e);
+}
+.adp__time-filter-summary {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.adp__time-filter-summary strong {
+  color: #334155;
+  font-weight: 700;
+}
+
+/* ─── Date grouped list ───────────────────────────────────────────────────── */
+.adp__grouped-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.adp__date-group {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.adp__date-group-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  transition: background 0.15s;
+  gap: 12px;
+  font-family: inherit;
+}
+.adp__date-group-header:hover { background: #f1f5f9; }
+.adp__date-group-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.adp__date-group-title {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: #1e293b;
+  white-space: nowrap;
+}
+.adp__date-group-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.adp__date-group-meta {
+  font-size: 12.5px;
+  color: #64748b;
+  white-space: nowrap;
+}
+.adp__date-group-revenue {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-chili, #d8382e);
+  white-space: nowrap;
+  font-family: var(--font-accent, monospace);
+}
+.adp__orders-grid--ingroup {
+  padding: 14px;
+  background: #fff;
+}
+
+@media (max-width: 760px) {
+  .adp__filter-bar,
+  .adp__time-filter-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .adp__filter-bar::-webkit-scrollbar,
+  .adp__time-filter-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .adp__filter-btn,
+  .adp__preset-btn {
+    min-height: 38px;
+    white-space: nowrap;
+  }
+
+  .adp__orders-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .adp__date-group-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .adp__date-group-right {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 430px) {
+  .adp__orders-grid--ingroup {
+    padding: 10px;
+  }
+
+  .adp__card-header,
+  .adp__card-info,
+  .adp__card-summary,
+  .adp__detail,
+  .adp__timeline {
+    padding-left: 16px;
+    padding-right: 12px;
+  }
+
+  .adp__card-header,
+  .adp__card-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .adp__totals {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+
+  .adp__timeline-track {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .adp__tl-rail {
+    min-width: 18px;
+  }
+}

@@ -5,10 +5,16 @@ import { getActiveOrders, updateOrderStatus, getOrderHistory } from './orders.co
 import { listCategories, createCategory, updateCategory, deleteCategory, restoreCategory } from './categories.controller';
 import { listMenuItems, createMenuItem, updateMenuItem, updateMenuItemStatus, deleteMenuItem, restoreMenuItem } from './menuItems.controller';
 import { listTables, createTable, updateTable, deactivateTable, restoreTable } from './tables.controller';
-import { resetTableSession } from './sessions.controller';
+import { getCurrentTableSession, resetTableSession } from './sessions.controller';
 import { getMe } from '../auth/auth.controller';
 import { upload, uploadImage } from './upload.controller';
-import { listStaff, createStaff, updateStaff, updateStaffStatus } from './users.controller';
+import { listStaff, createStaff, updateStaff, updateStaffStatus, resetStaffPassword, sendStaffInviteEmail } from './users.controller';
+import {
+  listOptionGroups, createOptionGroup, updateOptionGroup, deleteOptionGroup,
+  createOption, updateOption, deleteOption,
+} from './optionGroups.controller';
+import { onlineOrderInternalRouter } from '../public/online-orders/online-order.router';
+import { streamInternalOrderEvents } from '../realtime/realtime.controller';
 
 export const internalRouter = Router();
 
@@ -17,6 +23,7 @@ internalRouter.use(authMiddleware);
 
 // ─── Me (any authenticated user) ─────────────────────────────────────────────
 internalRouter.get('/me', getMe);
+internalRouter.get('/events', requireRole('KITCHEN', 'MANAGER', 'ADMIN'), streamInternalOrderEvents);
 
 // ─── KDS — Kitchen/Staff (KITCHEN, MANAGER, ADMIN) ──────────────────────────
 internalRouter.get(
@@ -38,6 +45,12 @@ internalRouter.get(
 );
 
 // ─── Table Session Reset (MANAGER, ADMIN) ─────────────────────────────────────
+internalRouter.get(
+  '/tables/:id/current-session',
+  requireRole('MANAGER', 'ADMIN'),
+  getCurrentTableSession
+);
+
 internalRouter.post(
   '/tables/:id/reset-session',
   requireRole('MANAGER', 'ADMIN'),
@@ -58,6 +71,15 @@ internalRouter.patch('/menu-items/:id/status', requireRole('ADMIN', 'MANAGER'), 
 internalRouter.delete('/menu-items/:id', requireRole('ADMIN'), deleteMenuItem);
 internalRouter.patch('/menu-items/:id/restore', requireRole('ADMIN'), restoreMenuItem);
 
+// ─── Option Groups & Options (ADMIN only) ────────────────────────────────────
+internalRouter.get('/menu-items/:id/option-groups', requireRole('ADMIN', 'MANAGER'), listOptionGroups);
+internalRouter.post('/menu-items/:id/option-groups', requireRole('ADMIN'), createOptionGroup);
+internalRouter.patch('/option-groups/:groupId', requireRole('ADMIN'), updateOptionGroup);
+internalRouter.delete('/option-groups/:groupId', requireRole('ADMIN'), deleteOptionGroup);
+internalRouter.post('/option-groups/:groupId/options', requireRole('ADMIN'), createOption);
+internalRouter.patch('/options/:optionId', requireRole('ADMIN'), updateOption);
+internalRouter.delete('/options/:optionId', requireRole('ADMIN'), deleteOption);
+
 internalRouter.get('/tables', requireRole('ADMIN', 'MANAGER', 'KITCHEN'), listTables);
 internalRouter.post('/tables', requireRole('ADMIN'), createTable);
 internalRouter.patch('/tables/:id', requireRole('ADMIN'), updateTable);
@@ -69,6 +91,16 @@ internalRouter.get('/users', requireRole('ADMIN'), listStaff);
 internalRouter.post('/users', requireRole('ADMIN'), createStaff);
 internalRouter.patch('/users/:id', requireRole('ADMIN'), updateStaff);
 internalRouter.patch('/users/:id/status', requireRole('ADMIN'), updateStaffStatus);
+internalRouter.patch('/users/:id/reset-password', requireRole('ADMIN'), resetStaffPassword);
+internalRouter.post('/users/:id/invite-email', requireRole('ADMIN'), sendStaffInviteEmail);
 
 // ─── File Upload ────────────────────────────────────────────────────────
 internalRouter.post('/upload', requireRole('ADMIN', 'MANAGER'), upload.single('file'), uploadImage);
+
+// ─── Phase 2: Delivery Orders & Branch Config ──────────────────────────────────
+// GET/PATCH /delivery-orders, GET/PATCH /branches/:id/delivery-config
+internalRouter.use(
+  '/',
+  requireRole('KITCHEN', 'MANAGER', 'ADMIN'),
+  onlineOrderInternalRouter
+);

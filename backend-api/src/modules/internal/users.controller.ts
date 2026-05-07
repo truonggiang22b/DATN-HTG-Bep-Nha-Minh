@@ -4,24 +4,41 @@ import { supabaseAdmin } from '../../lib/supabase';
 import { AppError } from '../../utils/errors';
 import { success } from '../../utils/apiResponse';
 import { z } from 'zod';
+import { env } from '../../config/env';
+import { sendInviteEmail } from '../../lib/email';
 
 const createStaffSchema = z.object({
   displayName: z.string().min(1).max(100),
   email: z.string().email(),
-  role: z.enum(['ADMIN', 'MANAGER', 'KITCHEN']),
+  role: z.enum(['ADMIN', 'MANAGER', 'KITCHEN', 'SHIPPER']),
   defaultBranchId: z.string().uuid().optional(),
   temporaryPassword: z.string().min(8, 'Mật khẩu tạm phải ít nhất 8 ký tự'),
 });
 
 const updateStaffSchema = z.object({
   displayName: z.string().min(1).max(100).optional(),
-  role: z.enum(['ADMIN', 'MANAGER', 'KITCHEN']).optional(),
+  role: z.enum(['ADMIN', 'MANAGER', 'KITCHEN', 'SHIPPER']).optional(),
   defaultBranchId: z.string().uuid().nullable().optional(),
 });
 
 const updateStatusSchema = z.object({
   isActive: z.boolean(),
 });
+
+const resetPasswordSchema = z.object({
+  newPassword: z.string().min(8, 'Mật khẩu mới phải ít nhất 8 ký tự'),
+});
+
+const inviteEmailSchema = z.object({
+  temporaryPassword: z.string().min(8).optional(),
+});
+
+const ROLE_LABEL: Record<string, string> = {
+  ADMIN: 'Quan tri',
+  MANAGER: 'Quan ly',
+  KITCHEN: 'Bep',
+  SHIPPER: 'Giao hang',
+};
 
 function mapUser(user: {
   id: string;
@@ -224,6 +241,82 @@ export async function updateStaffStatus(req: Request, res: Response, next: NextF
     });
 
     return success(res, { user: mapUser(updated) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** PATCH /api/internal/users/:id/reset-password — Admin đặt lại mật khẩu cho nhân viên */
+export async function resetStaffPassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    const adminUser = req.user!;
+    const id = String(req.params.id);
+    const { newPassword } = resetPasswordSchema.parse(req.body);
+
+    const existing = await prisma.user.findUnique({
+      where: { id },
+      include: { roles: true },
+    });
+    if (!existing) throw AppError.notFound('Nhân viên');
+    if (existing.storeId !== adminUser.storeId) {
+      throw AppError.forbidden('Nhân viên không thuộc quán của bạn');
+    }
+    if (!existing.supabaseAuthUserId) {
+      throw AppError.badRequest('NO_AUTH_USER', 'Tài khoản này chưa có Supabase Auth user');
+    }
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(
+      existing.supabaseAuthUserId,
+      { password: newPassword }
+    );
+    if (error) {
+      throw AppError.badRequest('RESET_FAILED', error.message ?? 'Đặt lại mật khẩu thất bại');
+    }
+
+    return success(res, { message: `Đã đặt lại mật khẩu cho ${existing.displayName}` });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** POST /api/internal/users/:id/invite-email — Admin gui email moi nhan vien */
+export async function sendStaffInviteEmail(req: Request, res: Response, next: NextFunction) {
+  try {
+    const adminUser = req.user!;
+    const id = String(req.params.id);
+    const { temporaryPassword } = inviteEmailSchema.parse(req.body ?? {});
+
+    const existing = await prisma.user.findUnique({
+      where: { id },
+      include: { roles: true },
+    });
+    if (!existing) throw AppError.notFound('Nhan vien');
+    if (existing.storeId !== adminUser.storeId) {
+      throw AppError.forbidden('Nhan vien khong thuoc quan cua ban');
+    }
+    if (!existing.isActive) {
+      throw AppError.badRequest('USER_INACTIVE', 'Tai khoan dang bi khoa, hay mo khoa truoc khi gui email moi');
+    }
+
+    const role = existing.roles[0]?.role ?? 'KITCHEN';
+    const result = await sendInviteEmail({
+      to: existing.email,
+      displayName: existing.displayName,
+      roleLabel: ROLE_LABEL[role] ?? role,
+      loginUrl: `${env.FRONTEND_URL.replace(/\/$/, '')}/login`,
+      temporaryPassword,
+    });
+
+    return success(res, {
+      message: result.sent
+        ? `Da gui email moi cho ${existing.displayName}`
+        : 'Chua cau hinh email provider, he thong da tao san noi dung moi',
+      emailSent: result.sent,
+      provider: result.provider,
+      subject: result.subject,
+      body: result.body,
+      mailtoUrl: result.mailtoUrl,
+    });
   } catch (err) {
     next(err);
   }

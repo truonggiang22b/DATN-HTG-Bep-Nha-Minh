@@ -78,10 +78,10 @@ export async function loginAndNavigate(
   // Navigate tới domain trước để set sessionStorage (useAuthStore dùng sessionStorage)
   await page.goto('/login');
   await page.evaluate((data) => {
-    // useAuthStore.ts dùng sessionStorage với 2 keys riêng biệt:
+    // useAuthStore.ts dùng localStorage (đã migrate từ sessionStorage):
     // TOKEN_KEY = 'bnm-auth-token', USER_KEY = 'bnm-auth-user'
-    sessionStorage.setItem('bnm-auth-token', data.accessToken);
-    sessionStorage.setItem('bnm-auth-user', JSON.stringify(data.user));
+    localStorage.setItem('bnm-auth-token', data.accessToken);
+    localStorage.setItem('bnm-auth-user', JSON.stringify(data.user));
   }, result);
 
   await page.goto(targetPath);

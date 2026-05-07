@@ -14,10 +14,10 @@ export const createOrderSchema = z.object({
         selectedOptions: z
           .array(
             z.object({
+              // priceDelta KHÔNG nhận từ client — backend tự lookup từ DB
               optionGroupId: z.string().optional(),
               optionId: z.string().min(1),
-              name: z.string().min(1),
-              priceDelta: z.number().default(0),
+              name: z.string().max(200).optional(),
             })
           )
           .default([]),

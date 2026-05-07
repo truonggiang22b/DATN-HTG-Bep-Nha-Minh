@@ -2,7 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import { useStore } from '../store/useStore';
-import { getTables, createTable, deactivateTable, restoreTableApi, resetTableSession } from '../services/internalApi';
+import {
+  getTables,
+  getTableCurrentSession,
+  createTable,
+  deactivateTable,
+  restoreTableApi,
+  resetTableSession,
+} from '../services/internalApi';
+import type { ApiTableCurrentSession, ApiTableSessionOrder, OrderStatus } from '../types';
 import '../styles/admin.css';
 
 // ── SVG Icons ─────────────────────────────────────────────────────────────────
@@ -27,8 +35,113 @@ const IconQr = () => (
     <path d="M14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/>
   </svg>
 );
+const IconReceipt = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z" />
+    <path d="M8 7h8M8 11h8M8 15h5" />
+  </svg>
+);
+const IconPrint = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+  </svg>
+);
+const IconDownload = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+);
+
+
+const formatMoney = (value: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+
+const formatTime = (value: string) =>
+  new Date(value).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  NEW: 'Mới gọi',
+  PREPARING: 'Đang làm',
+  READY: 'Sẵn sàng',
+  SERVED: 'Đã phục vụ',
+  CANCELLED: 'Đã hủy',
+};
 
 // ── QR Modal ──────────────────────────────────────────────────────────────────
+function wrapCanvasText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number
+) {
+  let line = '';
+  let currentY = y;
+  for (const char of text.split('')) {
+    const testLine = line + char;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      ctx.fillText(line, x, currentY);
+      line = char;
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  if (line) ctx.fillText(line, x, currentY);
+}
+
+function buildSingleImagePdf(jpegDataUrl: string, imageWidth: number, imageHeight: number) {
+  const base64 = jpegDataUrl.split(',')[1] ?? '';
+  const binary = atob(base64);
+  const imageBytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  const pageWidth = 595.28;
+  const pageHeight = 841.89;
+  const content = `q\n${pageWidth} 0 0 ${pageHeight} 0 0 cm\n/Im0 Do\nQ\n`;
+  const objects = [
+    '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n',
+    '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n',
+    `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n`,
+    `4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${imageWidth} /Height ${imageHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imageBytes.length} >>\nstream\n`,
+    `5 0 obj\n<< /Length ${content.length} >>\nstream\n${content}endstream\nendobj\n`,
+  ];
+
+  const chunks: Uint8Array[] = [];
+  const offsets: number[] = [];
+  let cursor = 0;
+  const encoder = new TextEncoder();
+  const pushText = (text: string) => {
+    const bytes = encoder.encode(text);
+    chunks.push(bytes);
+    cursor += bytes.length;
+  };
+  const pushBytes = (bytes: Uint8Array) => {
+    chunks.push(bytes);
+    cursor += bytes.length;
+  };
+
+  pushText('%PDF-1.4\n');
+  offsets.push(cursor); pushText(objects[0]);
+  offsets.push(cursor); pushText(objects[1]);
+  offsets.push(cursor); pushText(objects[2]);
+  offsets.push(cursor); pushText(objects[3]); pushBytes(imageBytes); pushText('\nendstream\nendobj\n');
+  offsets.push(cursor); pushText(objects[4]);
+
+  const xrefOffset = cursor;
+  pushText(`xref\n0 6\n0000000000 65535 f \n${offsets.map((offset) => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}`);
+  pushText(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`);
+
+  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const pdfBytes = new Uint8Array(totalLength);
+  let position = 0;
+  chunks.forEach((chunk) => {
+    pdfBytes.set(chunk, position);
+    position += chunk.length;
+  });
+
+  return new Blob([pdfBytes], { type: 'application/pdf' });
+}
+
 const QRModal = ({ table, onClose }: { table: { displayName: string; qrToken: string }; onClose: () => void }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const url = `${window.location.origin}/qr/${table.qrToken}`;
@@ -67,41 +180,252 @@ const QRModal = ({ table, onClose }: { table: { displayName: string; qrToken: st
     win.print();
   };
 
+  const handleDownloadPng = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const link = document.createElement('a');
+    const safeName = table.displayName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase();
+    link.href = canvas.toDataURL('image/png');
+    link.download = `qr-${safeName || table.qrToken}.png`;
+    link.click();
+  };
+
+  const getSafeFileName = () =>
+    table.displayName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase() || table.qrToken;
+
+  const handleDownloadPdf = () => {
+    const qrCanvas = canvasRef.current;
+    if (!qrCanvas) return;
+
+    const pageWidthPx = 1240;
+    const pageHeightPx = 1754;
+    const poster = document.createElement('canvas');
+    poster.width = pageWidthPx;
+    poster.height = pageHeightPx;
+    const ctx = poster.getContext('2d');
+    if (!ctx) return;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, pageWidthPx, pageHeightPx);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#e8521a';
+    ctx.font = '700 54px Arial, sans-serif';
+    ctx.fillText('Bep Nha Minh', pageWidthPx / 2, 230);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = '800 78px Arial, sans-serif';
+    ctx.fillText(table.displayName, pageWidthPx / 2, 340);
+
+    const qrSize = 620;
+    const qrX = (pageWidthPx - qrSize) / 2;
+    const qrY = 455;
+    ctx.fillStyle = '#f7f2ed';
+    ctx.fillRect(qrX - 34, qrY - 34, qrSize + 68, qrSize + 68);
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+
+    ctx.fillStyle = '#3d3530';
+    ctx.font = '500 38px Arial, sans-serif';
+    ctx.fillText('Quet QR de xem menu va dat mon', pageWidthPx / 2, 1180);
+    ctx.fillStyle = '#7a6f65';
+    ctx.font = '400 26px Arial, sans-serif';
+    wrapCanvasText(ctx, url, pageWidthPx / 2, 1270, 920, 36);
+
+    const jpegDataUrl = poster.toDataURL('image/jpeg', 0.92);
+    const pdfBlob = buildSingleImagePdf(jpegDataUrl, pageWidthPx, pageHeightPx);
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(pdfBlob);
+    link.download = `qr-${getSafeFileName()}.pdf`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(url);
   };
 
   return (
     <div
-      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}
+      style={{ position:'fixed', inset:0, background:'rgba(37,33,27,0.6)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}
       onClick={onClose}
     >
       <div
-        style={{ background:'#fff', borderRadius:20, padding:'28px 32px', minWidth:300, textAlign:'center', boxShadow:'0 12px 48px rgba(0,0,0,0.18)' }}
+        style={{ background:'#fff', borderRadius:16, padding:'28px 28px 24px', minWidth:300, textAlign:'center', boxShadow:'0 16px 56px rgba(37,33,27,0.22)', maxWidth:360, width:'90vw' }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ fontWeight:700, fontSize:18, marginBottom:4 }}>🍳 Bếp Nhà Mình</div>
-        <div style={{ fontSize:22, fontWeight:800, color:'#e8521a', marginBottom:16 }}>{table.displayName}</div>
+        {/* Header */}
+        <div style={{ fontWeight:700, fontSize:15, color:'var(--color-charcoal)', marginBottom:4, letterSpacing:'-0.01em' }}>Bếp Nhà Mình</div>
+        <div style={{ fontSize:20, fontWeight:800, color:'var(--color-chili)', marginBottom:20 }}>{table.displayName}</div>
 
-        <div style={{ display:'inline-block', padding:12, border:'2px solid #f0ece6', borderRadius:12, marginBottom:16 }}>
+        {/* QR canvas */}
+        <div style={{ display:'inline-block', padding:12, border:'1px solid var(--color-steam)', borderRadius:12, marginBottom:14, background:'#fafafa' }}>
           <canvas ref={canvasRef} />
         </div>
 
-        <div style={{ fontSize:11, color:'#999', wordBreak:'break-all', marginBottom:16, padding:'0 8px' }}>{url}</div>
+        {/* URL */}
+        <div style={{ fontSize:11, color:'var(--color-soy)', wordBreak:'break-all', marginBottom:20, padding:'0 4px', opacity:0.7 }}>{url}</div>
 
-        <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
+        {/* Actions — palette thống nhất */}
+        <div style={{ display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap' }}>
           <button onClick={handleCopy}
-            style={{ padding:'8px 18px', borderRadius:8, border:'1.5px solid #e8521a', background:'#fff5f0', color:'#e8521a', fontWeight:600, cursor:'pointer', fontSize:13 }}>
-            📋 Copy URL
+            style={{ padding:'8px 14px', borderRadius:8, border:'1.5px solid var(--color-steam)', background:'#fff', color:'var(--color-charcoal)', fontWeight:600, cursor:'pointer', fontSize:13, display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' }}>
+            <IconCopy /> Sao chép URL
           </button>
           <button onClick={handlePrint}
-            style={{ padding:'8px 18px', borderRadius:8, border:'none', background:'#e8521a', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13 }}>
-            🖨️ In QR
+            style={{ padding:'8px 14px', borderRadius:8, border:'none', background:'var(--color-charcoal)', color:'#fff', fontWeight:600, cursor:'pointer', fontSize:13, display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' }}>
+            <IconPrint /> In QR
+          </button>
+          <button onClick={handleDownloadPng}
+            style={{ padding:'8px 14px', borderRadius:8, border:'1.5px solid var(--color-steam)', background:'#fff', color:'var(--color-charcoal)', fontWeight:600, cursor:'pointer', fontSize:13, display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' }}>
+            <IconDownload /> PNG
+          </button>
+          <button onClick={handleDownloadPdf}
+            style={{ padding:'8px 14px', borderRadius:8, border:'1.5px solid var(--color-steam)', background:'#fff', color:'var(--color-charcoal)', fontWeight:600, cursor:'pointer', fontSize:13, display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' }}>
+            <IconDownload /> PDF
           </button>
           <button onClick={onClose}
-            style={{ padding:'8px 18px', borderRadius:8, border:'1.5px solid #ddd', background:'#fff', color:'#666', fontWeight:600, cursor:'pointer', fontSize:13 }}>
+            style={{ padding:'8px 14px', borderRadius:8, border:'1.5px solid var(--color-steam)', background:'#fff', color:'var(--color-soy)', fontWeight:500, cursor:'pointer', fontSize:13, fontFamily:'inherit' }}>
             Đóng
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SessionOrderCard = ({ order, index }: { order: ApiTableSessionOrder; index: number }) => (
+  <div className={`session-order-card${order.status === 'CANCELLED' ? ' session-order-card--cancelled' : ''}`}>
+    <div className="session-order-card__header">
+      <div>
+        <div className="session-order-card__title">Lần gọi {index + 1}</div>
+        <div className="session-order-card__meta">
+          {order.orderCode} · {formatTime(order.createdAt)}
+        </div>
+      </div>
+      <div className="session-order-card__status-wrap">
+        <span className={`session-order-status session-order-status--${order.status.toLowerCase()}`}>
+          {ORDER_STATUS_LABELS[order.status]}
+        </span>
+        <strong>{formatMoney(order.subtotal)}</strong>
+      </div>
+    </div>
+
+    <div className="session-order-card__items">
+      {order.items.map((item) => (
+        <div className="session-order-item" key={item.id}>
+          <div className="session-order-item__main">
+            <span className="session-order-item__qty">x{item.quantity}</span>
+            <span>{item.name}</span>
+            <strong>{formatMoney(item.lineTotal)}</strong>
+          </div>
+          {item.selectedOptions?.length > 0 && (
+            <div className="session-order-item__sub">
+              {item.selectedOptions.map((option) => option.name).join(' · ')}
+            </div>
+          )}
+          {item.note && <div className="session-order-item__sub">Ghi chú: {item.note}</div>}
+        </div>
+      ))}
+    </div>
+
+    {order.customerNote && (
+      <div className="session-order-card__note">Ghi chú đơn: {order.customerNote}</div>
+    )}
+  </div>
+);
+
+const SessionModal = ({
+  data,
+  isLoading,
+  isSettling,
+  onSettle,
+  onClose,
+}: {
+  data?: ApiTableCurrentSession;
+  isLoading: boolean;
+  isSettling: boolean;
+  onSettle: (tableId: string) => void;
+  onClose: () => void;
+}) => {
+  const session = data?.session ?? null;
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal session-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <span className="modal-title">Phiên ăn {data?.table ? `— ${data.table.displayName}` : ''}</span>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="modal-body session-modal__body">
+          {isLoading ? (
+            <div className="session-empty">Đang tải phiên ăn...</div>
+          ) : !session ? (
+            <div className="session-empty">
+              <strong>Bàn đang trống</strong>
+              <span>Chưa có phiên ăn đang mở cho bàn này.</span>
+            </div>
+          ) : (
+            <>
+              <div className="session-summary-grid">
+                <div className="session-summary-card">
+                  <span>Tổng thanh toán</span>
+                  <strong>{formatMoney(session.payableTotal)}</strong>
+                </div>
+                <div className="session-summary-card">
+                  <span>Lần gọi món</span>
+                  <strong>{session.orderCount}</strong>
+                </div>
+                <div className="session-summary-card">
+                  <span>Số món</span>
+                  <strong>{session.itemCount}</strong>
+                </div>
+                <div className="session-summary-card">
+                  <span>Đang xử lý</span>
+                  <strong>{session.activeOrderCount}</strong>
+                </div>
+              </div>
+
+              {session.activeOrderCount > 0 && (
+                <div className="session-warning">
+                  Còn {session.activeOrderCount} đơn chưa hoàn tất. Hãy phục vụ hoặc hủy trước khi tất toán/reset phiên.
+                </div>
+              )}
+
+              <div className="session-order-list">
+                {session.orders.length === 0 ? (
+                  <div className="session-empty">Phiên này chưa có đơn gọi món.</div>
+                ) : (
+                  session.orders.map((order, index) => (
+                    <SessionOrderCard key={order.id} order={order} index={index} />
+                  ))
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn btn-ghost" type="button" onClick={onClose}>Đóng</button>
+          {session && data?.table && (
+            <button
+              className="btn btn-primary"
+              type="button"
+              disabled={isSettling || session.activeOrderCount > 0}
+              onClick={() => onSettle(data.table.id)}
+              title={session.activeOrderCount > 0 ? 'Còn đơn chưa hoàn tất' : 'Đóng phiên ăn hiện tại'}
+            >
+              {isSettling ? 'Đang tất toán...' : 'Tất toán phiên'}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -120,6 +444,7 @@ export const AdminTablesPage = () => {
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ACTIVE');
   const [qrModalTable, setQrModalTable] = useState<{ displayName: string; qrToken: string } | null>(null);
+  const [sessionTableId, setSessionTableId] = useState<string | null>(null);
 
   // ── Query ─────────────────────────────────────────────────────────────────
   const { data: tables = [], isLoading } = useQuery({
@@ -128,18 +453,27 @@ export const AdminTablesPage = () => {
     staleTime: 30_000,
   });
 
+  const { data: sessionDetail, isLoading: sessionLoading } = useQuery({
+    queryKey: ['tableCurrentSession', sessionTableId],
+    queryFn: () => getTableCurrentSession(sessionTableId!),
+    enabled: Boolean(sessionTableId),
+    refetchInterval: sessionTableId ? 5000 : false,
+  });
+
   // ── Mutations ─────────────────────────────────────────────────────────────
   const { mutate: doReset, isPending: resetPending } = useMutation({
     mutationFn: (tableId: string) => resetTableSession(tableId),
     onSuccess: (_result, tableId) => {
       queryClient.invalidateQueries({ queryKey: ['tables'] });
+      queryClient.invalidateQueries({ queryKey: ['tableCurrentSession', tableId] });
       const table = tables.find((t) => t.id === tableId);
       showToast(`Đã reset phiên — ${table?.displayName ?? tableId}`);
       setConfirmReset(null);
+      setSessionTableId(null);
     },
     onError: (err: any) => {
       const code = err.code ?? err.response?.data?.error?.code;
-      if (code === 'ACTIVE_ORDERS_EXIST') {
+      if (code === 'SESSION_HAS_ACTIVE_ORDERS' || code === 'ACTIVE_ORDERS_EXIST') {
         showToast('Không thể reset — bàn còn đơn đang xử lý. Hãy hoàn tất hoặc hủy đơn trước.', 'error');
       } else {
         showToast('Không thể reset phiên', 'error');
@@ -189,6 +523,8 @@ export const AdminTablesPage = () => {
     window.open(`/qr/${qrToken}`, '_blank');
   };
 
+  const visibleTables = tables.filter(t => statusFilter === 'ALL' || t.status === statusFilter);
+
   return (
     <div>
       <div className="admin-topbar">
@@ -220,19 +556,18 @@ export const AdminTablesPage = () => {
             </div>
 
             {/* Info banner */}
-            <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 13, color: '#374151' }}>
-              <span style={{ marginTop: 1 }}>ℹ️</span>
-              <span>"Ngừng sử dụng" bàn sẽ ẩn bàn khỏi danh sách đang dùng nhưng không xóa lịch sử. QR cũ sẽ không nhận order mới. Bạn có thể bật lại bất cứ lúc nào.</span>
+            <div style={{ background: 'rgba(37,33,27,0.04)', border: '1px solid var(--color-steam)', borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: 'var(--color-soy)' }}>
+              <strong style={{ color: 'var(--color-charcoal)' }}>Lưu ý:</strong> "Ngừng sử dụng" sẽ ẩn bàn khỏi danh sách hoạt động nhưng không xóa lịch sử. QR cũ không nhận order mới. Bạn có thể bật lại bất cứ lúc nào.
             </div>
 
             <div className="admin-table-wrapper">
               <div className="admin-table-header">
                 <span className="admin-table-title">
                   {statusFilter === 'ACTIVE' ? 'Bàn đang sử dụng' : statusFilter === 'INACTIVE' ? 'Bàn ngừng sử dụng' : 'Tất cả bàn'}
-                  {' '}({tables.filter(t => statusFilter === 'ALL' || t.status === statusFilter).length})
+                  {' '}({visibleTables.length})
                 </span>
               </div>
-              <table className="data-table">
+              <table className="data-table admin-desktop-table">
                 <thead>
                   <tr>
                     <th>Bàn</th><th>Mã bàn</th><th>QR Token</th><th>Phiên hiện tại</th><th>Trạng thái</th><th>Thao tác</th>
@@ -240,11 +575,10 @@ export const AdminTablesPage = () => {
                 </thead>
                 <tbody>
                   {(() => {
-                    const filtered = tables.filter(t => statusFilter === 'ALL' || t.status === statusFilter);
-                    if (filtered.length === 0) return (
+                    if (visibleTables.length === 0) return (
                       <tr><td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--color-soy)' }}>Không có bàn nào</td></tr>
                     );
-                    return filtered.map((table) => (
+                    return visibleTables.map((table) => (
                       <tr key={table.id}>
                         <td>
                           <div style={{ fontWeight: 600 }}>{table.displayName}</div>
@@ -295,10 +629,17 @@ export const AdminTablesPage = () => {
                         </td>
                         <td>
                           <div className="quick-actions">
+                            {/* Current session */}
+                            <button
+                              className={`qa-btn${table.hasActiveSession ? ' qa-btn--session' : ''}`}
+                              title="Xem các lần gọi món trong phiên"
+                              onClick={() => setSessionTableId(table.id)}
+                            >
+                              <IconReceipt /> Phiên ăn
+                            </button>
                             {/* QR Code */}
                             <button
                               className="qa-btn"
-                              style={{ borderColor: '#6366f1', color: '#6366f1', display: 'flex', alignItems: 'center', gap: 4 }}
                               title="Xem QR Code"
                               onClick={() => setQrModalTable({ displayName: table.displayName, qrToken: table.qrToken })}
                             >
@@ -326,7 +667,7 @@ export const AdminTablesPage = () => {
                              {confirmDeactivate === table.id ? (
                                <span style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                                  <span style={{ fontSize: 12, color: 'var(--color-chili)', display: 'block', width: '100%', marginBottom: 4 }}>
-                                   {table.hasActiveSession ? '⚠️ Bàn có phiên đang mở!' : 'Ngừng sử dụng bàn này?'}
+                                   {table.hasActiveSession ? 'Bàn có phiên đang mở!' : 'Ngừng sử dụng bàn này?'}
                                  </span>
                                  <button className="qa-btn qa-btn--danger"
                                    onClick={() => doToggleStatus({ id: table.id, status: 'INACTIVE' })}>
@@ -358,6 +699,104 @@ export const AdminTablesPage = () => {
                   })()}
                 </tbody>
               </table>
+              <div className="admin-mobile-card-list admin-table-mobile-list">
+                {visibleTables.length === 0 ? (
+                  <div className="admin-mobile-empty">Không có bàn nào</div>
+                ) : (
+                  visibleTables.map((table) => (
+                    <article className={`admin-mobile-card admin-table-mobile-card${table.hasActiveSession ? ' admin-table-mobile-card--open' : ''}`} key={table.id}>
+                      <div className="admin-mobile-card__header">
+                        <div>
+                          <h3 className="admin-mobile-card__title">{table.displayName}</h3>
+                          <p className="admin-mobile-card__meta">
+                            <code>{table.tableCode}</code>
+                          </p>
+                        </div>
+                        <span className={`admin-mobile-status ${table.status === 'ACTIVE' ? 'admin-mobile-status--active' : 'admin-mobile-status--muted'}`}>
+                          {table.status === 'ACTIVE' ? 'Hoạt động' : 'Ngừng'}
+                        </span>
+                      </div>
+
+                      <div className="admin-mobile-info-grid">
+                        <div>
+                          <span>Phiên hiện tại</span>
+                          <strong className={table.hasActiveSession ? 'admin-mobile-value--open' : ''}>
+                            {table.hasActiveSession ? 'Đang phục vụ' : 'Trống'}
+                          </strong>
+                        </div>
+                        <div>
+                          <span>QR token</span>
+                          <strong>{table.qrToken.slice(0, 18)}{table.qrToken.length > 18 ? '…' : ''}</strong>
+                        </div>
+                      </div>
+
+                      <div className="quick-actions admin-mobile-card__actions">
+                        <button
+                          className={`qa-btn${table.hasActiveSession ? ' qa-btn--session' : ''}`}
+                          onClick={() => setSessionTableId(table.id)}
+                        >
+                          <IconReceipt /> Phiên ăn
+                        </button>
+                        <button
+                          className="qa-btn"
+                          onClick={() => setQrModalTable({ displayName: table.displayName, qrToken: table.qrToken })}
+                        >
+                          <IconQr /> Xem QR
+                        </button>
+                        <button
+                          className="qa-btn"
+                          onClick={() => handleCopyQR(table.qrToken)}
+                        >
+                          <IconCopy /> {copiedToken === table.qrToken ? 'Đã copy' : 'Copy URL'}
+                        </button>
+                        {confirmReset === table.id ? (
+                          <>
+                            <button className="qa-btn qa-btn--danger" disabled={resetPending} onClick={() => doReset(table.id)}>
+                              {resetPending ? '...' : 'Xác nhận'}
+                            </button>
+                            <button className="qa-btn" onClick={() => setConfirmReset(null)}>Hủy</button>
+                          </>
+                        ) : (
+                          <button
+                            className="qa-btn"
+                            style={{ borderColor: 'var(--color-chili)', color: 'var(--color-chili)' }}
+                            onClick={() => setConfirmReset(table.id)}
+                          >
+                            <IconTrash /> Reset phiên
+                          </button>
+                        )}
+                        {confirmDeactivate === table.id ? (
+                          <>
+                            <div className="admin-mobile-confirm-note">
+                              {table.hasActiveSession ? 'Bàn có phiên đang mở!' : 'Ngừng sử dụng bàn này?'}
+                            </div>
+                            <button className="qa-btn qa-btn--danger" onClick={() => doToggleStatus({ id: table.id, status: 'INACTIVE' })}>
+                              Xác nhận
+                            </button>
+                            <button className="qa-btn" onClick={() => setConfirmDeactivate(null)}>Hủy</button>
+                          </>
+                        ) : (
+                          <button
+                            className="qa-btn"
+                            style={table.status === 'ACTIVE'
+                              ? { borderColor: 'rgba(216,58,46,0.4)', color: 'var(--color-chili)' }
+                              : { borderColor: 'rgba(34,197,94,0.4)', color: '#166534' }}
+                            onClick={() => {
+                              if (table.status === 'ACTIVE') {
+                                setConfirmDeactivate(table.id);
+                              } else {
+                                doToggleStatus({ id: table.id, status: 'ACTIVE' });
+                              }
+                            }}
+                          >
+                            {table.status === 'ACTIVE' ? 'Ngừng sử dụng' : 'Bật lại'}
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
             </div>
           </>
         )}
@@ -398,6 +837,16 @@ export const AdminTablesPage = () => {
       {/* QR Modal */}
       {qrModalTable && (
         <QRModal table={qrModalTable} onClose={() => setQrModalTable(null)} />
+      )}
+
+      {sessionTableId && (
+        <SessionModal
+          data={sessionDetail}
+          isLoading={sessionLoading}
+          isSettling={resetPending}
+          onSettle={(tableId) => doReset(tableId)}
+          onClose={() => setSessionTableId(null)}
+        />
       )}
 
       <style>{`

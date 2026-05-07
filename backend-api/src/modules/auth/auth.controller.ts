@@ -7,9 +7,13 @@ import { success } from '../../utils/apiResponse';
 import { z } from 'zod';
 import { env } from '../../config/env';
 
-// Regular client for user-facing auth (login)
+// Regular client for user-facing auth (login + refresh)
 const supabaseClient = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
+});
+
+const refreshSchema = z.object({
+  refreshToken: z.string().min(1, 'refreshToken là bắt buộc'),
 });
 
 
@@ -74,11 +78,79 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+/** POST /api/auth/refresh */
+export async function refreshToken(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { refreshToken: rt } = refreshSchema.parse(req.body);
+
+    const { data, error } = await supabaseClient.auth.refreshSession({
+      refresh_token: rt,
+    });
+
+    if (error || !data.session) {
+      throw AppError.unauthorized('Refresh token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.');
+    }
+
+    const supabaseUserId = data.user?.id ?? data.session.user.id;
+    const user = await prisma.user.findUnique({
+      where: { supabaseAuthUserId: supabaseUserId },
+      select: { id: true, isActive: true },
+    });
+
+    if (!user || !user.isActive) {
+      throw AppError.unauthorized('Tài khoản không tồn tại hoặc đã bị vô hiệu hóa');
+    }
+
+    return success(res, {
+      accessToken: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+      expiresIn: data.session.expires_in,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 /** GET /api/internal/me */
 export async function getMe(req: Request, res: Response, next: NextFunction) {
   try {
     if (!req.user) throw AppError.unauthorized();
     return success(res, { user: req.user });
+  } catch (err) {
+    next(err);
+  }
+}
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Mật khẩu hiện tại là bắt buộc'),
+  newPassword: z.string().min(8, 'Mật khẩu mới phải ít nhất 8 ký tự'),
+});
+
+/** POST /api/auth/change-password — Nhân viên tự đổi mật khẩu */
+export async function changeMyPassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) throw AppError.unauthorized();
+    const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+
+    // 1. Xác nhận mật khẩu cũ đúng bằng cách signIn lại
+    const { error: verifyError } = await supabaseClient.auth.signInWithPassword({
+      email: req.user.email,
+      password: currentPassword,
+    });
+    if (verifyError) {
+      throw AppError.unauthorized('Mật khẩu hiện tại không đúng');
+    }
+
+    // 2. Cập nhật mật khẩu mới qua Admin API
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+      req.user.supabaseUserId,
+      { password: newPassword }
+    );
+    if (updateError) {
+      throw AppError.badRequest('UPDATE_FAILED', updateError.message ?? 'Đổi mật khẩu thất bại');
+    }
+
+    return success(res, { message: 'Đổi mật khẩu thành công' });
   } catch (err) {
     next(err);
   }

@@ -11,9 +11,15 @@ import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { AdminMenuPage } from './pages/AdminMenuPage';
 import { AdminTablesPage } from './pages/AdminTablesPage';
 import { AdminStaffPage } from './pages/AdminStaffPage';
-
-// Phase 2: Landing page variants
+// Phase 2: Online Ordering
 import { OnlineLandingPage } from './pages/OnlineLandingPage';
+import { OnlineOrderPage } from './pages/OnlineOrderPage';
+import { OnlineTrackingPage } from './pages/OnlineTrackingPage';
+// Phase 2: Admin
+import { AdminDeliveryPage } from './pages/AdminDeliveryPage';
+import { AdminBranchSettingsPage } from './pages/AdminBranchSettingsPage';
+import { ShipperPage } from './pages/ShipperPage';
+// Landing V2 — Redesign variants
 import { LandingPageV2 } from './pages/LandingPageV2';
 import { LandingPageV2_Student } from './pages/LandingPageV2_Student';
 import { LandingPageV2_Hola } from './pages/LandingPageV2_Hola';
@@ -23,8 +29,8 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 30_000,   // 30s: không refetch nếu data còn "tươi"
-      refetchOnWindowFocus: false, // Không refetch khi focus lại tab
+      staleTime: 30_000,   // 30s
+      refetchOnWindowFocus: false,
     },
     mutations: {
       retry: 0,
@@ -43,15 +49,24 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          {/* ── Customer routes (no auth) ─────────────────────────────── */}
+          {/* ── Phase 1: QR Dine-in (unchanged) ──────────────────────── */}
           <Route path="/qr/:qrToken" element={<MenuPageWrapper />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/order/:orderId/tracking" element={<TrackingPage />} />
 
-          {/* ── Auth ─────────────────────────────────────────────────── */}
+          {/* ── Phase 2: Online Ordering (new) ───────────────────────── */}
+          <Route path="/order-online" element={<OnlineLandingPage />} />
+          <Route path="/order-online/menu" element={<OnlineOrderPage />} />
+          <Route path="/order-online/track/:orderId" element={<OnlineTrackingPage />} />
+          {/* Landing V2 — Story-First redesign (preview) */}
+          <Route path="/landing-v2" element={<LandingPageV2 />} />
+          <Route path="/landing-v2-student" element={<LandingPageV2_Student />} />
+          <Route path="/landing-v2-hola" element={<LandingPageV2_Hola />} />
+
+          {/* ── Auth ──────────────────────────────────────────────────── */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* ── KDS (Kitchen & Admin) ─────────────────────────────────── */}
+          {/* ── KDS ───────────────────────────────────────────────────── */}
           <Route
             path="/kds"
             element={
@@ -61,7 +76,17 @@ function App() {
             }
           />
 
-          {/* ── Admin (Admin only) ────────────────────────────────────── */}
+          {/* ── Shipper ────────────────────────────────────────────────── */}
+          <Route
+            path="/shipper"
+            element={
+              <ProtectedRoute roles={['SHIPPER', 'MANAGER', 'ADMIN']}>
+                <ShipperPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ── Admin ─────────────────────────────────────────────────── */}
           <Route
             path="/admin"
             element={
@@ -74,15 +99,11 @@ function App() {
             <Route path="menu" element={<AdminMenuPage />} />
             <Route path="tables" element={<AdminTablesPage />} />
             <Route path="staff" element={<AdminStaffPage />} />
+            <Route path="delivery" element={<AdminDeliveryPage />} />
+            <Route path="branch-settings" element={<AdminBranchSettingsPage />} />
           </Route>
 
-          {/* ── Phase 2: Landing page variants ───────────────────────── */}
-          <Route path="/order-online"         element={<OnlineLandingPage />} />
-          <Route path="/landing-v2"           element={<LandingPageV2 />} />
-          <Route path="/landing-v2-student"   element={<LandingPageV2_Student />} />
-          <Route path="/landing-v2-hola"      element={<LandingPageV2_Hola />} />
-
-          {/* ── Catch-all ─────────────────────────────────────────────── */}
+          {/* ── Catch-all: redirect / → Phase 1 QR menu (default) ──────── */}
           <Route path="/" element={<Navigate to="/qr/qr-bnm-table-01" replace />} />
           <Route path="*" element={<Navigate to="/qr/qr-bnm-table-01" replace />} />
         </Routes>
