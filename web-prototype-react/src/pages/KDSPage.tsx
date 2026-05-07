@@ -81,7 +81,7 @@ export const KDSPage = () => {
     },
 
     // ③ Dù thành công hay lỗi → sync lại với server cho chắc
-    onSettled: (_data, _err, vars) => {
+    onSettled: (_data, _err, _vars) => {
       queryClient.invalidateQueries({ queryKey: ['activeOrders'] });
       // Toast sau khi server confirm (lấy orderCode từ snapshot cache)
       if (_data) {

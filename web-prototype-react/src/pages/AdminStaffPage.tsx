@@ -885,7 +885,7 @@ export function AdminStaffPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((s, idx) => {
+              {filtered.map((s) => {
                 const role = getRole(s);
                 const isRowLoading = actionLoading === s.id;
                 return (
