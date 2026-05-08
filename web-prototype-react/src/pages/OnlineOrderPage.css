@@ -1,4 +1,4 @@
-﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    OnlineOrderPage.css  â€” Unified Design System v2
    â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Color system:
@@ -407,12 +407,123 @@ body:has(.oop) #root {
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 640px) {
   .oop__menu-list {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 8px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE MENU CARD — Horizontal layout (clone dine-in /menu style)
+   Chỉ áp dụng ≤ 640px. Desktop 3-col vertical card KHÔNG thay đổi.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* Card dọc → ngang */
+  .oop__menu-card {
+    flex-direction: row;
+    border-radius: 14px;
+    align-items: stretch;
+    min-height: 100px;
+  }
+
+  /* Tắt hover scale-up trên touch screen */
+  .oop__menu-card:hover {
+    transform: none;
+    box-shadow: 0 2px 12px rgba(180,120,60,.07);
+    border-color: #eedfc8;
+  }
+  .oop__menu-card:active {
+    transform: scale(0.99);
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  }
+
+  /* Thumbnail ảnh — chiều rộng cố định, co dãn theo chiều cao card */
+  .oop__menu-card__img-wrap {
+    width: 108px;
+    min-width: 108px;
+    flex-shrink: 0;
+    aspect-ratio: unset;       /* Bỏ aspect-ratio 3/2 gây ra ảnh quá cao */
+    height: auto;
+    align-self: stretch;       /* Co dãn theo chiều cao card */
+    border-radius: 14px 0 0 14px;
+    overflow: hidden;
+  }
+
+  .oop__menu-card__img {
+    width: 100%;
+    height: 100%;
+    min-height: 100px;
+    object-fit: cover;
+    border-radius: 14px 0 0 14px;
+  }
+
+  /* Nút + FAB — nhỏ hơn, vẫn nổi góc phải dưới thumbnail */
+  .oop__menu-card__add-fab {
+    width: 30px;
+    height: 30px;
+    font-size: 22px;
+    bottom: 8px;
+    right: 8px;
+    box-shadow: 0 3px 10px rgba(233,79,55,.5);
+  }
+
+  .oop__menu-card__stepper-fab {
+    bottom: 6px;
+    right: 6px;
+    padding: 2px;
+    gap: 0;
+  }
+
+  .oop__fab-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 16px;
+  }
+
+  .oop__fab-qty {
+    min-width: 22px;
+    font-size: 13px;
+  }
+
+  /* Body text — nằm bên phải ảnh */
+  .oop__menu-card__body {
+    padding: 10px 12px 10px 11px;
+    flex: 1;
+    min-width: 0;
+    gap: 3px;
+    justify-content: center;
+  }
+
+  .oop__menu-card__name {
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-line-clamp: 2;
+    font-weight: 700;
+  }
+
+  .oop__menu-card__desc {
+    font-size: 12px;
+    -webkit-line-clamp: 2;
+    color: var(--text-sub);
+  }
+
+  .oop__menu-card__footer {
+    margin-top: 5px;
+  }
+
+  .oop__menu-card__price {
+    font-size: 15px;
+  }
+
+  /* Category title gọn hơn trên mobile */
+  .oop__cat-group-title {
+    font-size: 14px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+  }
+}
+
 
 /* Loading state */
 .oop__loading {
