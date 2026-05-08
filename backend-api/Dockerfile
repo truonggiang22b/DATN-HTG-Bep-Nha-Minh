@@ -1,6 +1,7 @@
 # ─────────────────────────────────────────────────────────────────
 # Bếp Nhà Mình — Backend Dockerfile
 # Multi-stage build: build TypeScript → run compiled JS
+# Cache-bust: 2026-05-08 — force rebuild with Phase 2 Prisma schema
 # ─────────────────────────────────────────────────────────────────
 
 # ─── Stage 1: Build ───────────────────────────────────────────────
