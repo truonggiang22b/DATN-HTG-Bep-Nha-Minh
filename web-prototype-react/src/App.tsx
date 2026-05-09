@@ -103,9 +103,9 @@ function App() {
             <Route path="branch-settings" element={<AdminBranchSettingsPage />} />
           </Route>
 
-          {/* ── Catch-all: redirect / → Phase 1 QR menu (default) ──────── */}
-          <Route path="/" element={<Navigate to="/qr/qr-bnm-table-01" replace />} />
-          <Route path="*" element={<Navigate to="/qr/qr-bnm-table-01" replace />} />
+          {/* ── Catch-all: redirect / → Online Ordering (trang đại diện cửa hàng) ── */}
+          <Route path="/" element={<Navigate to="/order-online" replace />} />
+          <Route path="*" element={<Navigate to="/order-online" replace />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
